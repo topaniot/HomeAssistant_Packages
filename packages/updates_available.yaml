@@ -1,0 +1,146 @@
+# Package - Updates Available
+# List all available updates of entities with device class update
+#
+# You must set in secrets.yaml
+# notify_service: notify.notify
+#
+# If you want to exlcude entities create group ignored_entities in groups.yaml
+# Example:
+# ignored_entities:
+#   name: "Ignored Entities"
+#   entities:
+#     - sun.sun
+
+group:
+  ignored_entities:
+    entities:
+      - binary_sensor.updater
+
+sensor:
+  - platform: version
+
+template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "Updates Available"
+        icon: "hass:update"
+        state: >
+              {{ states
+                |selectattr('attributes.device_class','eq','update')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |list|count 
+              }}
+        attributes:
+            names: >
+              {{ states
+                |selectattr('attributes.device_class','eq','update')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |map(attribute='name')|join (", ")
+              }}
+  - binary_sensor:
+      - name: "Available Updates Alert"
+        state: "{{  states('sensor.updates_available')|int > 0 or is_state('sensor.updates_available', 'unknown') }}"
+        icon: "mdi:alert-circle"
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "HA Newest Version"
+        icon: "hass:package"
+        state: >
+          {% if state_attr('binary_sensor.updater', 'newest_version') != states('sensor.current_version') %}
+            {{ state_attr('binary_sensor.updater', 'newest_version') }}
+          {% else %}
+            Up-to-date
+          {% endif %}
+
+automation:
+  - id: "updates_available_detected"
+    alias: Updates Available Detected
+    description: ''
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.updates_available
+    condition:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: sensor.updates_available
+            state: unknown
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_available
+                above: '0'
+                below: '2'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  title: "🟡 Este o actualizare disponibilă!"
+                  message: – {{ state_attr('sensor.updates_available','names').split(',') | join("\n–") }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_available
+                above: '1'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  title: "🟡 Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile!"
+                  message: – {{ state_attr('sensor.updates_available','names').split(',') | join("\n–") }}
+        default: []
+  - id: "updates_available_cleared"
+    alias: Updates Available Cleared
+    description: ''
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.available_updates_alert
+        from: 'on'
+        to: 'off'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: 🎉 Dispozitivele sunt actualizate!
+
+  - id: "update_available_ha"     
+    alias: Update Available HA
+    description: ''
+    trigger:
+      - platform: state
+        entity_id: sensor.ha_newest_version
+    condition: []
+    action:
+      - choose:
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.ha_newest_version
+                    state: 'Up-to-date'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: >-
+                    🎉 HA {{ state_attr('binary_sensor.updater', 'newest_version') }} disponibil!
+                    
+                    Actual {{ states('sensor.current_version') }}
+            
+            
+                    Note versiune: {{ state_attr('binary_sensor.updater', 'release_notes') }}
+          - conditions:
+              - condition: state
+                entity_id: sensor.ha_newest_version
+                state: 'Up-to-date'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: 🎉 Home Assistant este actualizat!
+        default: []
+    mode: restart
