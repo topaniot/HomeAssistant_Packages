@@ -1,0 +1,112 @@
+# Package - Unavailable Entities Sensor
+# Count and list of entities with a state of unavailable
+#
+# You must set in secrets.yaml
+# delay_time: 00:10:00
+# notify_service: notify.notify
+# 
+# If you want to exlcude entities create group ignored_entities in groups.yaml
+# Example:
+#  ignored_entities:
+#    entities:
+#       - sensor.temperature
+
+group:
+  ignored_entities:
+    entities:
+     - sensor.unavailable_entities
+     - binary_sensor.unavailable_entities_alert
+
+template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
+      - name: "Unavailable Entities"
+        icon: "mdi:format-list-checks"
+        state: >
+              {{ states
+                |selectattr('state','in',['unavailable'])
+                |rejectattr('domain','in',['group','person','device_tracker','media_player'])
+                |rejectattr('entity_id','search','_rssi')
+                |rejectattr('entity_id','search','_ssid')
+                |rejectattr('entity_id','search','_ip')
+                |rejectattr('entity_id','search','_firmware_update')
+                |rejectattr('entity_id','search','_wi_fi')
+                |rejectattr('entity_id','search','_overheating')
+                |rejectattr('entity_id','search','_overpowering')
+                |rejectattr('entity_id','search','_ds18b20_id')
+                |rejectattr('entity_id','search','_energy_')
+                |rejectattr('entity_id','search','_power')
+                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |list|count
+              }}
+        attributes:
+            names: >
+              {{ states
+                |selectattr('state','in',['unavailable'])
+                |rejectattr('domain','in',['group','person','device_tracker','media_player'])
+                |rejectattr('entity_id','search','_rssi')
+                |rejectattr('entity_id','search','_ssid')
+                |rejectattr('entity_id','search','_ip')
+                |rejectattr('entity_id','search','_firmware_update')
+                |rejectattr('entity_id','search','_wi_fi')
+                |rejectattr('entity_id','search','_overheating')
+                |rejectattr('entity_id','search','_overpowering')
+                |rejectattr('entity_id','search','_ds18b20_id')
+                |rejectattr('entity_id','search','_energy_')
+                |rejectattr('entity_id','search','_power')
+                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |map(attribute='name')|join(', ')
+              }}
+  - binary_sensor:
+      - name: "Unavailable Entities Alert"
+        state: "{{ states('sensor.unavailable_entities')|int > 0 or is_state('sensor.unavailable_entities', 'unknown') }}"
+        delay_on: !secret delay_time
+        icon: "mdi:alert-circle"
+
+automation:
+  - id: "unavailable_entities_detected"
+    alias: Unavailable Entities Detected
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.unavailable_entities
+        for: !secret delay_time
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_entities
+                above: '0'
+                below: '2'
+            sequence:
+               - service: !secret notify_service
+                 data:
+                   title: '🔴 Este un dispozitiv indisponibil:'
+                   message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_entities
+                above: '1'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  title: "🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:"
+                  message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
+        default: []
+        
+  - id: "unavailable_entities_cleared"
+    alias: Unavailable Entities Cleared
+    description: ''
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.unavailable_entities_alert
+        from: 'on'
+        to: 'off'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: 🟢 Toate dispozitivele funcționzează!
