@@ -50,3 +50,5 @@ automation:
       data:
         message: 🦾 Serverul a pornit!
     mode: single
+
+### test push request
