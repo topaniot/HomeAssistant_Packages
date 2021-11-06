@@ -16,8 +16,8 @@ sensor:
     name: Time Online
 
 
-####size of MariaDB
-#https: //www.home-assistant.io/components/sensor.sql/
+### size of MariaDB
+### https: //www.home-assistant.io/components/sensor.sql/
   - platform: sql
     db_url: !secret db_url
     queries:
@@ -26,7 +26,7 @@ sensor:
         column: 'value'
         unit_of_measurement: MB   
         
-#monitorizare server healthchecks.io
+### monitorizare server healthchecks.io
 rest_command:
   healthcheck:
     url: !secret healthcheck
@@ -36,3 +36,17 @@ http:
   use_x_forwarded_for: true
   trusted_proxies:
     - 172.30.33.0/24
+
+automation:
+  - id: 'server_start'
+    alias: Server Start
+    description: ''
+    trigger:
+    - platform: homeassistant
+      event: start
+    condition: []
+    action:
+    - service: notify.telegram
+      data:
+        message: 🦾 Serverul a pornit!
+    mode: single
