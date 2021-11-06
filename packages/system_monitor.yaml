@@ -1,0 +1,64 @@
+sensor:
+### monitorizare server rpi
+  - platform: systemmonitor
+    resources:
+     - type: processor_use
+     - type: swap_use_percent
+     - type: processor_temperature
+     - type: load_15m
+     - type: memory_use_percent
+     - type: disk_use_percent
+       arg: /
+     - type: disk_use
+       arg: /
+     - type: load_15m
+  - platform: uptime
+    name: Time Online
+    # unit_of_measurement: hours
+
+
+
+###met.no - extragere temperatura si umiditate
+#temperatura
+  - platform: template
+    sensor:
+      weather_temp:
+        friendly_name: "Weather Temperature"
+        unit_of_measurement: '°C'
+        value_template: "{{ state_attr('weather.home', 'temperature') }}"
+#humidity
+  - platform: template
+    sensor:
+      weather_humidity:
+        friendly_name: "Weather Humidity"
+        unit_of_measurement: '%'
+        value_template: "{{ state_attr('weather.home', 'humidity') }}"
+
+####size of MariaDB
+#https: //www.home-assistant.io/components/sensor.sql/
+  - platform: sql
+    db_url: !secret db_url
+    queries:
+      - name: 'DataBase size'
+        query: 'SELECT table_schema "database", Round(Sum(data_length + index_length)  /1024/1024) "value" FROM information_schema.tables WHERE table_schema="homeassistant" GROUP BY table_schema;'
+        column: 'value'
+        unit_of_measurement: MB   
+
+### TIME DATE
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+#monitorizare server healthchecks.io
+rest_command:
+  healthcheck:
+    url: !secret healthcheck
+
+
+
+### http settings pt ngnx
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.33.0/24
