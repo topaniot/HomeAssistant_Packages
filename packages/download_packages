@@ -1,0 +1,23 @@
+# This package will download all packages when script.download_packages is triggered
+# For this to work you need to have in config.yaml defined:
+# downloader:
+#   download_dir: packages
+
+script:
+  download_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/updates_available.yaml
+      # - service: downloader.download_file
+      #   data:
+      #     overwrite: true
+      #     url: >-
+      #       https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
