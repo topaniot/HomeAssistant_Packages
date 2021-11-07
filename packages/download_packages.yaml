@@ -10,14 +10,14 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/download_packages.yaml
       - service: downloader.download_file
         data:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/updates_available.yaml
-      # - service: downloader.download_file
-      #   data:
-      #     overwrite: true
-      #     url: >-
-      #       https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
