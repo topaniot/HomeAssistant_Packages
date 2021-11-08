@@ -4,13 +4,14 @@
 #   download_dir: packages
 
 script:
-  download_packages:
+  update_packages:
+    alias: Update Packages
     sequence:
       - service: downloader.download_file
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/download_packages.yaml
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/update_packages.yaml
       - service: downloader.download_file
         data:
           overwrite: true
