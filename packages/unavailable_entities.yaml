@@ -16,8 +16,7 @@
 group:
   ignored_entities:
     entities:
-     - sensor.unavailable_entities
-     - binary_sensor.unavailable_entities_alert
+      - 
 
 template:
   - trigger:
@@ -40,6 +39,7 @@ template:
                 |rejectattr('entity_id','search','_ds18b20_id')
                 |rejectattr('entity_id','search','_energy_')
                 |rejectattr('entity_id','search','_power')
+                |rejectattr('entity_id','search','_device_temperature')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
                 |list|count
               }}
@@ -58,6 +58,7 @@ template:
                 |rejectattr('entity_id','search','_ds18b20_id')
                 |rejectattr('entity_id','search','_energy_')
                 |rejectattr('entity_id','search','_power')
+                |rejectattr('entity_id','search','_device_temperature')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
                 |map(attribute='name')|join(', ')
               }}
@@ -83,10 +84,10 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-               - service: !secret notify_service
-                 data:
-                   title: '🔴 Este un dispozitiv indisponibil:'
-                   message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
+              - service: !secret notify_service
+                data:
+                  title: 🔴 Este un dispozitiv indisponibil!
+                  message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
@@ -94,13 +95,12 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: "🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:"
+                  title: 🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile!
                   message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
         default: []
         
   - id: "unavailable_entities_cleared"
     alias: Unavailable Entities Cleared
-    description: ''
     mode: restart
     trigger:
       - platform: state
