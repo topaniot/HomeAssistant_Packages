@@ -4,7 +4,7 @@
 # Count and list of entities with a state of unavailable
 #
 # You must set in secrets.yaml
-# delay_time: 00:10:00
+# delay_notify_unavailable: 00:10:00
 # notify_service: notify.notify
 # 
 # If you want to exlcude entities create group ignored_entities in groups.yaml
@@ -65,7 +65,7 @@ template:
   - binary_sensor:
       - name: "Unavailable Entities Alert"
         state: "{{ states('sensor.unavailable_entities')|int > 0 or is_state('sensor.unavailable_entities', 'unknown') }}"
-        delay_on: !secret delay_time
+        delay_on: !secret delay_notify_unavailable
         icon: "mdi:alert-circle"
 
 automation:
@@ -75,7 +75,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
-        for: !secret delay_time
+        for: !secret delay_notify_unavailable
     action:
       - choose:
           - conditions:
