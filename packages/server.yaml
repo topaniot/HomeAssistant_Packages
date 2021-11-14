@@ -1,5 +1,32 @@
+homeassistant:
+  # Two factor authentication
+  auth_mfa_modules:
+    - type: notify
+      message: 'Codul de acces este: {}'
+    - type: totp
+      name: Authenticator app
+
+recorder:
+  # Set recorder to use MariaDB
+  db_url: !secret recorder_db_url
+  purge_keep_days: !secret recorder_keep_days
+  exclude:
+    entities:
+      - automation.healthchecks
+http:
+  # Setup NGINX
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.33.0/24
+    
+rest_command:
+  # monitorizare server with healthchecks.io
+  healthchecks:
+    url: !secret healthchecks
+      
+
 sensor:
-### monitorizare server rpi
+    # monitorizare server rpi
   - platform: systemmonitor
     resources:
      - type: processor_use
@@ -14,45 +41,20 @@ sensor:
      - type: load_15m
   - platform: uptime
     name: Time Online
-
-
-### size of MariaDB
-### https: //www.home-assistant.io/components/sensor.sql/
+  
+    # size of MariaDB
   - platform: sql
     db_url: !secret db_url
     queries:
       - name: 'DataBase size'
-        query: 'SELECT table_schema "database", Round(Sum(data_length + index_length)  /1024/1024) "value" FROM information_schema.tables WHERE table_schema="homeassistant" GROUP BY table_schema;'
+        query: !secret db_query 
         column: 'value'
         unit_of_measurement: MB   
-        
-### monitorizare server healthchecks.io
-rest_command:
-  healthchecks:
-    url: !secret healthchecks
 
-### Two factor autentification
-homeassistant:
-  auth_mfa_modules:
-    - type: notify
-      message: 'Codul de acces este: {}'
-    - type: totp
-      name: Authenticator app
 
-recorder:
-  db_url: !secret db_url
-  purge_keep_days: !secret recorder_keep_days
-  exclude:
-    entities:
-      - automation.healthcheck
-
-### http settings pt ngnx
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 172.30.33.0/24
 
 automation:
+    # Notify on server start using defined service
   - id: 'server_start'
     alias: Server Start
     description: ''
@@ -66,7 +68,8 @@ automation:
         message: 🦾 Serverul a pornit!
     mode: single
     
-  - id: 'healthcheck_update'
+    # Ping healthchecks.io every minute
+  - id: 'healthchecks_update'
     alias: HealthChecks
     description: ''
     trigger:
