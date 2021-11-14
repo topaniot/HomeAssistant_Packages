@@ -44,11 +44,11 @@ sensor:
   
     # MariaDB database size
   - platform: sql
-    db_url: !secret db_url
+    db_url: !secret recorder_db_url
     queries:
-      - name: 'DataBase size'
-        query: !secret db_query 
-        column: 'value'
+      - name: "DataBase size"
+        query: !secret recorder_db_query 
+        column: "value"
         unit_of_measurement: MB   
 
 
