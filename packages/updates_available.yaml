@@ -66,6 +66,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
+        for: !secret delay_notify_updates
     condition:
       - condition: not
         conditions:
@@ -131,7 +132,6 @@ automation:
                     🎉 HA {{ state_attr('binary_sensor.updater', 'newest_version') }} disponibil!
                     
                     Actual {{ states('sensor.current_version') }}
-            
             
                     Note versiune: {{ state_attr('binary_sensor.updater', 'release_notes') }}
           - conditions:

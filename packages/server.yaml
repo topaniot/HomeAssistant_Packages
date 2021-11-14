@@ -1,5 +1,32 @@
+homeassistant:
+  # Two factor authentication
+  auth_mfa_modules:
+    - type: notify
+      message: 'Codul de acces este: {}'
+    - type: totp
+      name: Authenticator app
+
+recorder:
+  # Set recorder to use MariaDB
+  db_url: !secret recorder_db_url
+  purge_keep_days: !secret recorder_keep_days
+  exclude:
+    entities:
+      - automation.healthchecks
+http:
+  # Setup NGINX
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.33.0/24
+    
+rest_command:
+  # monitor server with healthchecks.io
+  healthchecks:
+    url: !secret healthchecks
+      
+
 sensor:
-### monitorizare server rpi
+    # RPI sensors
   - platform: systemmonitor
     resources:
      - type: processor_use
@@ -14,30 +41,20 @@ sensor:
      - type: load_15m
   - platform: uptime
     name: Time Online
-
-
-### size of MariaDB
-### https: //www.home-assistant.io/components/sensor.sql/
+  
+    # MariaDB database size
   - platform: sql
-    db_url: !secret db_url
+    db_url: !secret recorder_db_url
     queries:
-      - name: 'DataBase size'
-        query: 'SELECT table_schema "database", Round(Sum(data_length + index_length)  /1024/1024) "value" FROM information_schema.tables WHERE table_schema="homeassistant" GROUP BY table_schema;'
-        column: 'value'
+      - name: "DataBase size"
+        query: !secret recorder_db_query 
+        column: "value"
         unit_of_measurement: MB   
-        
-### monitorizare server healthchecks.io
-rest_command:
-  healthcheck:
-    url: !secret healthcheck
 
-### http settings pt ngnx
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 172.30.33.0/24
+
 
 automation:
+    # Notify on server start using defined service
   - id: 'server_start'
     alias: Server Start
     description: ''
@@ -46,8 +63,20 @@ automation:
       event: start
     condition: []
     action:
-    - service: notify.telegram
+    - service: !secret notify_service
       data:
         message: 🦾 Serverul a pornit!
+    mode: single
+    
+    # Ping healthchecks.io every minute
+  - id: 'healthchecks_update'
+    alias: HealthChecks
+    description: ''
+    trigger:
+      - platform: time_pattern
+        minutes: /1
+    condition: []
+    action:
+      - service: rest_command.healthchecks
     mode: single
 

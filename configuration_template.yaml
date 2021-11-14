@@ -1,0 +1,32 @@
+# Default config for TIOT clinents
+default_config:
+
+homeassistant:
+  packages: !include_dir_named packages/
+  
+downloader:
+  download_dir: packages
+
+tts:
+  - platform: google_translate
+
+#Telegram
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_api_key
+    allowed_chat_ids:
+      - !secret telegram_notify_chat_id
+
+notify:
+  - platform: telegram
+    name: telegram
+    chat_id: !secret telegram_notify_chat_id
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+template: !include templates.yaml
+climate: !include climates.yaml
+
+# End default config for TIOT clients
