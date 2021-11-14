@@ -20,13 +20,13 @@ http:
     - 172.30.33.0/24
     
 rest_command:
-  # monitorizare server with healthchecks.io
+  # monitor server with healthchecks.io
   healthchecks:
     url: !secret healthchecks
       
 
 sensor:
-    # monitorizare server rpi
+    # RPI sensors
   - platform: systemmonitor
     resources:
      - type: processor_use
@@ -42,7 +42,7 @@ sensor:
   - platform: uptime
     name: Time Online
   
-    # size of MariaDB
+    # MariaDB database size
   - platform: sql
     db_url: !secret db_url
     queries:
