@@ -2,7 +2,8 @@
 # List all available updates of entities with device class update
 #
 # You must set in secrets.yaml
-# notify_service: notify.notify
+# notify_service: "notify.notify"
+# delay_notify_updates: "24:00:00"
 #
 # If you want to exlcude entities create group ignored_entities in groups.yaml
 # Example:
@@ -83,8 +84,10 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: "🟡 Este o actualizare disponibilă!"
-                  message: – {{ state_attr('sensor.updates_available','names').split(',') | join("\n–") }}
+                  message: |
+                    🟡 Este o actualizare disponibilă:
+                    – {{ state_attr('sensor.updates_available','names').split(',') | join('
+                    –') }}
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
@@ -92,8 +95,10 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: "🟡 Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile!"
-                  message: – {{ state_attr('sensor.updates_available','names').split(',') | join("\n–") }}
+                  message: |
+                    🟡 Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
+                    – {{ state_attr('sensor.updates_available','names').split(',') | join('
+                    –') }}
         default: []
   - id: "updates_available_cleared"
     alias: Updates Available Cleared
@@ -128,12 +133,12 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  message: >-
+                  message: |
                     🎉 HA {{ state_attr('binary_sensor.updater', 'newest_version') }} disponibil!
-                    
                     Actual {{ states('sensor.current_version') }}
-            
-                    Note versiune: {{ state_attr('binary_sensor.updater', 'release_notes') }}
+                    
+                    Note versiune:
+                    {{ state_attr('binary_sensor.updater', 'release_notes') }}
           - conditions:
               - condition: state
                 entity_id: sensor.ha_newest_version
