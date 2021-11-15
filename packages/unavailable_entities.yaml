@@ -114,6 +114,8 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.unavailable_entities_alert
+        from: 'on'
+        to: 'off'
         for: "00:00:05"
     condition: []
     action:
