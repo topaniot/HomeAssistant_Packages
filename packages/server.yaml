@@ -1,3 +1,52 @@
+################################################################################
+#
+# Sample lovelace card to display all data from packages
+#
+# type: vertical-stack
+# cards:
+#   - type: markdown
+#     content: '## __Server__'
+#   - type: glance
+#     entities:
+#       - entity: sensor.processor_temperature
+#         name: CPU
+#       - entity: sensor.processor_use
+#         name: CPU
+#       - entity: sensor.load_15m
+#         name: Load
+#       - entity: sensor.memory_use_percent
+#         name: RAM
+#       - entity: sensor.swap_use_percent
+#         name: Swap
+#     columns: 5
+#   - type: glance
+#     entities:
+#       - entity: sensor.time_online
+#         name: Online
+#       - entity: binary_sensor.rpi_power_status
+#         name: Power
+#       - entity: sensor.database_size
+#         name: Database
+#         icon: mdi:database
+#       - entity: sensor.disk_use
+#         name: Disk
+#       - entity: sensor.disk_use_percent
+#         name: Disk
+#     columns: 5
+#   - type: glance
+#     entities:
+#       - entity: sensor.unavailable_entities
+#         name: Unavailable
+#       - entity: sensor.updates_available
+#         name: Updates
+#       - entity: sensor.ha_newest_version
+#         name: HA Newest
+#   - type: entities
+#     entities:
+#       - entity: script.update_packages
+#
+################################################################################
+
 homeassistant:
   # Two factor authentication
   auth_mfa_modules:
@@ -23,7 +72,16 @@ rest_command:
   # monitor server with healthchecks.io
   healthchecks:
     url: !secret healthchecks
-      
+
+#Telegram
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_api_key
+    allowed_chat_ids: !secret telegram_allowed_chat_ids
+notify:
+  - platform: telegram
+    name: tiot_telegram
+    chat_id: !secret telegram_notify_chat_id
 
 sensor:
     # RPI sensors
@@ -40,7 +98,7 @@ sensor:
        arg: /
   - platform: uptime
     name: Time Online
-  
+
     # MariaDB database size
   - platform: sql
     db_url: !secret recorder_db_url
@@ -49,8 +107,6 @@ sensor:
         query: !secret recorder_db_query 
         column: "value"
         unit_of_measurement: MB   
-
-
 
 automation:
     # Notify on server start using defined service
