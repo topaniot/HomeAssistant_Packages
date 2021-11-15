@@ -53,7 +53,7 @@ homeassistant:
     - type: notify
       message: 'Codul de acces este: {}'
     - type: totp
-      name: Authenticator app
+      name: Authenticator App
 
 recorder:
   # Set recorder to use MariaDB
@@ -62,6 +62,7 @@ recorder:
   exclude:
     entities:
       - automation.healthchecks
+
 http:
   # Setup NGINX
   use_x_forwarded_for: true
@@ -98,7 +99,6 @@ sensor:
        arg: /
   - platform: uptime
     name: Time Online
-
     # MariaDB database size
   - platform: sql
     db_url: !secret recorder_db_url
