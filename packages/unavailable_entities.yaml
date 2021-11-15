@@ -1,5 +1,3 @@
-#### test test test
-
 # Package - Unavailable Entities Sensor
 # Count and list of entities with a state of unavailable
 #
@@ -64,7 +62,9 @@ template:
               }}
   - binary_sensor:
       - name: "Unavailable Entities Alert"
-        state: "{{ states('sensor.unavailable_entities')|int > 0 or is_state('sensor.unavailable_entities', 'unknown') }}"
+        state: >
+          is_state('sensor.unavailable_entities', 'unknown')
+          or states('sensor.unavailable_entities')|int(default=0) > 0 
         delay_on: !secret delay_notify_unavailable
         icon: "mdi:alert-circle"
 
@@ -79,6 +79,11 @@ automation:
     action:
       - choose:
           - conditions:
+              - condition: state
+                entity_id: sensor.unavailable_entities
+                state: unknown
+            sequence: []
+          - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
                 above: '0'
@@ -86,8 +91,10 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: 🔴 Este un dispozitiv indisponibil!
-                  message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
+                  message: |
+                    🔴 Este un dispozitiv indisponibil:
+                    – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
+                    –') }}
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
@@ -95,8 +102,11 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: 🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile!
-                  message: – {{ state_attr('sensor.unavailable_entities','names').split(',') | join("\n–") }}
+                  title: 
+                  message: |
+                    🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile!
+                    – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
+                    –') }}
         default: []
         
   - id: "unavailable_entities_cleared"
@@ -105,10 +115,21 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.unavailable_entities_alert
-        from: 'on'
-        to: 'off'
+        for: "00:00:05"
     condition: []
     action:
-      - service: !secret notify_service
-        data:
-          message: 🟢 Toate dispozitivele funcționzează!
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.unavailable_entities_alert
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.unavailable_entities_alert
+                state: 'off'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: "🟢 Toate dispozitivele funcționzează!"
+        default: []
