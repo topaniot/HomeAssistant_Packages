@@ -102,7 +102,6 @@ automation:
             sequence:
               - service: !secret notify_service
                 data:
-                  title: 
                   message: |
                     🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile!
                     – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
