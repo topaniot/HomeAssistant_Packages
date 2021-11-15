@@ -42,10 +42,18 @@ template:
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
                 |map(attribute='name')|join (", ")
               }}
-  - binary_sensor:
+  - sensor:
       - name: "Available Updates Alert"
-        state: "{{  states('sensor.updates_available')|int > 0 or is_state('sensor.updates_available', 'unknown') }}"
         icon: "mdi:alert-circle"
+        state: >
+          {% if is_state('sensor.updates_available', 'unknown') %}
+            unknown
+          {% elif states('sensor.updates_available')|int(default=0) > 0 %}
+            on
+          {% else %}
+            off
+          {% endif %}
+          
   - trigger:
       - platform: time_pattern
         minutes: "/1"
@@ -60,6 +68,7 @@ template:
           {% endif %}
 
 automation:
+  # Notify when updates are available
   - id: "updates_available_detected"
     alias: Updates Available Detected
     description: ''
@@ -68,14 +77,13 @@ automation:
       - platform: state
         entity_id: sensor.updates_available
         for: !secret delay_notify_updates
-    condition:
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: sensor.updates_available
-            state: unknown
     action:
       - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.updates_available
+                state: unknown
+            sequence: []
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
@@ -100,30 +108,58 @@ automation:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
         default: []
+
+  # Notify when there are no updates available
   - id: "updates_available_cleared"
     alias: Updates Available Cleared
     description: ''
     mode: restart
     trigger:
       - platform: state
-        entity_id: binary_sensor.available_updates_alert
-        from: 'on'
-        to: 'off'
+        entity_id: sensor.available_updates_alert
+        for: "00:00:05"
     condition: []
     action:
-      - service: !secret notify_service
-        data:
-          message: 🎉 Dispozitivele sunt actualizate!
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.available_updates_alert
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: state
+                entity_id: sensor.available_updates_alert
+                state: 'off'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: "🎉 Dispozitivele sunt actualizate!"
+        default: []
 
+  # Notify when Home Assistant update is available
   - id: "update_available_ha"     
     alias: Update Available HA
     description: ''
     trigger:
       - platform: state
         entity_id: sensor.ha_newest_version
+        for: "00:00:05"
     condition: []
     action:
       - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.unavailable_entities
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: state
+                entity_id: sensor.ha_newest_version
+                state: 'Up-to-date'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: "🎉 Home Assistant este actualizat!"
           - conditions:
               - condition: not
                 conditions:
@@ -139,13 +175,5 @@ automation:
                     
                     Note versiune:
                     {{ state_attr('binary_sensor.updater', 'release_notes') }}
-          - conditions:
-              - condition: state
-                entity_id: sensor.ha_newest_version
-                state: 'Up-to-date'
-            sequence:
-              - service: !secret notify_service
-                data:
-                  message: 🎉 Home Assistant este actualizat!
         default: []
     mode: restart
