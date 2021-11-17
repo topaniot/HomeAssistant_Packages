@@ -88,6 +88,17 @@ notify:
     name: tiot_telegram
     chat_id: !secret telegram_notify_chat_id
 
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    alias: Update Packages
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
+
 sensor:
     # RPI sensors
   - platform: systemmonitor
