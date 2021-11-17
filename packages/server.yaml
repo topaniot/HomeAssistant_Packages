@@ -149,3 +149,21 @@ automation:
     action:
       - service: rest_command.healthchecks
     mode: single
+
+  - id: 'cpu_load_15m'
+    alias: CPU Load
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.load_15m
+        above: '4'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+      - wait_template: "{{ states( 'sensor.load_15m' ) | int < 3 }}"
+      - service: !secret notify_service
+        data:
+          message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+    mode: single
