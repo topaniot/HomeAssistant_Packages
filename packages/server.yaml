@@ -4,7 +4,7 @@ homeassistant:
     - type: notify
       message: 'Codul de acces este: {}'
     - type: totp
-      name: Authenticator App
+      name: Authenticator APP
 
 http:
   # Setup NGINX
@@ -55,15 +55,15 @@ sensor:
     # RPI sensors
   - platform: systemmonitor
     resources:
-     - type: processor_use
-     - type: swap_use_percent
-     - type: processor_temperature
-     - type: load_15m
-     - type: memory_use_percent
-     - type: disk_use_percent
-       arg: /
-     - type: disk_use
-       arg: /
+      - type: processor_use
+      - type: swap_use_percent
+      - type: processor_temperature
+      - type: load_15m
+      - type: memory_use_percent
+      - type: disk_use_percent
+        arg: /
+      - type: disk_use
+        arg: /
   - platform: uptime
     name: Time Online
     # MariaDB database size
