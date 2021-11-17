@@ -1,0 +1,46 @@
+
+# Sample lovelace card to display Server Stats
+###############################################################################
+type: vertical-stack
+cards:
+  - type: markdown
+    content: '## __Server__'
+  - type: glance
+    entities:
+      - entity: sensor.processor_temperature
+        name: CPU
+      - entity: sensor.processor_use
+        name: CPU
+      - entity: sensor.load_15m
+        name: Load
+      - entity: sensor.memory_use_percent
+        name: RAM
+      - entity: sensor.swap_use_percent
+        name: Swap
+    columns: 5
+  - type: glance
+    entities:
+      - entity: sensor.time_online
+        name: Online
+      - entity: binary_sensor.rpi_power_status
+        name: Power
+      - entity: sensor.database_size
+        name: Database
+        icon: mdi:database
+      - entity: sensor.disk_use
+        name: Disk
+      - entity: sensor.disk_use_percent
+        name: Disk
+    columns: 5
+  - type: glance
+    entities:
+      - entity: sensor.unavailable_entities
+        name: Unavailable
+      - entity: sensor.updates_available
+        name: Updates
+      - entity: sensor.ha_newest_version
+        name: HA Newest
+  - type: entities
+    entities:
+      - entity: script.update_packages
+###############################################################################
