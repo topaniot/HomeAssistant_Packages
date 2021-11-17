@@ -1,58 +1,10 @@
-################################################################################
-# Sample lovelace card to display all data from packages
-#
-# type: vertical-stack
-# cards:
-#   - type: markdown
-#     content: '## __Server__'
-#   - type: glance
-#     entities:
-#       - entity: sensor.processor_temperature
-#         name: CPU
-#       - entity: sensor.processor_use
-#         name: CPU
-#       - entity: sensor.load_15m
-#         name: Load
-#       - entity: sensor.memory_use_percent
-#         name: RAM
-#       - entity: sensor.swap_use_percent
-#         name: Swap
-#     columns: 5
-#   - type: glance
-#     entities:
-#       - entity: sensor.time_online
-#         name: Online
-#       - entity: binary_sensor.rpi_power_status
-#         name: Power
-#       - entity: sensor.database_size
-#         name: Database
-#         icon: mdi:database
-#       - entity: sensor.disk_use
-#         name: Disk
-#       - entity: sensor.disk_use_percent
-#         name: Disk
-#     columns: 5
-#   - type: glance
-#     entities:
-#       - entity: sensor.unavailable_entities
-#         name: Unavailable
-#       - entity: sensor.updates_available
-#         name: Updates
-#       - entity: sensor.ha_newest_version
-#         name: HA Newest
-#   - type: entities
-#     entities:
-#       - entity: script.update_packages
-#
-################################################################################
-
 homeassistant:
   # Two factor authentication
   auth_mfa_modules:
     - type: notify
       message: 'Codul de acces este: {}'
     - type: totp
-      name: Authenticator App
+      name: Authenticator APP
 
 http:
   # Setup NGINX
@@ -103,15 +55,15 @@ sensor:
     # RPI sensors
   - platform: systemmonitor
     resources:
-     - type: processor_use
-     - type: swap_use_percent
-     - type: processor_temperature
-     - type: load_15m
-     - type: memory_use_percent
-     - type: disk_use_percent
-       arg: /
-     - type: disk_use
-       arg: /
+      - type: processor_use
+      - type: swap_use_percent
+      - type: processor_temperature
+      - type: load_15m
+      - type: memory_use_percent
+      - type: disk_use_percent
+        arg: /
+      - type: disk_use
+        arg: /
   - platform: uptime
     name: Time Online
     # MariaDB database size
@@ -148,4 +100,22 @@ automation:
     condition: []
     action:
       - service: rest_command.healthchecks
+    mode: single
+
+  - id: 'cpu_load_15m'
+    alias: CPU Load
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.load_15m
+        above: '4'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+      - wait_template: "{{ states( 'sensor.load_15m' ) | int < 3 }}"
+      - service: !secret notify_service
+        data:
+          message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
