@@ -1,20 +1,17 @@
 # Default config for TIOT clinents
 default_config:
 
+homeassistant:
+  packages: !include_dir_named packages/
+ 
+
+tts:
+  - platform: google_translate
+
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 template: !include templates.yaml
 climate: !include climates.yaml
-
-homeassistant:
-  packages: !include_dir_named packages/
-  
-downloader:
-  download_dir: packages
-
-tts:
-  - platform: google_translate
-
 # End default config for TIOT clients
