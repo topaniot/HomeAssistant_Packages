@@ -12,6 +12,16 @@
 #   entities:
 #     - sun.sun
 
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/updates_available.yaml
+
 group:
   ignored_entities:
     entities:
