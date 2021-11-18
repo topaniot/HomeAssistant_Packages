@@ -176,6 +176,7 @@ automation:
                   - condition: state
                     entity_id: sensor.ha_newest_version
                     state: 'Up-to-date'
+                    for: !secret delay_notify_updates
             sequence:
               - service: !secret notify_service
                 data:
