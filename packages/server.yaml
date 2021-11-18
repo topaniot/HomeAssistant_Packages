@@ -102,6 +102,7 @@ automation:
       - service: rest_command.healthchecks
     mode: single
 
+    # Notify when CPU load 15m is above 4 and when goes back below 3
   - id: 'cpu_load_15m'
     alias: CPU Load
     description: ''
@@ -114,8 +115,65 @@ automation:
       - service: !secret notify_service
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - wait_template: "{{ states( 'sensor.load_15m' ) | int < 3 }}"
+      - wait_template: "{{ states( 'sensor.load_15m' ) | float < 3 }}"
       - service: !secret notify_service
         data:
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+    mode: single
+
+    # Notify when CPU Temperature is high
+  - id: 'cpu_temp'
+    alias: CPU Temperature
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.processor_temperature
+        above: '70'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+      - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 60 }}"
+      - service: !secret notify_service
+        data:
+          message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+    mode: single
+
+    # Notify when RAM is almost full
+  - id: 'ram_usage'
+    alias: RAM Usage
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.memory_use_percent
+        above: '80'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
+      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 70 }}"
+      - service: !secret notify_service
+        data:
+          message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
+    mode: single
+
+    # Notify when storage is almost full
+  - id: 'disk_usage'
+    alias: Disk Usage
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.disk_use_percent
+        above: '70'
+    condition: []
+    action:
+      - service: !secret notify_service
+        data:
+          message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
+      - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
+      - service: !secret notify_service
+        data:
+          message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: single
