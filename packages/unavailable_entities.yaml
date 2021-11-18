@@ -35,7 +35,7 @@ template:
         icon: "mdi:format-list-checks"
         state: >
               {{ states
-                |selectattr('state','in',['unavailable'])
+                |selectattr('state','in',['unavailable','none'])
                 |rejectattr('domain','in',['group','person','device_tracker','media_player'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
@@ -57,7 +57,7 @@ template:
         attributes:
             names: >
               {{ states
-                |selectattr('state','in',['unavailable'])
+                |selectattr('state','in',['unavailable','none'])
                 |rejectattr('domain','in',['group','person','device_tracker','media_player'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
