@@ -20,11 +20,12 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
+      - service: automation.reload
+      - service: template.reload
 
 group:
   ignored_entities:
-    entities:
-      - 
+    entities: []
 
 template:
   - trigger:
@@ -119,7 +120,7 @@ automation:
               - service: !secret notify_service
                 data:
                   message: |
-                    🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile!
+                    🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:
                     – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
                     –') }}
         default: []

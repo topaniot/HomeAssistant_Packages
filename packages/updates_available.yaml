@@ -21,6 +21,8 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/updates_available.yaml
+      - service: automation.reload
+      - service: template.reload
 
 group:
   ignored_entities:

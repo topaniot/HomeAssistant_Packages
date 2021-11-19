@@ -50,6 +50,8 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
+      - service: automation.reload
+      - service: template.reload
 
 sensor:
     # RPI sensors
@@ -100,6 +102,23 @@ automation:
     condition: []
     action:
       - service: rest_command.healthchecks
+    mode: single
+
+    # Notificare periodică
+  - id: 'life_bit'
+    alias: Life Bit
+    description: ''
+    trigger:
+      - platform: time
+        at: '10:00'
+    condition:
+      - condition: time
+        weekday:
+          - thu
+    action:
+      - service: !secret notify_service
+        data:
+          message: "Notificare periodică Joi 11:00"
     mode: single
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
