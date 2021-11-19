@@ -1,3 +1,19 @@
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/low_battery.yaml
+
+group:
+  ignored_entities:
+    entities: []
+
+
 template:
   - trigger:
       - platform: time_pattern
@@ -6,23 +22,72 @@ template:
       - name: "Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% set threshold = 50 %}
+              {% set threshold = 30 %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
-                {% if 0 <= state.state | int(-1) < threshold | int  %}
+                {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
                 {% endif %}
               {% endfor %}
               {{ result.sensors|count }}
         attributes:
             names: >
-              {% set threshold = 50 %}
+              {% set threshold = 30 %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
-                {% if 0 <= state.state | int(-1) < threshold | int  %}
+                {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
                 {% endif %}
               {% endfor %}
               {{ result.sensors|join (', ') }}
+
+automation:
+  - id: "low_batteries"
+    alias: Low Batteries
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.low_batteries
+        for: "00:00:05"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.low_batteries
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.low_batteries
+                above: '0'
+                below: '2'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: |
+                    🚨 Este un dispozitiv cu baterie descărcată:
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
+                    –') }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.low_batteries
+                above: '1'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: |
+                    🚨 Sunt {{ states('sensor.low_batteries')|int }} dispozitive cu bateria descărcată:
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
+                    –') }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.low_batteries
+                below: '1'
+            sequence:
+              - service: !secret notify_service
+                data:
+                  message: |
+                    🔋 Starea bateriilor este bună!
+        default: []
