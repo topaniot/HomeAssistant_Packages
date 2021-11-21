@@ -20,8 +20,6 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
-      - service: automation.reload
-      - service: template.reload
 
 group:
   ignored_entities:
@@ -77,22 +75,19 @@ template:
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
                 |map(attribute='name')|join(', ')
               }}
-  - binary_sensor:
-      - name: "Unavailable Entities Alert"
-        state: >
-          is_state('sensor.unavailable_entities', 'unknown')
-          or states('sensor.unavailable_entities')|int(default=0) > 0 
-        delay_on: !secret delay_notify_unavailable
-        icon: "mdi:alert-circle"
+
+input_boolean:
+  unavailable_entities_alert:
+    name: Unavailable Entities Alert
+    icon: "mdi:alert-circle"
 
 automation:
   - id: "unavailable_entities_detected"
-    alias: Unavailable Entities Detected
+    alias: Unavailable Entities
     mode: restart
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
-        for: !secret delay_notify_unavailable
     action:
       - choose:
           - conditions:
@@ -106,6 +101,10 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
+              - delay: !secret delay_notify_unavailable
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.unavailable_entities_alert
               - service: !secret notify_service
                 data:
                   message: |
@@ -117,36 +116,27 @@ automation:
                 entity_id: sensor.unavailable_entities
                 above: '1'
             sequence:
+              - delay: !secret delay_notify_unavailable
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.unavailable_entities_alert
               - service: !secret notify_service
                 data:
                   message: |
                     🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:
                     – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
                     –') }}
-        default: []
-        
-  - id: "unavailable_entities_cleared"
-    alias: Unavailable Entities Cleared
-    mode: restart
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.unavailable_entities_alert
-        from: 'on'
-        to: 'off'
-        for: "00:00:05"
-    condition: []
-    action:
-      - choose:
           - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_entities
+                below: '1'
               - condition: state
-                entity_id: binary_sensor.unavailable_entities_alert
-                state: unknown
-            sequence: []
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.unavailable_entities_alert
-                state: 'off'
+                entity_id: input_boolean.unavailable_entities_alert
+                state: 'on'
             sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.unavailable_entities_alert
               - service: !secret notify_service
                 data:
                   message: "🟢 Toate dispozitivele funcționzează!"

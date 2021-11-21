@@ -8,13 +8,10 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/low_battery.yaml
-      - service: automation.reload
-      - service: template.reload
 
 group:
   ignored_entities:
     entities: []
-
 
 template:
   - trigger:
@@ -29,7 +26,7 @@ template:
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
-                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
+                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
               {{ result.sensors|count }}
@@ -40,10 +37,15 @@ template:
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
-                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
+                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
               {{ result.sensors|join (', ') }}
+
+input_boolean:
+  low_batteries_alert:
+    name: Low Batteries Alert
+    icon: "mdi:alert-circle"
 
 automation:
   - id: "low_batteries"
@@ -52,7 +54,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.low_batteries
-        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -66,10 +67,13 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.low_batteries_alert
               - service: !secret notify_service
                 data:
                   message: |
-                    🚨 Este un dispozitiv cu baterie descărcată:
+                    ⚠️ Este un dispozitiv cu baterie descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
           - conditions:
@@ -77,17 +81,26 @@ automation:
                 entity_id: sensor.low_batteries
                 above: '1'
             sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.low_batteries_alert
               - service: !secret notify_service
                 data:
                   message: |
-                    🚨 Sunt {{ states('sensor.low_batteries')|int }} dispozitive cu bateria descărcată:
+                    ⚠️ Sunt {{ states('sensor.low_batteries')|int }} dispozitive cu bateria descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries
                 below: '1'
+              - condition: state
+                entity_id: input_boolean.low_batteries_alert
+                state: 'on'
             sequence:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.low_batteries_alert
               - service: !secret notify_service
                 data:
                   message: |

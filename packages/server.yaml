@@ -50,8 +50,6 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
-      - service: automation.reload
-      - service: template.reload
 
 sensor:
     # RPI sensors
@@ -120,6 +118,24 @@ automation:
         data:
           message: "Notificare periodică Joi 11:00"
     mode: single
+
+    # Reload things after script update_packages is run
+  - id: 'update_packages'
+    alias: Update Packages
+    description: ''
+    trigger:
+      - platform: state
+        entity_id: script.update_packages
+        from: 'on'
+        to: 'off'
+    condition: []
+    action:
+      - service: script.reload
+      - service: template.reload
+      - service: input_boolean.reload
+      - service: group.reload
+      - service: automation.reload
+    mode: restart
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
   - id: 'cpu_load_15m'
