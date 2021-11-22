@@ -2,7 +2,7 @@
 # List all available updates of entities with device class update
 #
 # You must set in secrets.yaml
-# notify_service: "notify.notify"
+# notify_service_updates: "notify.notify"
 # delay_notify_updates: "24:00:00"
 #
 # If you want to exlcude entities create group ignored_entities in groups.yaml
@@ -76,13 +76,12 @@ input_boolean:
 
 automation:
   # Notify when updates are available
-  - id: "updates_available_detected"
-    alias: Updates Available Detected
+  - id: "updates_available"
+    alias: Updates Available
     mode: restart
     trigger:
       - platform: state
         entity_id: sensor.updates_available
-        #for: !secret delay_notify_updates
     action:
       - choose:
           - conditions:
@@ -100,7 +99,7 @@ automation:
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert
-              - service: !secret notify_service
+              - service: !secret notify_service_updates
                 data:
                   message: |
                     🟡 Este o actualizare disponibilă:
@@ -115,7 +114,7 @@ automation:
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert
-              - service: !secret notify_service
+              - service: !secret notify_service_updates
                 data:
                   message: |
                     🟡 Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
@@ -132,7 +131,7 @@ automation:
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.updates_available_alert
-              - service: !secret notify_service
+              - service: !secret notify_service_updates
                 data:
                   message: "🎉 Dispozitivele sunt actualizate!"
         default: []
@@ -163,7 +162,7 @@ automation:
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_ha_alert
-              - service: !secret notify_service
+              - service: !secret notify_service_updates
                 data:
                   message: "🎉 Home Assistant este actualizat!"
           - conditions:
@@ -177,7 +176,7 @@ automation:
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_ha_alert
-              - service: !secret notify_service
+              - service: !secret notify_service_updates
                 data:
                   message: |
                     🎉 HA {{ state_attr('binary_sensor.updater', 'newest_version') }} disponibil!

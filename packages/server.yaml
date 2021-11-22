@@ -1,3 +1,30 @@
+# Package Server
+# This package includes default integrations, automations 
+# and sersors for server activity.
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    alias: Update Packages
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
+  # reload_packages:
+  #   alias: Reload Packages
+  #   sequence: 
+  #     - service: automation.turn_off
+  #       target:
+  #         entity_id: all
+  #     - service: input_boolean.reload
+  #     - service: group.reload
+  #     - service: template.reload
+  #     - service: automation.turn_on
+  #       target:
+  #         entity_id: all
+
 homeassistant:
   # Two factor authentication
   auth_mfa_modules:
@@ -34,22 +61,12 @@ telegram_bot:
     api_key: !secret telegram_api_key
     allowed_chat_ids: !secret telegram_allowed_chat_ids
 
-# Telegram notify
+
 notify:
+    # Telegram notify
   - platform: telegram
     name: tiot_telegram
     chat_id: !secret telegram_notify_chat_id
-
-script:
-  # Script to update this package from GitHub
-  update_packages:
-    alias: Update Packages
-    sequence:
-      - service: downloader.download_file
-        data:
-          overwrite: true
-          url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
 
 sensor:
     # RPI sensors
@@ -85,7 +102,7 @@ automation:
       event: start
     condition: []
     action:
-    - service: !secret notify_service
+    - service: !secret notify_service_server
       data:
         message: 🦾 Serverul a pornit!
     mode: single
@@ -114,7 +131,7 @@ automation:
         weekday:
           - thu
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "Notificare periodică Joi 11:00"
     mode: single
@@ -130,11 +147,26 @@ automation:
         to: 'off'
     condition: []
     action:
-      - service: script.reload
-      - service: template.reload
+      - service: automation.turn_off
+        target:
+          entity_id:
+            - automation.low_batteries
+            - automation.unavailable_entities
+            - automation.update_available_ha
+            - automation.updates_available
       - service: input_boolean.reload
       - service: group.reload
+      - service: template.reload
+      - service: script.reload
+      - service: automation.turn_on
+        target:
+          entity_id:
+            - automation.low_batteries
+            - automation.unavailable_entities
+            - automation.update_available_ha
+            - automation.updates_available
       - service: automation.reload
+      
     mode: restart
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
@@ -147,11 +179,11 @@ automation:
         above: '4'
     condition: []
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - wait_template: "{{ states( 'sensor.load_15m' ) | float < 3 }}"
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
@@ -166,11 +198,11 @@ automation:
         above: '70'
     condition: []
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 60 }}"
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
     mode: single
@@ -185,11 +217,11 @@ automation:
         above: '80'
     condition: []
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 70 }}"
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
@@ -204,11 +236,11 @@ automation:
         above: '70'
     condition: []
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: single
@@ -223,11 +255,11 @@ automation:
         to: 'on'
     condition: []
     action:
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: 🚨 Probleme alimentare SERVER!
       - wait_template: "{{ is_state('binary_sensor.rpi_power_status', 'off') }}"
-      - service: !secret notify_service
+      - service: !secret notify_service_server
         data:
           message: 🟢 Alimentare SERVER funcționează în parametrii!
     mode: single
