@@ -3,8 +3,7 @@ default_config:
 
 homeassistant:
   packages: !include_dir_named packages/
- 
-
+  
 tts:
   - platform: google_translate
 
