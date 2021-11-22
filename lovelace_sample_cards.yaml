@@ -34,12 +34,13 @@ cards:
     columns: 5
   - type: glance
     entities:
+      - entity: sensor.low_batteries
       - entity: sensor.unavailable_entities
         name: Unavailable
       - entity: sensor.updates_available
         name: Updates
       - entity: sensor.ha_newest_version
-        name: HA Newest
+        name: Newest
   - type: entities
     entities:
       - entity: script.update_packages
