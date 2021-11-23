@@ -12,18 +12,6 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
-  # reload_packages:
-  #   alias: Reload Packages
-  #   sequence: 
-  #     - service: automation.turn_off
-  #       target:
-  #         entity_id: all
-  #     - service: input_boolean.reload
-  #     - service: group.reload
-  #     - service: template.reload
-  #     - service: automation.turn_on
-  #       target:
-  #         entity_id: all
 
 homeassistant:
   # Two factor authentication
@@ -60,7 +48,6 @@ telegram_bot:
   - platform: polling
     api_key: !secret telegram_api_key
     allowed_chat_ids: !secret telegram_allowed_chat_ids
-
 
 notify:
     # Telegram notify
@@ -117,7 +104,7 @@ automation:
     condition: []
     action:
       - service: rest_command.healthchecks
-    mode: single
+    mode: restart
 
     # Notificare periodică
   - id: 'life_bit'
@@ -135,6 +122,7 @@ automation:
         data:
           message: "Notificare periodică Joi 11:00"
     mode: single
+    max_exceeded: silent
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
@@ -166,7 +154,6 @@ automation:
             - automation.update_available_ha
             - automation.updates_available
       - service: automation.reload
-      
     mode: restart
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
@@ -187,6 +174,7 @@ automation:
         data:
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
+    max_exceeded: silent
 
     # Notify when CPU Temperature is high
   - id: 'cpu_temp'
@@ -195,7 +183,7 @@ automation:
     trigger:
       - platform: numeric_state
         entity_id: sensor.processor_temperature
-        above: '70'
+        above: '75'
     condition: []
     action:
       - service: !secret notify_service_server
@@ -206,6 +194,7 @@ automation:
         data:
           message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
     mode: single
+    max_exceeded: silent
 
     # Notify when RAM is almost full
   - id: 'ram_usage'
@@ -214,17 +203,18 @@ automation:
     trigger:
       - platform: numeric_state
         entity_id: sensor.memory_use_percent
-        above: '80'
+        above: '85'
     condition: []
     action:
       - service: !secret notify_service_server
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 70 }}"
+      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 75 }}"
       - service: !secret notify_service_server
         data:
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
+    max_exceeded: silent
 
     # Notify when storage is almost full
   - id: 'disk_usage'
@@ -243,7 +233,7 @@ automation:
       - service: !secret notify_service_server
         data:
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
-    mode: single
+    mode: restart
 
     # Notify on RPI power issue
   - id: 'rpi_power_issue'
@@ -263,3 +253,4 @@ automation:
         data:
           message: 🟢 Alimentare SERVER funcționează în parametrii!
     mode: single
+    max_exceeded: silent
