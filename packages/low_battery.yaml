@@ -5,8 +5,9 @@
 # notify_service_battery: notify.notify
 # 
 # If you want to exlcude entities create group ignored_entities in groups.yaml
+#
 # Example:
-#  ignored_entities:
+#  ignored_batteries:
 #    entities:
 #       - sensor.iphone_battery_level
 
@@ -21,7 +22,8 @@ script:
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/low_battery.yaml
 
 group:
-  ignored_entities:
+  ignored_batteries:
+    name: Ignored Batteries
     entities: []
 
 template:
@@ -35,7 +37,7 @@ template:
               {% set threshold = 30 %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
+                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
@@ -46,7 +48,7 @@ template:
               {% set threshold = 30 %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id')) %}
+                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
