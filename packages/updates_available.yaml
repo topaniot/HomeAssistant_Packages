@@ -5,12 +5,12 @@
 # notify_service_updates: "notify.notify"
 # delay_notify_updates: "24:00:00"
 #
-# If you want to exlcude entities create group ignored_entities in groups.yaml
+# If you want to exlcude entities create group ignored_updates in groups.yaml
+#
 # Example:
-# ignored_entities:
-#   name: "Ignored Entities"
+# ignored_updates:
 #   entities:
-#     - sun.sun
+#     - binary_sensor.updater
 
 script:
   # Script to update this package from GitHub
@@ -23,7 +23,8 @@ script:
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/updates_available.yaml
 
 group:
-  ignored_entities:
+  ignored_updates:
+    name: Ignored Updates
     entities:
       - binary_sensor.updater
 
@@ -41,7 +42,7 @@ template:
               {{ states
                 |selectattr('attributes.device_class','eq','update')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |list|count 
               }}
         attributes:
@@ -49,7 +50,7 @@ template:
               {{ states
                 |selectattr('attributes.device_class','eq','update')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |map(attribute='name')|join (", ")
               }}
           

@@ -5,9 +5,10 @@
 # delay_notify_unavailable: 00:10:00
 # notify_service_unavailable: notify.notify
 # 
-# If you want to exlcude entities create group ignored_entities in groups.yaml
+# If you want to exlcude entities create group ignored_unavailable in groups.yaml
+#
 # Example:
-#  ignored_entities:
+#  ignored_unavailable:
 #    entities:
 #       - sensor.temperature
 
@@ -22,7 +23,8 @@ script:
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
 
 group:
-  ignored_entities:
+  ignored_unavailable:
+    name: Ingnored Unavailable Devices
     entities: []
 
 template:
@@ -34,7 +36,7 @@ template:
         icon: "mdi:format-list-checks"
         state: >
               {{ states
-                |selectattr('state','in',['unavailable','none'])
+                |selectattr('state','in',['unavailable','unknown','none'])
                 |rejectattr('domain','in',['group','person','device_tracker','media_player'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
@@ -50,13 +52,13 @@ template:
                 |rejectattr('entity_id','search','_input')
                 |rejectattr('entity_id','search','_device_temperature')
                 |rejectattr('entity_id','search','_analog_temperature')
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |list|count
               }}
         attributes:
             names: >
               {{ states
-                |selectattr('state','in',['unavailable','none'])
+                |selectattr('state','in',['unavailable','unknown','none'])
                 |rejectattr('domain','in',['group','person','device_tracker','media_player'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
@@ -72,7 +74,7 @@ template:
                 |rejectattr('entity_id','search','_input')
                 |rejectattr('entity_id','search','_device_temperature')
                 |rejectattr('entity_id','search','_analog_temperature')
-                |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |map(attribute='name')|join(', ')
               }}
 
