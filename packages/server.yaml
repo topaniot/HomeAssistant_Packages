@@ -254,3 +254,20 @@ automation:
           message: 🟢 Alimentare SERVER funcționează în parametrii!
     mode: single
     max_exceeded: silent
+
+  - id: 'stale_backups'
+    alias: Stale Backups
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.backups_stale
+        from: 'off'
+        to: 'on'
+    condition: []
+    action:
+      - service: !secret notify_service_server
+        data:
+          message: |
+            ⚠️ Nu s-a putut realiza Backup!
+            Verifică addon-ul 'Home Assistant Google Drive Backup' pentru detalii.
+
