@@ -1,0 +1,33 @@
+# Insights package
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/insights.yaml
+
+template:
+  - sensor:
+    - name: Total Entities
+      icon: mdi:shape
+      state: "{{ states | count }}"
+
+    - name: Total Automations
+      icon: mdi:robot
+      state: "{{ states.automation | count }}"
+    
+    - name: Total Lights
+      icon: mdi:lightbulb-multiple-outline
+      state: "{{ states.light | count }}"
+
+    - name: Total Switches
+      icon: mdi:light-switch
+      state: "{{ states.switch | count }}"
+
+    - name: Total Sensors
+      icon: mdi:signal-variant
+      state: "{{ states.sensor | count + states.binary_sensor | count }}"
