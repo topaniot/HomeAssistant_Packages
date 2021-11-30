@@ -235,39 +235,3 @@ automation:
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
 
-    # Notify on RPI power issue
-  - id: 'rpi_power_issue'
-    alias: RPI Power Issue
-    description: ''
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.rpi_power_status
-        to: 'on'
-    condition: []
-    action:
-      - service: !secret notify_service_server
-        data:
-          message: 🚨 Probleme alimentare SERVER!
-      - wait_template: "{{ is_state('binary_sensor.rpi_power_status', 'off') }}"
-      - service: !secret notify_service_server
-        data:
-          message: 🟢 Alimentare SERVER funcționează în parametrii!
-    mode: single
-    max_exceeded: silent
-
-  - id: 'stale_backups'
-    alias: Stale Backups
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.backups_stale
-        from: 'off'
-        to: 'on'
-    condition: []
-    action:
-      - service: !secret notify_service_server
-        data:
-          message: |
-            ⚠️ Nu s-a putut realiza Backup!
-            Verifică addon-ul 'Home Assistant Google Drive Backup' pentru detalii.
-
