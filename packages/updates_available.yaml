@@ -32,10 +32,7 @@ sensor:
   - platform: version
 
 template:
-  - trigger:
-      - platform: time_pattern
-        minutes: "/1"
-    sensor:
+  - sensor:
       - name: "Updates Available"
         icon: "hass:update"
         state: >
@@ -54,10 +51,7 @@ template:
                 |map(attribute='name')|join (", ")
               }}
           
-  - trigger:
-      - platform: time_pattern
-        minutes: "/1"
-    sensor:
+  - sensor:
       - name: "HA Newest Version"
         icon: "hass:package"
         state: >

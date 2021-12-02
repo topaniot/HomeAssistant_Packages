@@ -28,10 +28,7 @@ group:
     entities: []
 
 template:
-  - trigger:
-      - platform: time_pattern
-        minutes: "/1"
-    sensor:
+  - sensor:
       - name: "Unavailable Entities"
         icon: "mdi:format-list-checks"
         state: >
