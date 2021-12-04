@@ -90,7 +90,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
-        for: "00:00:05"
     action:
       - choose:
           - conditions:

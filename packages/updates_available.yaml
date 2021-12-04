@@ -82,7 +82,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
-        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -144,7 +143,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.ha_newest_version
-        for: "00:00:05"
     condition: []
     action:
       - choose:
