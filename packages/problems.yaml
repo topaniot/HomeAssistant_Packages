@@ -83,7 +83,7 @@ automation:
               - service: !secret notify_service_problems
                 data:
                   message: |
-                    ⚠️ Este o problema la:
+                    ⚠️ Este o problema:
                     – {{ state_attr('sensor.problems_detected','names').split(',') | join('
                     –') }}
           - conditions:
@@ -98,7 +98,7 @@ automation:
               - service: !secret notify_service_problems
                 data:
                   message: |
-                    🟡 Sunt {{ states('sensor.problems_detected')|int }} probleme:
+                    ⚠️ Sunt {{ states('sensor.problems_detected')|int }} probleme:
                     – {{ state_attr('sensor.problems_detected','names').split(',') | join('
                     –') }}
           - conditions:
