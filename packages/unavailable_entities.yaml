@@ -87,6 +87,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
+        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -133,10 +134,10 @@ automation:
                 entity_id: input_boolean.unavailable_entities_alert
                 state: 'on'
             sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.unavailable_entities_alert
               - service: !secret notify_service_unavailable
                 data:
                   message: "🟢 Toate dispozitivele funcționzează!"
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.unavailable_entities_alert
         default: []

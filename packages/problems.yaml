@@ -60,6 +60,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.problems_detected
+        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -106,10 +107,10 @@ automation:
                 entity_id: input_boolean.problems_detected_alert
                 state: 'on'
             sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.problems_detected_alert
               - service: !secret notify_service_problems
                 data:
                   message: "👌 Problemele au disparut!"
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.problems_detected_alert
         default: []
