@@ -27,7 +27,10 @@ group:
     entities: []
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
       - name: "Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
@@ -64,6 +67,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.low_batteries
+        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -108,11 +112,11 @@ automation:
                 entity_id: input_boolean.low_batteries_alert
                 state: 'on'
             sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.low_batteries_alert
               - service: !secret notify_service_battery
                 data:
                   message: |
                     🔋 Starea bateriilor este bună!
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.low_batteries_alert
         default: []

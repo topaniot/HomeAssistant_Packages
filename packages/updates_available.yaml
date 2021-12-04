@@ -32,7 +32,10 @@ sensor:
   - platform: version
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
       - name: "Updates Available"
         icon: "hass:update"
         state: >
@@ -50,8 +53,10 @@ template:
                 |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |map(attribute='name')|join (", ")
               }}
-          
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"          
+    sensor:
       - name: "HA Newest Version"
         icon: "hass:package"
         state: >
@@ -77,6 +82,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
+        for: "00:00:05"
     action:
       - choose:
           - conditions:
@@ -123,12 +129,12 @@ automation:
                 entity_id: input_boolean.updates_available_alert
                 state: 'on'
             sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.updates_available_alert
               - service: !secret notify_service_updates
                 data:
                   message: "🎉 Dispozitivele sunt actualizate!"
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.updates_available_alert
         default: []
 
   # Notify when Home Assistant update is available
@@ -138,6 +144,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.ha_newest_version
+        for: "00:00:05"
     condition: []
     action:
       - choose:
@@ -154,12 +161,12 @@ automation:
                 entity_id: input_boolean.update_available_ha_alert
                 state: 'on'
             sequence:
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.update_available_ha_alert
               - service: !secret notify_service_updates
                 data:
                   message: "🎉 Home Assistant este actualizat!"
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.update_available_ha_alert
           - conditions:
               - condition: not
                 conditions:

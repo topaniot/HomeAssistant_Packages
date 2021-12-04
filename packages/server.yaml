@@ -79,6 +79,16 @@ sensor:
         column: "value"
         unit_of_measurement: MB   
 
+group:
+  turn_off_automations:
+    name: Turn OFF Automations
+    entities:
+      - automation.low_batteries
+      - automation.unavailable_entities
+      - automation.update_available_ha
+      - automation.updates_available
+      - automation.problems_detected
+
 automation:
     # Notify on server start using defined service
   - id: 'server_start'
@@ -137,22 +147,14 @@ automation:
     action:
       - service: automation.turn_off
         target:
-          entity_id:
-            - automation.low_batteries
-            - automation.unavailable_entities
-            - automation.update_available_ha
-            - automation.updates_available
+          entity_id: group.turn_off_automations
       - service: input_boolean.reload
-      - service: group.reload
       - service: template.reload
+      - service: group.reload
       - service: script.reload
       - service: automation.turn_on
         target:
-          entity_id:
-            - automation.low_batteries
-            - automation.unavailable_entities
-            - automation.update_available_ha
-            - automation.updates_available
+          entity_id: group.turn_off_automations
       - service: automation.reload
     mode: restart
 
