@@ -32,7 +32,10 @@ sensor:
   - platform: version
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
       - name: "Updates Available"
         icon: "hass:update"
         state: >
@@ -50,8 +53,10 @@ template:
                 |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |map(attribute='name')|join (", ")
               }}
-          
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"          
+    sensor:
       - name: "HA Newest Version"
         icon: "hass:package"
         state: >

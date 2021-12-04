@@ -28,7 +28,10 @@ group:
     entities: []
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
       - name: "Problems Detected"
         icon: "hass:alert-outline"
         state: >
@@ -60,7 +63,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.problems_detected
-        for: "00:00:05"
+        attribute: names
     action:
       - choose:
           - conditions:
