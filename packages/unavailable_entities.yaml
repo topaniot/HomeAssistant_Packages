@@ -59,7 +59,7 @@ template:
             names: >
               {{ states
                 |selectattr('state','in',['unavailable','unknown','none'])
-                |rejectattr('domain','in',['group','person','device_tracker','media_player'])
+                |rejectattr('domain','in',['group','person','device_tracker','media_player','automation'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
                 |rejectattr('entity_id','search','_ip')
@@ -90,7 +90,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
-        for: "00:00:05"
     action:
       - choose:
           - conditions:
