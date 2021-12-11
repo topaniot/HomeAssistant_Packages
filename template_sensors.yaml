@@ -1,0 +1,93 @@
+### Template for detecting malfunctioning temperature and humidity sensors.
+### Sensors (entities) must be declared with "states." in front of them
+
+# Checking one sensor
+- binary_sensor:
+  - name: "name_of_sensor Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}
+
+# Checking 2 sensors
+- binary_sensor:
+  - name: "name_of_sensor Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor1 %}
+      {% set sensor2 = states.sensor.name_of_sensor2 %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none or sensor2 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}
+
+
+# Checking 3 sensors
+- binary_sensor:
+  - name: "name_of_sensor Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor1 %}
+      {% set sensor2 = states.sensor.name_of_sensor2 %}
+      {% set sensor3 = states.sensor.name_of_sensor3 %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none or sensor2 == none or sensor3 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' or sensor3.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor3.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}
+
+# Checking 4 sensors
+- binary_sensor:
+  - name: "name_of_sensor Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor1 %}
+      {% set sensor2 = states.sensor.name_of_sensor2 %}
+      {% set sensor3 = states.sensor.name_of_sensor3 %}
+      {% set sensor4 = states.sensor.name_of_sensor4 %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none or sensor2 == none or sensor3 == none or sensor4 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' or sensor3.state == 'unavailable' or sensor4.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor3.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor4.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}
