@@ -1,0 +1,40 @@
+### Template for detecting malfunctioning temperature and humidity sensors.
+### Sensors (entities) must be declared with "states." in front of them
+# Checking two entities
+- binary_sensor:
+  - name: "Sensor <name> Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor1 %}
+      {% set sensor2 = states.sensor.name_of_sensor2 %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none or sensor2 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}
+
+# Checking one entity
+- binary_sensor:
+  - name: "Sensor <name> Active 30m"
+    device_class: "problem"
+    state: >
+      {% set sensor1 = states.sensor.name_of_sensor %}
+      {% set minutes = 30 %}
+
+      {% if sensor1 == none %}
+        on
+      {% elif sensor1.state == 'unavailable' %}
+        on
+      {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
+        off
+      {% else %}
+        on
+      {% endif %}

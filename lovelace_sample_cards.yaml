@@ -4,7 +4,18 @@
 type: vertical-stack
 cards:
   - type: markdown
-    content: '## __Server__'
+    content: '## Server'
+    theme: No Card Background
+  - type: glance
+    entities:
+      - entity: sensor.unavailable_entities
+        name: Unavailable
+      - entity: sensor.problems_detected
+        name: Problems
+      - entity: sensor.low_batteries
+        name: Low Batt.
+      - entity: sensor.updates_available
+        name: Updates
   - type: glance
     entities:
       - entity: sensor.processor_temperature
@@ -34,14 +45,19 @@ cards:
     columns: 5
   - type: glance
     entities:
-      - entity: sensor.low_batteries
-      - entity: sensor.unavailable_entities
-        name: Unavailable
-      - entity: sensor.updates_available
-        name: Updates
-      - entity: sensor.ha_newest_version
-        name: Newest
+      - entity: sensor.total_entities
+        name: Entities
+      - entity: sensor.total_switches
+        name: Switches
+      - entity: sensor.total_lights
+        name: Lights
+      - entity: sensor.total_sensors
+        name: Sensors
+      - entity: sensor.total_automations
+        name: Automations
   - type: entities
     entities:
+      - entity: sensor.ha_newest_version
       - entity: script.update_packages
+
 ###############################################################################
