@@ -33,11 +33,11 @@ template:
         minutes: "/1"
     sensor:
       - name: "Unavailable Entities"
-        icon: "mdi:format-list-checks"
+        icon: "hass:shape"
         state: >
               {{ states
                 |selectattr('state','in',['unavailable','unknown','none'])
-                |rejectattr('domain','in',['group','person','device_tracker','media_player'])
+                |rejectattr('domain','in',['group','person','device_tracker','media_player','button','automation'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
                 |rejectattr('entity_id','search','_ip')
@@ -59,7 +59,7 @@ template:
             names: >
               {{ states
                 |selectattr('state','in',['unavailable','unknown','none'])
-                |rejectattr('domain','in',['group','person','device_tracker','media_player','automation'])
+                |rejectattr('domain','in',['group','person','device_tracker','media_player','button','automation'])
                 |rejectattr('entity_id','search','_rssi')
                 |rejectattr('entity_id','search','_ssid')
                 |rejectattr('entity_id','search','_ip')
@@ -81,7 +81,7 @@ template:
 input_boolean:
   unavailable_entities_alert:
     name: Unavailable Entities Alert
-    icon: "mdi:alert-circle"
+    icon: "hass:alert-circle"
 
 automation:
   - id: "unavailable_entities"

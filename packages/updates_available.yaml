@@ -55,7 +55,7 @@ template:
               }}
   - trigger:
       - platform: time_pattern
-        minutes: "/1"          
+        minutes: "/1"
     sensor:
       - name: "HA Newest Version"
         icon: "hass:package"
@@ -69,10 +69,10 @@ template:
 input_boolean:
   updates_available_alert:
     name: Updates Available Alert
-    icon: "mdi:alert-circle"
+    icon: "hass:alert-circle"
   update_available_ha_alert:
     name: Update Available HA Alert
-    icon: "mdi:alert-circle"
+    icon: "hass:alert-circle"
 
 automation:
   # Notify when updates are available
