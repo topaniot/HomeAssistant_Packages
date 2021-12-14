@@ -11,23 +11,26 @@ script:
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/insights.yaml
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+    sensor:
     - name: Total Entities
-      icon: mdi:shape
+      icon: hass:shape
       state: "{{ states | count }}"
 
     - name: Total Automations
-      icon: mdi:robot
+      icon: hass:robot
       state: "{{ states.automation | count }}"
     
     - name: Total Lights
-      icon: mdi:lightbulb-multiple-outline
+      icon: hass:lightbulb-multiple-outline
       state: "{{ states.light | count }}"
 
     - name: Total Switches
-      icon: mdi:light-switch
+      icon: hass:light-switch
       state: "{{ states.switch | count }}"
 
     - name: Total Sensors
-      icon: mdi:signal-variant
+      icon: hass:signal-variant
       state: "{{ states.sensor | count + states.binary_sensor | count }}"

@@ -1,5 +1,5 @@
-### Template for detecting malfunctioning temperature and humidity sensors.
-### Sensors (entities) must be declared with "states." in front of them
+### Template for detecting malfunctioning sensors.
+### Sensors (entities) must be set with "states." in front of them
 
 # Checking one sensor
 - binary_sensor:

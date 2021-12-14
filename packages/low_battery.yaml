@@ -58,7 +58,7 @@ template:
 input_boolean:
   low_batteries_alert:
     name: Low Batteries Alert
-    icon: "mdi:alert-circle"
+    icon: "hass:alert-circle"
 
 automation:
   - id: "low_batteries"

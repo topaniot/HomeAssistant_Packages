@@ -53,7 +53,7 @@ template:
 input_boolean:
   problems_detected_alert:
     name: Problems Detected Alert
-    icon: "mdi:alert-circle"
+    icon: "hass:alert-circle"
 
 automation:
   # Notify when updates are available
