@@ -67,6 +67,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.low_batteries
+        to: ~
     action:
       - choose:
           - conditions:
