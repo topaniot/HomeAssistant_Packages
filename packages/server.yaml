@@ -101,9 +101,23 @@ automation:
     action:
     - service: !secret notify_service_server
       data:
-        message: 🦾 Serverul a pornit!
+        message: ▶️ Serverul a pornit!
     mode: single
     
+    # Notify on server Stop using defined service
+  - id: 'server_stop'
+    alias: Server Stop
+    description: ''
+    trigger:
+    - platform: homeassistant
+      event: shutdown
+    condition: []
+    action:
+    - service: !secret notify_service_server
+      data:
+        message: ⏹️ Serverul s-a oprit!
+    mode: single
+  
     # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
     alias: HealthChecks
