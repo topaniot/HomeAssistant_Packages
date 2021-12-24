@@ -1,7 +1,9 @@
 
 # Sample lovelace card to display Server Stats
 ###############################################################################
-type: vertical-stack
+type: grid
+columns: 1
+square: false
 cards:
   - type: markdown
     content: '## Server'
@@ -59,5 +61,5 @@ cards:
     entities:
       - entity: sensor.ha_newest_version
       - entity: script.update_packages
-
+        secondary_info: last-updated
 ###############################################################################
