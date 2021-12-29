@@ -61,5 +61,5 @@ cards:
     entities:
       - entity: sensor.ha_newest_version
       - entity: script.update_packages
-        secondary_info: last-updated
+        secondary_info: last-triggered
 ###############################################################################
