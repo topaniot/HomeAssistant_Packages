@@ -10,13 +10,13 @@
       {% set minutes = 30 %}
 
       {% if sensor1 == none %}
-        on
+        true
       {% elif sensor1.state == 'unavailable' %}
-        on
+        true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% else %}
-        on
+        true
       {% endif %}
 
 # Checking 2 sensors
@@ -29,15 +29,15 @@
       {% set minutes = 30 %}
 
       {% if sensor1 == none or sensor2 == none %}
-        on
+        true
       {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' %}
-        on
+        true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% else %}
-        on
+        true
       {% endif %}
 
 # Checking 3 sensors
@@ -51,17 +51,17 @@
       {% set minutes = 30 %}
 
       {% if sensor1 == none or sensor2 == none or sensor3 == none %}
-        on
+        true
       {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' or sensor3.state == 'unavailable' %}
-        on
+        true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor3.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% else %}
-        on
+        true
       {% endif %}
 
 # Checking 4 sensors
@@ -76,17 +76,17 @@
       {% set minutes = 30 %}
 
       {% if sensor1 == none or sensor2 == none or sensor3 == none or sensor4 == none %}
-        on
+        true
       {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' or sensor3.state == 'unavailable' or sensor4.state == 'unavailable' %}
-        on
+        true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor2.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor3.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% elif as_timestamp(sensor4.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
-        off
+        false
       {% else %}
-        on
+        true
       {% endif %}
