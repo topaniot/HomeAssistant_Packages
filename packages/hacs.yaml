@@ -1,0 +1,83 @@
+# HACS package
+# Notify when there are HACS updates pending.
+#
+#
+# You must set in secrets.yaml
+# notify_service_updates: "notify.notify"
+# delay_notify_updates: "24:00:00"
+
+
+
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/hacs.yaml
+            
+input_boolean:
+  updates_available_alert_hacs:
+    name: Updates Available Alert HACS
+    icon: "hass:alert-circle"
+
+automation:
+  # Notify when updates are available
+  - id: "updates_available_hacs"
+    alias: Updates Available HACS
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.hacs
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.hacs
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.hacs
+                above: '0'
+                below: '2'
+            sequence:
+              - delay: !secret delay_notify_updates
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.updates_available_alert_hacs
+              - service: !secret notify_service_updates
+                data:
+                  message: |
+                    🟡 Este o actualizare HACS disponibilă!
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.hacs
+                above: '1'
+            sequence:
+              - delay: !secret delay_notify_updates
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.updates_available_alert_hacs
+              - service: !secret notify_service_updates
+                data:
+                  message: |
+                    🟡 Sunt {{ states('sensor.hacs') }} actualizari HACS disponibile!
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.hacs
+                below: '1'
+              - condition: state
+                entity_id: input_boolean.updates_available_alert_hacs
+                state: 'on'
+            sequence:
+              - service: !secret notify_service_updates
+                data:
+                  message: "🎉 HACS este actualizat!"
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.updates_available_alert_hacs
+        default: []
