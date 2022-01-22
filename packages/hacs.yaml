@@ -27,7 +27,7 @@ input_boolean:
 automation:
   # Notify when updates are available
   - id: "updates_available_hacs"
-    alias: Updates Available HACS
+    alias: "| Updates Available HACS"
     mode: restart
     trigger:
       - platform: state

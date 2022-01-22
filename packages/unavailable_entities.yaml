@@ -59,7 +59,7 @@ input_boolean:
 
 automation:
   - id: "unavailable_entities"
-    alias: Unavailable Entities
+    alias: "| Unavailable Entities"
     mode: restart
     trigger:
       - platform: state

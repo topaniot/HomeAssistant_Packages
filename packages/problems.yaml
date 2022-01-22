@@ -58,7 +58,7 @@ input_boolean:
 automation:
   # Notify when updates are available
   - id: "problems_detected"
-    alias: Problems Detected
+    alias: "| Problems Detected"
     mode: restart
     trigger:
       - platform: state

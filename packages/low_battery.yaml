@@ -62,7 +62,7 @@ input_boolean:
 
 automation:
   - id: "low_batteries"
-    alias: Low Batteries
+    alias: "| Low Batteries"
     mode: restart
     trigger:
       - platform: state

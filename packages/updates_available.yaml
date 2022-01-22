@@ -77,7 +77,7 @@ input_boolean:
 automation:
   # Notify when updates are available
   - id: "updates_available"
-    alias: Updates Available
+    alias: "| Updates Available"
     mode: restart
     trigger:
       - platform: state
@@ -138,7 +138,7 @@ automation:
 
   # Notify when Home Assistant update is available
   - id: "update_available_ha"     
-    alias: Update Available HA
+    alias: "| Update Available HA"
     description: ''
     trigger:
       - platform: state
