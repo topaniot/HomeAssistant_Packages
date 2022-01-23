@@ -79,6 +79,13 @@ sensor:
         column: "value"
         unit_of_measurement: MB   
 
+logbook:
+  exclude:
+    entity_globs:
+      # Exclude Load Sensors
+      - sensor.*_load_*
+      - sensor.load_*
+
 group:
   turn_off_automations:
     name: Turn OFF Automations
