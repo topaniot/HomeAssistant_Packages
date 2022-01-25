@@ -99,7 +99,7 @@ group:
 automation:
     # Notify on server start using defined service
   - id: 'server_start'
-    alias: "| Server Start"
+    alias: "|| Server Start"
     description: ''
     trigger:
     - platform: homeassistant
@@ -113,7 +113,7 @@ automation:
     
     # Notify on server Stop using defined service
   - id: 'server_stop'
-    alias: "| Server Stop"
+    alias: "|| Server Stop"
     description: ''
     trigger:
     - platform: homeassistant
@@ -127,7 +127,7 @@ automation:
   
     # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
-    alias: "| HealthChecks"
+    alias: "|| HealthChecks"
     description: ''
     trigger:
       - platform: time_pattern
@@ -139,7 +139,7 @@ automation:
 
     # Notificare periodică
   - id: 'life_bit'
-    alias: "| Life Bit"
+    alias: "|| Life Bit"
     description: ''
     trigger:
       - platform: time
@@ -157,7 +157,7 @@ automation:
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
-    alias: "| Update Packages"
+    alias: "|| Update Packages"
     description: ''
     trigger:
       - platform: state
@@ -181,7 +181,7 @@ automation:
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
   - id: 'cpu_load_15m'
-    alias: "| CPU Load"
+    alias: "|| CPU Load"
     description: ''
     trigger:
       - platform: numeric_state
@@ -201,7 +201,7 @@ automation:
 
     # Notify when CPU Temperature is high
   - id: 'cpu_temp'
-    alias: "| CPU Temperature"
+    alias: "|| CPU Temperature"
     description: ''
     trigger:
       - platform: numeric_state
@@ -221,7 +221,7 @@ automation:
 
     # Notify when RAM is almost full
   - id: 'ram_usage'
-    alias: "| RAM Usage"
+    alias: "|| RAM Usage"
     description: ''
     trigger:
       - platform: numeric_state
@@ -241,7 +241,7 @@ automation:
 
     # Notify when storage is almost full
   - id: 'disk_usage'
-    alias: "| Disk Usage"
+    alias: "|| Disk Usage"
     description: ''
     trigger:
       - platform: numeric_state
