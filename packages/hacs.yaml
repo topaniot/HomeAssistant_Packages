@@ -52,7 +52,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    🟡 Este o actualizare HACS disponibilă!
+                    ⚙️ Este o actualizare HACS disponibilă!
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.hacs
@@ -65,7 +65,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    🟡 Sunt {{ states('sensor.hacs') }} actualizari HACS disponibile!
+                    ⚙️ Sunt {{ states('sensor.hacs') }} actualizari HACS disponibile!
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.hacs

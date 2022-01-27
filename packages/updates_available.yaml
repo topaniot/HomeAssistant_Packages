@@ -102,7 +102,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    🟡 Este o actualizare disponibilă:
+                    ⚙️ Este o actualizare disponibilă:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
           - conditions:
@@ -117,7 +117,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    🟡 Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
+                    ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
           - conditions:
