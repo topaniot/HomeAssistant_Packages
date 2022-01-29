@@ -28,6 +28,11 @@ group:
     entities:
       - binary_sensor.updater
 
+  turn_off_automations:
+    entities:
+      - automation.update_available_ha
+      - automation.updates_available
+
 sensor:
   - platform: version
 

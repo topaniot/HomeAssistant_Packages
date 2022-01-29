@@ -89,12 +89,7 @@ logbook:
 group:
   turn_off_automations:
     name: Turn OFF Automations
-    entities:
-      - automation.low_batteries
-      - automation.unavailable_entities
-      - automation.update_available_ha
-      - automation.updates_available
-      - automation.problems_detected
+    entities: []
 
 automation:
     # Notify on server start using defined service
