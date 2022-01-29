@@ -3,14 +3,14 @@
 #
 # You must set in secrets.yaml
 # notify_service_problems: "notify.notify"
-# delay_notify_updates: "24:00:00"
+# delay_notify_problems: "00:10:00"
 #
-# If you want to exlcude entities create group ignored_updates in groups.yaml
+# If you want to exlcude entities create group ignored_problems in groups.yaml
 #
 # Example:
-# ignored_updates:
+# ignored_problems:
 #   entities:
-#     - binary_sensor.updater
+#     - binary_sensor.sensor_active_2h
 
 script:
   # Script to update this package from GitHub
@@ -50,10 +50,14 @@ template:
                 |map(attribute='name')|join (", ")
               }}
           
-input_boolean:
-  problems_detected_alert:
-    name: Problems Detected Alert
+input_number:
+  problems_detected_last_triggered:
+    name: "Problems Detected Last Triggered"
     icon: "hass:alert-circle"
+    mode: box
+    min: 0
+    max: 99999
+    step: 1
 
 automation:
   # Notify when updates are available
@@ -75,11 +79,17 @@ automation:
                 entity_id: sensor.problems_detected
                 above: '0'
                 below: '2'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.problems_detected_last_triggered') | int
+                  != states('sensor.problems_detected') | int }}
             sequence:
               - delay: !secret delay_notify_problems
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.problems_detected_alert
+                  entity_id: input_number.problems_detected_last_triggered
+                data:
+                  value: "{{ states('sensor.problems_detected') | int }}"
               - service: !secret notify_service_problems
                 data:
                   message: |
@@ -90,11 +100,17 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.problems_detected
                 above: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.problems_detected_last_triggered') | int
+                  != states('sensor.problems_detected') | int }}
             sequence:
               - delay: !secret delay_notify_problems
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.problems_detected_alert
+                  entity_id: input_number.problems_detected_last_triggered
+                data:
+                  value: "{{ states('sensor.problems_detected') | int }}"
               - service: !secret notify_service_problems
                 data:
                   message: |
@@ -105,14 +121,16 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.problems_detected
                 below: '1'
-              - condition: state
-                entity_id: input_boolean.problems_detected_alert
-                state: 'on'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.problems_detected_last_triggered') | int > 0 }}
             sequence:
               - service: !secret notify_service_problems
                 data:
-                  message: "👌 Problemele au disparut!"
-              - service: input_boolean.turn_off
+                  message: "👌 Probleme rezolvate!"
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.problems_detected_alert
+                  entity_id: input_number.problems_detected_last_triggered
+                data:
+                  value: "{{ states('sensor.problems_detected') | int }}"
         default: []
