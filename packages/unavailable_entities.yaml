@@ -1,5 +1,5 @@
 # Package - Unavailable Entities Sensor
-# Count and list of entities with a state of unavailable
+# Count and list of devices with a state of unavailable
 #
 # You must set in secrets.yaml
 # delay_notify_unavailable: 00:10:00
@@ -10,7 +10,7 @@
 # Example:
 #  ignored_unavailable:
 #    entities:
-#       - sensor.temperature
+#       - switch.heater
 
 script:
   # Script to update this package from GitHub
@@ -52,10 +52,14 @@ template:
                 |map(attribute='name')|join(', ')
               }}
 
-input_boolean:
-  unavailable_entities_alert:
-    name: Unavailable Entities Alert
+input_number:
+  unavailable_entities_last_triggered:
+    name: "Unavailable Entities Last Triggered"
     icon: "hass:alert-circle"
+    mode: box
+    min: 0
+    max: 99999
+    step: 1
 
 automation:
   - id: "unavailable_entities"
@@ -76,11 +80,17 @@ automation:
                 entity_id: sensor.unavailable_entities
                 above: '0'
                 below: '2'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_entities_last_triggered') | int
+                  != states('sensor.unavailable_entities') | int }}
             sequence:
               - delay: !secret delay_notify_unavailable
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.unavailable_entities_alert
+                  entity_id: input_number.unavailable_entities_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_entities') | int }}"
               - service: !secret notify_service_unavailable
                 data:
                   message: |
@@ -91,11 +101,17 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
                 above: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_entities_last_triggered') | int
+                  != states('sensor.unavailable_entities') | int }}
             sequence:
               - delay: !secret delay_notify_unavailable
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.unavailable_entities_alert
+                  entity_id: input_number.unavailable_entities_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_entities') | int }}"
               - service: !secret notify_service_unavailable
                 data:
                   message: |
@@ -106,14 +122,16 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
                 below: '1'
-              - condition: state
-                entity_id: input_boolean.unavailable_entities_alert
-                state: 'on'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_entities_last_triggered') | int > 0 }}
             sequence:
               - service: !secret notify_service_unavailable
                 data:
                   message: "🟢 Toate dispozitivele funcționzează!"
-              - service: input_boolean.turn_off
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.unavailable_entities_alert
+                  entity_id: input_number.unavailable_entities_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_entities') | int }}"
         default: []
