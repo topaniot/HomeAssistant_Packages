@@ -27,6 +27,10 @@ group:
     name: Ingnored Unavailable Devices
     entities: []
 
+  turn_off_automations:
+    entities:
+      - automation.unavailable_entities
+
 template:
   - trigger:
       - platform: time_pattern

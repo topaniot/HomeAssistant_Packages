@@ -6,9 +6,6 @@
 # notify_service_updates: "notify.notify"
 # delay_notify_updates: "24:00:00"
 
-
-
-
 script:
   # Script to update this package from GitHub
   update_packages:
@@ -23,6 +20,11 @@ input_boolean:
   updates_available_alert_hacs:
     name: Updates Available Alert HACS
     icon: "hass:alert-circle"
+
+group:
+  turn_off_automations:
+    entities:
+      - automation.updates_available_hacs
 
 automation:
   # Notify when updates are available
