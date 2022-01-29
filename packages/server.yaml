@@ -170,6 +170,7 @@ automation:
         target:
           entity_id: group.turn_off_automations
       - service: input_boolean.reload
+      - service: input_number.reload
       - service: template.reload
       - service: group.reload
       - service: script.reload
