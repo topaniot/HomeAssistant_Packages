@@ -24,7 +24,7 @@ script:
 
 group:
   ignored_updates:
-    name: Ignored Updates
+    name: "|| Ignored Updates"
     entities:
       - binary_sensor.updater
 
@@ -41,7 +41,7 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-      - name: "Updates Available"
+      - name: "|| Updates Available"
         icon: "hass:update"
         state: >
               {{ states
@@ -62,7 +62,7 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-      - name: "HA Newest Version"
+      - name: "|| HA Newest Version"
         icon: "hass:package"
         state: >
           {% if state_attr('binary_sensor.updater', 'newest_version') != states('sensor.current_version') %}
@@ -73,10 +73,10 @@ template:
 
 input_boolean:
   updates_available_alert:
-    name: Updates Available Alert
+    name: "|| Updates Available Alert"
     icon: "hass:alert-circle"
   update_available_ha_alert:
-    name: Update Available HA Alert
+    name: "|| Update Available HA Alert"
     icon: "hass:alert-circle"
 
 automation:

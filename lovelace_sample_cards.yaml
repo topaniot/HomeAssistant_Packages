@@ -60,6 +60,8 @@ cards:
   - type: entities
     entities:
       - entity: sensor.ha_newest_version
+        name: HA Newest Version
       - entity: script.update_packages
+        name: Update Packages
         secondary_info: last-triggered
 ###############################################################################

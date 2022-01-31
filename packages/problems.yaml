@@ -24,7 +24,7 @@ script:
 
 group:
   ignored_problems:
-    name: Ignored Updates
+    name: "|| Ignored Updates"
     entities: []
 
   turn_off_automations:
@@ -36,7 +36,7 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-      - name: "Problems Detected"
+      - name: "|| Problems Detected"
         icon: "hass:alert-outline"
         state: >
               {{ states
@@ -56,7 +56,7 @@ template:
           
 input_number:
   problems_detected_last_triggered:
-    name: "Problems Detected Last Triggered"
+    name: "|| Problems Detected Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
