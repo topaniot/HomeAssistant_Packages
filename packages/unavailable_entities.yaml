@@ -24,7 +24,7 @@ script:
 
 group:
   ignored_unavailable:
-    name: Ingnored Unavailable Devices
+    name: "|| Ingnored Unavailable Devices"
     entities: []
 
   turn_off_automations:
@@ -36,7 +36,7 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-      - name: "Unavailable Entities"
+      - name: "|| Unavailable Entities"
         icon: "hass:shape"
         state: >
               {{ states
@@ -58,7 +58,7 @@ template:
 
 input_number:
   unavailable_entities_last_triggered:
-    name: "Unavailable Entities Last Triggered"
+    name: "|| Unavailable Entities Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0

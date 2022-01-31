@@ -5,7 +5,7 @@
 script:
   # Script to update this package from GitHub
   update_packages:
-    alias: Update Packages
+    alias: "|| Update Packages"
     sequence:
       - service: downloader.download_file
         data:
@@ -69,12 +69,12 @@ sensor:
       - type: disk_use
         arg: /
   - platform: uptime
-    name: Time Online
+    name: "|| Time Online"
     # MariaDB database size
   - platform: sql
     db_url: !secret recorder_db_url
     queries:
-      - name: "DataBase size"
+      - name: "|| DataBase size"
         query: !secret recorder_db_query 
         column: "value"
         unit_of_measurement: MB   
@@ -88,7 +88,7 @@ logbook:
 
 group:
   turn_off_automations:
-    name: Turn OFF Automations
+    name: "|| Turn OFF Automations"
     entities: []
 
 automation:

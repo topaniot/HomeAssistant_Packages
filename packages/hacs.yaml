@@ -18,7 +18,7 @@ script:
             
 input_boolean:
   updates_available_alert_hacs:
-    name: Updates Available Alert HACS
+    name: "|| Updates Available Alert HACS"
     icon: "hass:alert-circle"
 
 group:
