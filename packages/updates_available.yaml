@@ -46,6 +46,7 @@ template:
         state: >
               {{ states
                 |selectattr('attributes.device_class','eq','update')
+                |rejectattr('domain','in',['button'])
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |list|count 
@@ -54,6 +55,7 @@ template:
             names: >
               {{ states
                 |selectattr('attributes.device_class','eq','update')
+                |rejectattr('domain','in',['button'])
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
                 |map(attribute='name')|join (", ")
