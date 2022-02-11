@@ -74,12 +74,19 @@ template:
           {% endif %}
 
 input_boolean:
-  updates_available_alert:
-    name: "|| Updates Available Alert"
-    icon: "hass:alert-circle"
   update_available_ha_alert:
     name: "|| Update Available HA Alert"
     icon: "hass:alert-circle"
+
+input_number:
+  updates_available_last_triggered:
+    name: "|| Updates Available Last Triggered"
+    icon: "hass:alert-circle"
+    mode: box
+    min: 0
+    max: 99999
+    step: 1
+
 
 automation:
   # Notify when updates are available
@@ -101,11 +108,17 @@ automation:
                 entity_id: sensor.updates_available
                 above: '0'
                 below: '2'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.updates_available_last_triggered') | int
+                  != states('sensor.updates_available') | int }}
             sequence:
               - delay: !secret delay_notify_updates
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.updates_available_alert
+                  entity_id: input_number.updates_available_last_triggered
+                data:
+                  value: "{{ states('sensor.updates_available') | int }}"
               - service: !secret notify_service_updates
                 data:
                   message: |
@@ -116,11 +129,17 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 above: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.updates_available_last_triggered') | int
+                  != states('sensor.updates_available') | int }}
             sequence:
               - delay: !secret delay_notify_updates
-              - service: input_boolean.turn_on
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.updates_available_alert
+                  entity_id: input_number.updates_available_last_triggered
+                data:
+                  value: "{{ states('sensor.updates_available') | int }}"
               - service: !secret notify_service_updates
                 data:
                   message: |
@@ -131,16 +150,18 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 below: '1'
-              - condition: state
-                entity_id: input_boolean.updates_available_alert
-                state: 'on'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.updates_available_last_triggered') | int > 0 }}
             sequence:
               - service: !secret notify_service_updates
                 data:
                   message: "🎉 Dispozitivele sunt actualizate!"
-              - service: input_boolean.turn_off
+              - service: input_number.set_value
                 target:
-                  entity_id: input_boolean.updates_available_alert
+                  entity_id: input_number.unavailable_entities_last_triggered
+                data:
+                  value: "{{ states('sensor.updates_available') | int }}"
         default: []
 
   # Notify when Home Assistant update is available
