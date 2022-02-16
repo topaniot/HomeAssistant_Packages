@@ -159,7 +159,7 @@ automation:
                   message: "🎉 Dispozitivele sunt actualizate!"
               - service: input_number.set_value
                 target:
-                  entity_id: input_number.unavailable_entities_last_triggered
+                  entity_id: input_number.updates_available_last_triggered
                 data:
                   value: "{{ states('sensor.updates_available') | int }}"
         default: []
@@ -194,6 +194,9 @@ automation:
                 target:
                   entity_id: input_boolean.update_available_ha_alert
           - conditions:
+              - condition: state
+                entity_id: input_boolean.update_available_ha_alert
+                state: 'off'
               - condition: not
                 conditions:
                   - condition: state
