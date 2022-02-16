@@ -13,14 +13,6 @@ script:
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
 
-homeassistant:
-  # Two factor authentication
-  auth_mfa_modules:
-    - type: notify
-      message: 'Codul de acces este: {}'
-    - type: totp
-      name: Authenticator APP
-
 http:
   # Setup NGINX
   use_x_forwarded_for: true
