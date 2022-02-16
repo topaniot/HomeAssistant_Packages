@@ -67,9 +67,28 @@ sensor:
     db_url: !secret recorder_db_url
     queries:
       - name: "|| DataBase size"
-        query: !secret recorder_db_query 
+        query: !secret recorder_db_query
         column: "value"
-        unit_of_measurement: MB   
+        unit_of_measurement: MB
+     
+homeassistant:
+  customize:
+    sensor.processor_temperature:
+      friendly_name: "|| Processor Temperature"
+    sensor.processor_use:
+      friendly_name: "|| Processor Use"
+    sensor.load_15m:
+      friendly_name: "|| Load (15m)"
+    sensor.memory_use_percent:
+      friendly_name: "|| Memory Use"
+    sensor.swap_use_percent:
+      friendly_name: "|| Swap Use"
+    binary_sensor.rpi_power_status:
+      friendly_name: "|| RPi Power Status"
+    sensor.disk_use:
+      friendly_name: "|| Disk Use"
+    sensor.disk_use_percent:
+      friendly_name: "|| Disk Use Percent"
 
 logbook:
   exclude:
