@@ -180,6 +180,7 @@ automation:
       - service: template.reload
       - service: group.reload
       - service: script.reload
+      - service: homeassistant.reload_core_config
       - service: automation.turn_on
         target:
           entity_id: group.turn_off_automations
