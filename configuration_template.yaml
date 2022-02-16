@@ -3,6 +3,12 @@ default_config:
 
 homeassistant:
   packages: !include_dir_named packages/
+  # Two factor authentication
+  auth_mfa_modules:
+    - type: notify
+      message: 'Codul de acces este: {}'
+    - type: totp
+      name: Authenticator APP
   
 tts:
   - platform: google_translate
