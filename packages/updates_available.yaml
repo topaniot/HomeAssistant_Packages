@@ -27,14 +27,12 @@ group:
     name: "|| Ignored Updates"
     entities:
       - binary_sensor.updater
+      - binary_sensor.home_assistant_versions_update_available
 
   turn_off_automations:
     entities:
       - automation.update_available_ha
       - automation.updates_available
-
-sensor:
-  - platform: version
 
 template:
   - trigger:
@@ -67,8 +65,8 @@ template:
       - name: "|| HA Newest Version"
         icon: "hass:package"
         state: >
-          {% if state_attr('binary_sensor.updater', 'newest_version') != states('sensor.current_version') %}
-            {{ state_attr('binary_sensor.updater', 'newest_version') }}
+          {% if states('sensor.home_assistant_versions') != states('sensor.current_version') %}
+            {{ states('sensor.home_assistant_versions') }}
           {% else %}
             Up-to-date
           {% endif %}
@@ -176,11 +174,6 @@ automation:
       - choose:
           - conditions:
               - condition: state
-                entity_id: sensor.unavailable_entities
-                state: unknown
-            sequence: []
-          - conditions:
-              - condition: state
                 entity_id: sensor.ha_newest_version
                 state: 'Up-to-date'
               - condition: state
@@ -194,9 +187,9 @@ automation:
                 target:
                   entity_id: input_boolean.update_available_ha_alert
           - conditions:
-              - condition: state
-                entity_id: input_boolean.update_available_ha_alert
-                state: 'off'
+              # - condition: state
+              #   entity_id: input_boolean.update_available_ha_alert
+              #   state: 'off'
               - condition: not
                 conditions:
                   - condition: state
@@ -210,10 +203,9 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    🎉 HA {{ state_attr('binary_sensor.updater', 'newest_version') }} disponibil!
-                    Actual {{ states('sensor.current_version') }}
-                    
-                    Note versiune:
-                    {{ state_attr('binary_sensor.updater', 'release_notes') }}
+                    🎉 HA {{ states('sensor.home_assistant_versions') }} disponibil!
+                    Actual {{ states('sensor.current_version') }}.
+
+                    https://www.home-assistant.io/latest-release-notes/
         default: []
     mode: restart
