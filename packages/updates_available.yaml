@@ -123,6 +123,8 @@ automation:
                     ⚙️ Este o actualizare disponibilă:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
+                  data:
+                    disable_notification: True                
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
@@ -144,6 +146,8 @@ automation:
                     ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
+                  data:
+                    disable_notification: True                      
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
@@ -155,6 +159,8 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: "🎉 Dispozitivele sunt actualizate!"
+                  data:
+                    disable_notification: True                    
               - service: input_number.set_value
                 target:
                   entity_id: input_number.updates_available_last_triggered
@@ -183,6 +189,8 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: "🎉 Home Assistant este actualizat!"
+                  data:
+                    disable_notification: True                    
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_ha_alert
@@ -207,5 +215,7 @@ automation:
                     Actual {{ states('sensor.current_version') }}.
 
                     https://www.home-assistant.io/latest-release-notes/
+                  data:
+                    disable_notification: True                      
         default: []
     mode: restart

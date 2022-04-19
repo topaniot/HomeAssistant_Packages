@@ -158,6 +158,8 @@ automation:
       - service: !secret notify_service_server
         data:
           message: "Notificare periodică Joi 11:00"
+          data:
+            disable_notification: True          
     mode: single
     max_exceeded: silent
 
