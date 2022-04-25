@@ -25,13 +25,10 @@ script:
 group:
   ignored_updates:
     name: "|| Ignored Updates"
-    entities:
-      - binary_sensor.updater
-      - binary_sensor.home_assistant_versions_update_available
+    entities: []
 
   turn_off_automations:
     entities:
-      - automation.update_available_ha
       - automation.updates_available
 
 template:
@@ -42,49 +39,33 @@ template:
       - name: "|| Updates Available"
         icon: "hass:update"
         state: >
-              {{ states
-                |selectattr('attributes.device_class','eq','update')
-                |rejectattr('domain','in',['button'])
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
-                |list|count 
-              }}
+              {% set result = namespace(updates=[]) %}
+              {% for state in states.update | selectattr('state', '==', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) %}
+                {% if state.state == 'on'  %}
+                  {% set result.updates = result.updates + [state.name 
+                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                    ~ state.attributes.latest_version ~ ')'] %}
+                {% endif %}
+              {% endfor %}
+              {{ result.updates|count }}
         attributes:
             names: >
-              {{ states
-                |selectattr('attributes.device_class','eq','update')
-                |rejectattr('domain','in',['button'])
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))
-                |map(attribute='name')|join (", ")
-              }}
-  - trigger:
-      - platform: time_pattern
-        minutes: "/1"
-    sensor:
-      - name: "|| HA Newest Version"
-        icon: "hass:package"
-        state: >
-          {% if states('sensor.home_assistant_versions') != states('sensor.current_version') %}
-            {{ states('sensor.home_assistant_versions') }}
-          {% else %}
-            Up-to-date
-          {% endif %}
+              {% set result = namespace(updates=[]) %}
+              {% for state in states.update | selectattr('state', '==', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) %}
+                {% if state.state == 'on'  %}
+                  {% set result.updates = result.updates + [state.name 
+                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                    ~ state.attributes.latest_version ~ ')'] %}
+                {% endif %}
+              {% endfor %}
+              {{ result.updates|join (', ') }}
 
 input_boolean:
-  update_available_ha_alert:
-    name: "|| Update Available HA Alert"
+  update_available_alert:
+    name: "|| Update Available Alert"
     icon: "hass:alert-circle"
-
-input_number:
-  updates_available_last_triggered:
-    name: "|| Updates Available Last Triggered"
-    icon: "hass:alert-circle"
-    mode: box
-    min: 0
-    max: 99999
-    step: 1
-
 
 automation:
   # Notify when updates are available
@@ -106,17 +87,8 @@ automation:
                 entity_id: sensor.updates_available
                 above: '0'
                 below: '2'
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.updates_available_last_triggered') | int
-                  != states('sensor.updates_available') | int }}
             sequence:
               - delay: !secret delay_notify_updates
-              - service: input_number.set_value
-                target:
-                  entity_id: input_number.updates_available_last_triggered
-                data:
-                  value: "{{ states('sensor.updates_available') | int }}"
               - service: !secret notify_service_updates
                 data:
                   message: |
@@ -124,22 +96,16 @@ automation:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
                   data:
-                    disable_notification: True                
+                    disable_notification: True
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.update_available_alert
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 above: '1'
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.updates_available_last_triggered') | int
-                  != states('sensor.updates_available') | int }}
             sequence:
               - delay: !secret delay_notify_updates
-              - service: input_number.set_value
-                target:
-                  entity_id: input_number.updates_available_last_triggered
-                data:
-                  value: "{{ states('sensor.updates_available') | int }}"
               - service: !secret notify_service_updates
                 data:
                   message: |
@@ -147,75 +113,24 @@ automation:
                     – {{ state_attr('sensor.updates_available','names').split(',') | join('
                     –') }}
                   data:
-                    disable_notification: True                      
+                    disable_notification: True
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.update_available_alert
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 below: '1'
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.updates_available_last_triggered') | int > 0 }}
-            sequence:
-              - service: !secret notify_service_updates
-                data:
-                  message: "🎉 Dispozitivele sunt actualizate!"
-                  data:
-                    disable_notification: True                    
-              - service: input_number.set_value
-                target:
-                  entity_id: input_number.updates_available_last_triggered
-                data:
-                  value: "{{ states('sensor.updates_available') | int }}"
-        default: []
-
-  # Notify when Home Assistant update is available
-  - id: "update_available_ha"     
-    alias: "|| Update Available HA"
-    description: ''
-    trigger:
-      - platform: state
-        entity_id: sensor.ha_newest_version
-    condition: []
-    action:
-      - choose:
-          - conditions:
               - condition: state
-                entity_id: sensor.ha_newest_version
-                state: 'Up-to-date'
-              - condition: state
-                entity_id: input_boolean.update_available_ha_alert
+                entity_id: input_boolean.update_available_alert
                 state: 'on'
             sequence:
               - service: !secret notify_service_updates
                 data:
-                  message: "🎉 Home Assistant este actualizat!"
+                  message: "🎉 Dispozitivele și serviciile sunt actualizate!"
                   data:
-                    disable_notification: True                    
+                    disable_notification: True
               - service: input_boolean.turn_off
                 target:
-                  entity_id: input_boolean.update_available_ha_alert
-          - conditions:
-              # - condition: state
-              #   entity_id: input_boolean.update_available_ha_alert
-              #   state: 'off'
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: sensor.ha_newest_version
-                    state: 'Up-to-date'
-            sequence:
-              - delay: !secret delay_notify_updates
-              - service: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.update_available_ha_alert
-              - service: !secret notify_service_updates
-                data:
-                  message: |
-                    🎉 HA {{ states('sensor.home_assistant_versions') }} disponibil!
-                    Actual {{ states('sensor.current_version') }}.
-
-                    https://www.home-assistant.io/latest-release-notes/
-                  data:
-                    disable_notification: True                      
+                  entity_id: input_boolean.update_available_alert
         default: []
-    mode: restart
