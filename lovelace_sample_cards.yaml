@@ -1,4 +1,4 @@
-# Sample lovelace card to display z Stats
+# Sample lovelace card to display Server Stats
 ###############################################################################
 type: grid
 columns: 1
