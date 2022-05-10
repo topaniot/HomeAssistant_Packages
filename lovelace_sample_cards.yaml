@@ -21,8 +21,6 @@ cards:
     entities:
       - entity: sensor.time_online
         name: Time Online
-      - entity: sensor.ha_newest_version
-        name: Newest Version
       - entity: script.update_packages
         name: Update Packages
         secondary_info: last-triggered
