@@ -5,7 +5,8 @@
 # You must set in secrets.yaml
 # notify_service_updates: "notify.notify"
 # delay_notify_updates: "24:00:00"
-#### test flaviu vs-code
+
+
 script:
   # Script to update this package from GitHub
   update_packages:
@@ -15,7 +16,7 @@ script:
           overwrite: true
           url: >-
             https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/hacs.yaml
-            
+
 input_boolean:
   updates_available_alert_hacs:
     name: "|| Updates Available Alert HACS"

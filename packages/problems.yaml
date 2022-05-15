@@ -53,7 +53,7 @@ template:
                 |rejectattr('entity_id','in',state_attr('group.ignored_problems','entity_id'))
                 |map(attribute='name')|join (", ")
               }}
-          
+
 input_number:
   problems_detected_last_triggered:
     name: "|| Problems Detected Last Triggered"
