@@ -56,7 +56,7 @@ automation:
                   message: |
                     ⚙️ Este o actualizare HACS disponibilă!
                   data:
-                    disable_notification: True                    
+                    disable_notification: True
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.hacs
@@ -71,7 +71,7 @@ automation:
                   message: |
                     ⚙️ Sunt {{ states('sensor.hacs') }} actualizari HACS disponibile!
                   data:
-                    disable_notification: True                       
+                    disable_notification: True
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.hacs
@@ -84,7 +84,7 @@ automation:
                 data:
                   message: "🎉 HACS este actualizat!"
                   data:
-                    disable_notification: True                     
+                    disable_notification: True
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs

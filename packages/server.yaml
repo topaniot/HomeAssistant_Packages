@@ -23,7 +23,7 @@ http:
 
 downloader:
   download_dir: packages
-  
+
 recorder:
   # Set recorder to use MariaDB
   db_url: !secret recorder_db_url
@@ -64,7 +64,7 @@ sensor:
         arg: /
   - platform: uptime
     name: "|| Time Online"
-     
+
 homeassistant:
   customize:
     sensor.processor_temperature:
@@ -110,7 +110,7 @@ automation:
       data:
         message: ▶️ Serverul a pornit!
     mode: single
-    
+
     # Notify on server Stop using defined service
   - id: 'server_stop'
     alias: "|| Server Stop"
@@ -124,7 +124,7 @@ automation:
       data:
         message: ⏹️ Serverul s-a oprit!
     mode: single
-  
+
     # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
     alias: "|| HealthChecks"
