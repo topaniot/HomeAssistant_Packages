@@ -25,7 +25,7 @@ group:
     entities: []
 
   ignored_doors:
-    name: "|| Ignored Windows"
+    name: "|| Ignored Doors"
     entities: []
 
 
