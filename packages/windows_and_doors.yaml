@@ -1,0 +1,68 @@
+# Open Windows Package
+# This package create a sensor with number of open windows
+#
+# If you want to exlcude entities create group ignored_windows/ignored_doors in groups.yaml
+#
+# Example:
+# ignored_updates:
+#   entities:
+#     - binary_sensor.window
+
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/windows_and_doors.yaml
+
+group:
+  ignored_windows:
+    name: "|| Ignored Windows"
+    entities: []
+
+  ignored_doors:
+    name: "|| Ignored Doors"
+    entities: []
+
+
+template:
+  - sensor:
+      - name: "Open Windows"
+        icon: "hass:window-open"
+        state: >
+              {{ states
+                |selectattr('attributes.device_class','eq','window')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
+                |list|count 
+              }}
+        attributes:
+            names: >
+              {{ states
+                |selectattr('attributes.device_class','eq','window')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
+                |map(attribute='name')|join (", ")
+              }}
+
+      - name: "Open Doors"
+        icon: "hass:door-open"
+        state: >
+              {{ states
+                |selectattr('attributes.device_class','eq','door')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
+                |list|count 
+              }}
+        attributes:
+            names: >
+              {{ states
+                |selectattr('attributes.device_class','eq','door')
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
+                |map(attribute='name')|join (", ")
+              }}
