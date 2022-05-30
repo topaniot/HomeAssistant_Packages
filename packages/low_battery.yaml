@@ -34,7 +34,7 @@ group:
 template:
   - trigger:
       - platform: time_pattern
-        minutes: "/1"
+        seconds: "/1"
     sensor:
       - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
