@@ -30,7 +30,10 @@ group:
 
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        seconds: "/1"
+    sensor:
       - name: "Open Windows"
         icon: "hass:window-open"
         state: >
