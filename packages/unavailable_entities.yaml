@@ -34,24 +34,22 @@ group:
 template:
   - trigger:
       - platform: time_pattern
-        minutes: "/1"
+        seconds: "/1"
     sensor:
       - name: "|| Unavailable Entities"
         icon: "hass:shape"
         state: >
               {{ states
+                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
-                |rejectattr('domain','in',['group','person','device_tracker',
-                  'media_player','button','automation','sensor','binary_sensor'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |list|count
               }}
         attributes:
             names: >
               {{ states
+                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
-                |rejectattr('domain','in',['group','person','device_tracker',
-                  'media_player','button','automation','sensor','binary_sensor'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |map(attribute='name')|join(', ')
               }}

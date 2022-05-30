@@ -34,15 +34,18 @@ group:
 template:
   - trigger:
       - platform: time_pattern
-        minutes: "/1"
+        seconds: "/1"
     sensor:
       - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
               {% set threshold = 20 %}
               {% set result = namespace(sensors=[]) %}
-              {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) %}
+              {% for state in states.sensor 
+                |selectattr('attributes.device_class', 'defined')
+                |selectattr('attributes.device_class', '==', 'battery')
+                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
+              %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
@@ -52,8 +55,11 @@ template:
             names: >
               {% set threshold = 20 %}
               {% set result = namespace(sensors=[]) %}
-              {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) %}
+              {% for state in states.sensor 
+                |selectattr('attributes.device_class', 'defined')
+                |selectattr('attributes.device_class', '==', 'battery')
+                |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
+              %}
                 {% if 0 <= state.state | int(-1) <= threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}

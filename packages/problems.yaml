@@ -34,12 +34,13 @@ group:
 template:
   - trigger:
       - platform: time_pattern
-        minutes: "/1"
+        seconds: "/1"
     sensor:
       - name: "|| Problems Detected"
         icon: "hass:alert-outline"
         state: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_problems','entity_id'))
@@ -47,7 +48,8 @@ template:
               }}
         attributes:
             names: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_problems','entity_id'))

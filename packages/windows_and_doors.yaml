@@ -30,11 +30,15 @@ group:
 
 
 template:
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        seconds: "/1"
+    sensor:
       - name: "Open Windows"
         icon: "hass:window-open"
         state: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','window')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
@@ -42,7 +46,8 @@ template:
               }}
         attributes:
             names: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','window')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
@@ -52,7 +57,8 @@ template:
       - name: "Open Doors"
         icon: "hass:door-open"
         state: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','door')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
@@ -60,7 +66,8 @@ template:
               }}
         attributes:
             names: >
-              {{ states
+              {{ states.binary_sensor
+                |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','door')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
