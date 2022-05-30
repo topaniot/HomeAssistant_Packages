@@ -34,7 +34,7 @@
         true
       {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' %}
         true
-       {% elif sensor1.state == 'unknown' or sensor2.state == 'unknown' %}
+      {% elif sensor1.state == 'unknown' or sensor2.state == 'unknown' %}
         true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
         false
@@ -58,7 +58,7 @@
         true
       {% elif sensor1.state == 'unavailable' or sensor2.state == 'unavailable' or sensor3.state == 'unavailable' %}
         true
-       {% elif sensor1.state == 'unknown' or sensor2.state == 'unknown' or sensor3.state == 'unknown' %}
+      {% elif sensor1.state == 'unknown' or sensor2.state == 'unknown' or sensor3.state == 'unknown' %}
         true
       {% elif as_timestamp(sensor1.last_updated) | int + 60 * minutes > as_timestamp(now()) | int %}
         false
