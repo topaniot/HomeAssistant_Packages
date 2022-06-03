@@ -1,0 +1,76 @@
+# Package Asuswrt
+# For this to work asuswrt integrations needs to be setup.
+
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    alias: "|| Update Packages"
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/asuswrt.yaml
+
+
+automation:
+# Notify when CPU Temperature is high
+  - id: 'asuswrt_cpu_temp'
+    alias: "|| Asuswrt CPU Temperature"
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.asuswrt_cpu_temperature
+        above: '80'
+    condition: []
+    action:
+      - service: !secret notify_service_server
+        data:
+          message: "🟡 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
+      - wait_template: "{{ states( 'sensor.asuswrt_cpu_temperature' ) | float < 75 }}"
+      - service: !secret notify_service_server
+        data:
+          message: "🟢 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
+    mode: single
+    max_exceeded: silent
+
+# Notify when 2.4GHz Temperature is high
+  - id: 'asuswrt_24ghz_temp'
+    alias: "|| Asuswrt 2.4GHz Temperature"
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.asuswrt_2_4ghz_temperature
+        above: '60'
+    condition: []
+    action:
+      - service: !secret notify_service_server
+        data:
+          message: "🟡 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
+      - wait_template: "{{ states( 'sensor.asuswrt_2_4ghz_temperature' ) | float < 55 }}"
+      - service: !secret notify_service_server
+        data:
+          message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
+    mode: single
+    max_exceeded: silent
+
+# Notify when 5GHz Temperature is high
+  - id: 'asuswrt_5ghz_temp'
+    alias: "|| Asuswrt 5GHz Temperature"
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.asuswrt_5ghz_temperature
+        above: '60'
+    condition: []
+    action:
+      - service: !secret notify_service_server
+        data:
+          message: "🟡 Asuswrt 5GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
+      - wait_template: "{{ states( 'sensor.asuswrt_5ghz_temperature' ) | float < 55 }}"
+      - service: !secret notify_service_server
+        data:
+          message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
+    mode: single
+    max_exceeded: silent
