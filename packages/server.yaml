@@ -210,13 +210,13 @@ automation:
     trigger:
       - platform: numeric_state
         entity_id: sensor.processor_temperature
-        above: '75'
+        above: '80'
     condition: []
     action:
       - service: !secret notify_service_server
         data:
           message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-      - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 60 }}"
+      - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 70 }}"
       - service: !secret notify_service_server
         data:
           message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
