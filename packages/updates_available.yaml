@@ -30,6 +30,7 @@ group:
   turn_off_automations:
     entities:
       - automation.updates_available
+      - automation.updates_in_progress
 
 template:
   - trigger:
