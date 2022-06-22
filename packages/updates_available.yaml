@@ -81,6 +81,9 @@ input_boolean:
   update_available_alert:
     name: "|| Update Available Alert"
     icon: "hass:alert-circle"
+  update_in_progress_alert:
+    name: "|| Update in Progress Alert"
+    icon: "hass:alert-circle"
 
 automation:
   # Notify when updates are available
@@ -181,7 +184,7 @@ automation:
                     disable_notification: True
               - service: input_boolean.turn_on
                 target:
-                  entity_id: input_boolean.update_available_alert
+                  entity_id: input_boolean.update_in_progress_alert
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
@@ -197,5 +200,21 @@ automation:
                     disable_notification: True
               - service: input_boolean.turn_on
                 target:
-                  entity_id: input_boolean.update_available_alert
+                  entity_id: input_boolean.update_in_progress_alert
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_in_progress
+                below: '1'
+              - condition: state
+                entity_id: input_boolean.update_in_progress_alert
+                state: 'on'
+            sequence:
+              - service: !secret notify_service_updates
+                data:
+                  message: "🎉 Actualizare finalizată"
+                  data:
+                    disable_notification: True
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.update_in_progress_alert
         default: []
