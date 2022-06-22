@@ -94,6 +94,8 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
+      - platform: homeassistant
+        event: start
     action:
       - choose:
           - conditions:
@@ -162,6 +164,8 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_in_progress
+      - platform: homeassistant
+        event: start
     action:
       - choose:
           - conditions:

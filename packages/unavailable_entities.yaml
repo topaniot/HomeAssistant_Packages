@@ -70,6 +70,8 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.unavailable_entities
+      - platform: homeassistant
+        event: start
     action:
       - choose:
           - conditions:
