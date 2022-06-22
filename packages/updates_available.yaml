@@ -216,7 +216,7 @@ automation:
             sequence:
               - service: !secret notify_service_updates
                 data:
-                  message: "🎉 Actualizare finalizată"
+                  message: "🎉 Actualizare finalizată!"
                   data:
                     disable_notification: True
               - service: input_boolean.turn_off
