@@ -61,6 +61,21 @@ template:
                 {% endif %}
               {% endfor %}
               {{ result.updates|join (', ') }}
+      - name: "|| Updates in Progress"
+        icon: "hass:update"
+        state: >
+              {{ states.update
+                |selectattr('attributes.in_progress','defined')
+                |selectattr('attributes.in_progress','true')
+                |list|count
+              }}
+        attributes:
+            names: >
+              {{ states.update
+                |selectattr('attributes.in_progress','defined')
+                |selectattr('attributes.in_progress','true')
+                |map(attribute='name')|join (", ")
+              }}
 
 input_boolean:
   update_available_alert:
@@ -131,6 +146,56 @@ automation:
                   data:
                     disable_notification: True
               - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.update_available_alert
+        default: []
+
+
+  # Notify when updates are in progress
+  - id: "updates_in_progress"
+    alias: "|| Updates in Progress"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.updates_in_progress
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.updates_in_progress
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_in_progress
+                above: '0'
+                below: '2'
+            sequence:
+              - service: !secret notify_service_updates
+                data:
+                  message: |
+                    ⚙️ Este o actualizare în progress:
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
+                    –') }}
+                  data:
+                    disable_notification: True
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.update_available_alert
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_in_progress
+                above: '1'
+            sequence:
+              - service: !secret notify_service_updates
+                data:
+                  message: |
+                    ⚙️ Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
+                    –') }}
+                  data:
+                    disable_notification: True
+              - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
         default: []
