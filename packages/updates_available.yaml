@@ -1,3 +1,6 @@
+#
+# VERSION: 2022.06.23.0
+#
 # Package - Updates Available
 # List all available updates of entities with device class update
 #
@@ -41,26 +44,46 @@ template:
         icon: "hass:update"
         state: >
               {% set result = namespace(updates=[]) %}
-              {% for state in states.update | selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) %}
-                {% if state.state == 'on'  %}
-                  {% set result.updates = result.updates + [state.name 
-                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                    ~ state.attributes.latest_version ~ ')'] %}
-                {% endif %}
-              {% endfor %}
+                {% for state in states.update 
+                  | selectattr('state', '==', 'on')
+                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                %}
+                    {% set result.updates 
+                      = result.updates + [state.name 
+                      ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                      ~ state.attributes.latest_version ~ ')'] 
+                    %}
+                {% endfor %}
+                {% for state in states.binary_sensor
+                  |selectattr('attributes.device_class', 'defined')
+                  |selectattr('attributes.device_class', '==', 'update')
+                  |selectattr('state', 'eq', 'on')
+                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                %}
+                    {% set result.updates = result.updates + [state.name ] %}
+                {% endfor %}
               {{ result.updates|count }}
         attributes:
             names: >
               {% set result = namespace(updates=[]) %}
-              {% for state in states.update | selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) %}
-                {% if state.state == 'on'  %}
-                  {% set result.updates = result.updates + [state.name 
-                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                    ~ state.attributes.latest_version ~ ')'] %}
-                {% endif %}
-              {% endfor %}
+                {% for state in states.update 
+                  | selectattr('state', '==', 'on')
+                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                %}
+                    {% set result.updates 
+                      = result.updates + [state.name 
+                      ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                      ~ state.attributes.latest_version ~ ')'] 
+                    %}
+                {% endfor %}
+                {% for state in states.binary_sensor
+                  |selectattr('attributes.device_class', 'defined')
+                  |selectattr('attributes.device_class', '==', 'update')
+                  |selectattr('state', 'eq', 'on')
+                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                %}
+                    {% set result.updates = result.updates + [state.name ] %}
+                {% endfor %}
               {{ result.updates|join (', ') }}
       - name: "|| Updates in Progress"
         icon: "hass:update"
