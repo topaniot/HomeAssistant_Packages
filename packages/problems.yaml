@@ -73,6 +73,8 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.problems_detected
+      - platform: homeassistant
+        event: start
     action:
       - choose:
           - conditions:

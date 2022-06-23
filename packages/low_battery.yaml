@@ -79,6 +79,8 @@ automation:
       - platform: state
         entity_id: sensor.low_batteries
         to: ~
+      - platform: homeassistant
+        event: start
     action:
       - choose:
           - conditions:
