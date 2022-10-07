@@ -205,7 +205,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    ⚙️ Este o actualizare în progress:
+                    🔧 Este o actualizare în progress:
                     – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
                     –') }}
                   data:
@@ -221,7 +221,7 @@ automation:
               - service: !secret notify_service_updates
                 data:
                   message: |
-                    ⚙️ Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
+                    🔧 Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
                     – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
                     –') }}
                   data:
