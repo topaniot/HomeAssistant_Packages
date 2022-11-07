@@ -234,7 +234,7 @@ automation:
       - service: !secret notify_service_server
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 75 }}"
+      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 80 }}"
       - service: !secret notify_service_server
         data:
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
