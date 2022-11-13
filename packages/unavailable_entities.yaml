@@ -40,7 +40,7 @@ template:
         icon: "hass:shape"
         state: >
               {{ states
-                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
+                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote','binary_sensor'])
                 |selectattr('state','in',['unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |list|count
@@ -48,7 +48,7 @@ template:
         attributes:
             names: >
               {{ states
-                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
+                |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote','binary_sensor'])
                 |selectattr('state','in',['unavailable','none'])
                 |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
                 |map(attribute='name')|join(', ')
