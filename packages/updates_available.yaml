@@ -1,5 +1,5 @@
 #
-# VERSION: 2022.06.23.0
+# VERSION: 2022.11.17.0
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -109,78 +109,125 @@ input_boolean:
     name: "|| Update in Progress Alert"
     icon: "hass:alert-circle"
 
+timer:
+  updates_available:
+    name: '|| Updates Available'
+    duration: !secret delay_notify_updates
+    restore: true
+
 automation:
   # Notify when updates are available
   - id: "updates_available"
     alias: "|| Updates Available"
-    mode: restart
+    description: ""
     trigger:
       - platform: state
         entity_id: sensor.updates_available
-      - platform: homeassistant
-        event: start
+        id: UPDATES_AVAILABLE
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.updates_available
+        id: TIMER_END
+    condition: []
     action:
       - choose:
           - conditions:
-              - condition: state
-                entity_id: sensor.updates_available
-                state: unknown
-            sequence: []
+              - condition: trigger
+                id: UPDATES_AVAILABLE
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.updates_available
+                        above: 0
+                    sequence:
+                      - service: timer.start
+                        data: {}
+                        target:
+                          entity_id: timer.updates_available
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.updates_available
+                        below: 1
+                    sequence:
+                      - service: timer.cancel
+                        data: {}
+                        target:
+                          entity_id: timer.updates_available
+      - choose:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                above: '0'
-                below: '2'
+                above: "0"
+                below: "2"
+              - condition: trigger
+                id: TIMER_END
             sequence:
-              - delay: !secret delay_notify_updates
               - service: !secret notify_service_updates
                 data:
-                  message: |
+                  message: >
                     ⚙️ Este o actualizare disponibilă:
-                    – {{ state_attr('sensor.updates_available','names').split(',') | join('
+    
+                    – {{ state_attr('sensor.updates_available','names').split(',') |
+                    join('
+    
                     –') }}
                   data:
-                    disable_notification: True
+                    disable_notification: true
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
+                data: {}
+                enabled: true
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                above: '1'
+                above: "1"
+              - condition: trigger
+                id: TIMER_END
             sequence:
-              - delay: !secret delay_notify_updates
               - service: !secret notify_service_updates
                 data:
-                  message: |
-                    ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări disponibile:
-                    – {{ state_attr('sensor.updates_available','names').split(',') | join('
+                  message: >
+                    ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
+                    disponibile:
+    
+                    – {{ state_attr('sensor.updates_available','names').split(',') |
+                    join('
+    
                     –') }}
                   data:
-                    disable_notification: True
+                    disable_notification: true
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
+                data: {}
+                enabled: true
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                below: '1'
+                below: "1"
               - condition: state
                 entity_id: input_boolean.update_available_alert
-                state: 'on'
+                state: "on"
+                enabled: true
             sequence:
               - service: !secret notify_service_updates
                 data:
-                  message: "🎉 Dispozitivele și serviciile sunt actualizate!"
+                  message: 🎉 Dispozitivele și serviciile sunt actualizate!
                   data:
-                    disable_notification: True
+                    disable_notification: true
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_alert
+                data: {}
+                enabled: true
         default: []
+    mode: restart
 
 
-  # Notify when updates are in progress
+# Notify when updates are in progress
   - id: "updates_in_progress"
     alias: "|| Updates in Progress"
     mode: restart
