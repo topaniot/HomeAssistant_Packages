@@ -1,5 +1,5 @@
 #
-# VERSION: 2022.11.17.0
+# VERSION: 2022.11.18.0
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -111,7 +111,7 @@ input_boolean:
 
 timer:
   updates_available:
-    name: '|| Updates Available'
+    name: '|| Updates Available Timer'
     duration: !secret delay_notify_updates
     restore: true
 
@@ -131,30 +131,29 @@ automation:
         id: TIMER_END
     condition: []
     action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: UPDATES_AVAILABLE
-            sequence:
-              - choose:
-                  - conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.updates_available
-                        above: 0
-                    sequence:
-                      - service: timer.start
-                        data: {}
-                        target:
-                          entity_id: timer.updates_available
-                  - conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.updates_available
-                        below: 1
-                    sequence:
-                      - service: timer.cancel
-                        data: {}
-                        target:
-                          entity_id: timer.updates_available
+      - if:
+        - condition: trigger
+          id: UPDATES_AVAILABLE
+        then:
+          - choose:
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: sensor.updates_available
+                    above: 0
+                sequence:
+                  - service: timer.start
+                    data: {}
+                    target:
+                      entity_id: timer.updates_available
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: sensor.updates_available
+                    below: 1
+                sequence:
+                  - service: timer.cancel
+                    data: {}
+                    target:
+                      entity_id: timer.updates_available
       - choose:
           - conditions:
               - condition: numeric_state
@@ -279,6 +278,9 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
+                below: '1'
+              - condition: numeric_state
+                entity_id: sensor.updates_available
                 below: '1'
               - condition: state
                 entity_id: input_boolean.update_in_progress_alert
