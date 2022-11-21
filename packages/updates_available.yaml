@@ -1,5 +1,4 @@
-#
-# VERSION: 2022.11.18.0
+# VERSION: 2022.11.21.0
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -142,7 +141,8 @@ automation:
                     above: 0
                 sequence:
                   - service: timer.start
-                    data: {}
+                    data: 
+                      duration: !secret delay_notify_updates
                     target:
                       entity_id: timer.updates_available
               - conditions:
