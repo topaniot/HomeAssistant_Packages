@@ -279,12 +279,12 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
                 below: '1'
-              - condition: numeric_state
-                entity_id: sensor.updates_available
-                below: '1'
               - condition: state
                 entity_id: input_boolean.update_in_progress_alert
                 state: 'on'
+              - condition: state
+                entity_id: input_boolean.update_available_alert
+                state: 'off'
             sequence:
               - service: !secret notify_service_updates
                 data:
