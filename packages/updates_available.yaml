@@ -1,4 +1,4 @@
-# VERSION: 2022.11.21.0
+# VERSION: 2022.12.02.0
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -282,9 +282,6 @@ automation:
               - condition: state
                 entity_id: input_boolean.update_in_progress_alert
                 state: 'on'
-              - condition: state
-                entity_id: input_boolean.update_available_alert
-                state: 'off'
             sequence:
               - service: !secret notify_service_updates
                 data:
