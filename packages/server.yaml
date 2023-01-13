@@ -95,6 +95,19 @@ group:
     entities: []
 
 automation:
+    # Update Packages on server STOP
+  - id: 'update_on_server_stop'
+    alias: "|| Update Packages on STOP"
+    description: ''
+    trigger:
+    - platform: homeassistant
+      event: shutdown
+    condition: []
+    action:
+    - service: script.turn_on
+      target:
+        entity_id: script.update_packages
+    mode: single
     # Notify on server start using defined service
   - id: 'server_start'
     alias: "|| Server Start"
