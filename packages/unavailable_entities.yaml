@@ -1,11 +1,13 @@
-# Package - Unavailable Entities Sensor
-# Count and list of devices with a state of unavailable
+# Version 2023.01.17-01
+# Package - Unavailable Entities
+# Count and list of devices and sensors with a state of unavailable
 #
 # You must set in secrets.yaml
 # delay_notify_unavailable: 00:10:00
 # notify_service_unavailable: notify.notify
 # 
-# If you want to exlcude entities create group ignored_unavailable in groups.yaml
+# If you want to exlcude entities create group ignored_unavailable 
+# and ignored_unavailable_sensors in groups.yaml
 #
 # Example:
 #  ignored_unavailable:
@@ -26,10 +28,14 @@ group:
   ignored_unavailable:
     name: "|| Ingnored Unavailable Devices"
     entities: []
+  ignored_unavailable_sensors:
+    name: "|| Ingnored Unavailable Sensors"
+    entities: []
 
   turn_off_automations:
     entities:
       - automation.unavailable_entities
+      - automation.unavailable_sensors
 
 template:
   - trigger:
@@ -54,9 +60,42 @@ template:
                 |map(attribute='name')|join(', ')
               }}
 
+  - trigger:
+      - platform: time_pattern
+        seconds: "/1"
+    sensor:
+      - name: "|| Unavailable Sensors"
+        icon: "hass:shape"
+        state: >
+              {{ states
+                |selectattr('domain','in',['sensor','binary_sensor'])
+                |selectattr('attributes.device_class','defined')
+                |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
+                |selectattr('state', 'in', ['unavailable','unknown','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable_sensors','entity_id'))
+                |list|count
+              }}
+        attributes:
+            names: >
+              {{ states
+                |selectattr('domain','in',['sensor','binary_sensor'])
+                |selectattr('attributes.device_class','defined')
+                |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
+                |selectattr('state', 'in', ['unavailable','unknown','none'])
+                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable_sensors','entity_id'))
+                |map(attribute='name')|join (", ")
+              }}
+
 input_number:
   unavailable_entities_last_triggered:
     name: "|| Unavailable Entities Last Triggered"
+    icon: "hass:alert-circle"
+    mode: box
+    min: 0
+    max: 99999
+    step: 1
+  unavailable_sensors_last_triggered:
+    name: "|| Unavailable Sensors Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
@@ -138,4 +177,80 @@ automation:
                   entity_id: input_number.unavailable_entities_last_triggered
                 data:
                   value: "{{ states('sensor.unavailable_entities') | int }}"
+        default: []
+
+  - id: "unavailable_sensors"
+    alias: "|| Unavailable Sensors"
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: sensor.unavailable_sensors
+      - platform: homeassistant
+        event: start
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.unavailable_sensors
+                state: unknown
+            sequence: []
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_sensors
+                above: '0'
+                below: '2'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_sensors_last_triggered') | int
+                  != states('sensor.unavailable_sensors') | int }}
+            sequence:
+              - delay: !secret delay_notify_unavailable
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.unavailable_sensors_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_sensors') | int }}"
+              - service: !secret notify_service_unavailable
+                data:
+                  message: |
+                    🔴 Este un senzor indisponibil:
+                    – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('
+                    –') }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_sensors
+                above: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_sensors_last_triggered') | int
+                  != states('sensor.unavailable_sensors') | int }}
+            sequence:
+              - delay: !secret delay_notify_unavailable
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.unavailable_sensors_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_sensors') | int }}"
+              - service: !secret notify_service_unavailable
+                data:
+                  message: |
+                    🔴 Sunt {{ states('sensor.unavailable_sensors')|int }} senzori indisponibili:
+                    – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('
+                    –') }}
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.unavailable_sensors
+                below: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.unavailable_sensors_last_triggered') | int > 0 }}
+            sequence:
+              - service: !secret notify_service_unavailable
+                data:
+                  message: "🟢 Toți senzorii funcționzează!"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.unavailable_sensors_last_triggered
+                data:
+                  value: "{{ states('sensor.unavailable_sensors') | int }}"
         default: []
