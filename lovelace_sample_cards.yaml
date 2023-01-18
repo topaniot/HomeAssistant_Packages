@@ -1,63 +1,70 @@
 # Sample lovelace card to display Server Stats
 ###############################################################################
 type: grid
+cards:
+  - type: grid
+    columns: 1
+    square: false
+    cards:
+      - type: markdown
+        content: '## Home Assistant'
+        theme: No Card Background
+      - type: glance
+        entities:
+          - entity: sensor.unavailable_entities
+            name: Devices
+          - entity: sensor.unavailable_sensors
+            name: Sensors
+          - entity: sensor.problems_detected
+            name: Problems
+          - entity: sensor.low_batteries
+            name: Low Batt.
+          - entity: sensor.updates_available
+            name: Updates
+      - type: entities
+        entities:
+          - entity: sensor.time_online
+            name: Time Online
+          - entity: script.update_packages
+            name: Update Packages
+            secondary_info: last-triggered
+      - type: glance
+        entities:
+          - entity: sensor.total_entities
+            name: Entities
+          - entity: sensor.total_switches
+            name: Switches
+          - entity: sensor.total_lights
+            name: Lights
+          - entity: sensor.total_sensors
+            name: Sensors
+          - entity: sensor.total_automations
+            name: Automations
+      - type: markdown
+        content: '## Server'
+        theme: No Card Background
+      - type: glance
+        entities:
+          - entity: sensor.processor_temperature
+            name: CPU Temp.
+          - entity: sensor.processor_use
+            name: CPU Use
+          - entity: sensor.load_15m
+            name: Load 15m
+          - entity: sensor.memory_use_percent
+            name: RAM
+      - type: glance
+        entities:
+          - entity: sensor.swap_use_percent
+            name: Swap
+          - entity: sensor.database_size
+            name: Database
+            icon: mdi:database
+          - entity: sensor.disk_use
+            name: Disk
+          - entity: sensor.disk_use_percent
+            name: Disk
 columns: 1
 square: false
-cards:
-  - type: markdown
-    content: '## Home Assistant'
-    theme: No Card Background
-  - type: glance
-    entities:
-      - entity: sensor.unavailable_entities
-        name: Unavailable
-      - entity: sensor.problems_detected
-        name: Problems
-      - entity: sensor.low_batteries
-        name: Low Batt.
-      - entity: sensor.updates_available
-        name: Updates
-  - type: entities
-    entities:
-      - entity: sensor.time_online
-        name: Time Online
-      - entity: script.update_packages
-        name: Update Packages
-        secondary_info: last-triggered
-  - type: glance
-    entities:
-      - entity: sensor.total_entities
-        name: Entities
-      - entity: sensor.total_switches
-        name: Switches
-      - entity: sensor.total_lights
-        name: Lights
-      - entity: sensor.total_sensors
-        name: Sensors
-      - entity: sensor.total_automations
-        name: Automations
-  - type: markdown
-    content: '## Server'
-    theme: No Card Background
-  - type: glance
-    entities:
-      - entity: sensor.processor_temperature
-        name: CPU Temp.
-      - entity: sensor.processor_use
-        name: CPU Use
-      - entity: sensor.load_15m
-        name: Load 15m
-      - entity: sensor.memory_use_percent
-        name: RAM
-  - type: glance
-    entities:
-      - entity: sensor.swap_use_percent
-        name: Swap
-      - entity: sensor.database_size
-        name: Database
-        icon: mdi:database
-      - entity: sensor.disk_use
-        name: Disk
-      - entity: sensor.disk_use_percent
-        name: Disk
+
 ###############################################################################
