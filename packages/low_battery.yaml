@@ -46,7 +46,7 @@ template:
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if 0 <= state.state | int(-1) <= threshold | int  %}
+                {% if state.state | int (-1) < threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
@@ -60,7 +60,7 @@ template:
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if 0 <= state.state | int(-1) <= threshold | int  %}
+                {% if state.state | int (-1) < threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
