@@ -1,9 +1,10 @@
+# Version: 2023.02.09-2
 # Package - Low Batteries
 # Count and list of entities device class battery with the value under 30
 #
 # You must set in secrets.yaml
 # notify_service_battery: notify.notify
-# 
+# delay: !secret delay_notify_problems
 # If you want to exlcude entities create group ignored_entities in groups.yaml
 #
 # Example:
@@ -94,6 +95,7 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
+              - delay: !secret delay_notify_problems
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.low_batteries_alert
@@ -108,6 +110,7 @@ automation:
                 entity_id: sensor.low_batteries
                 above: '1'
             sequence:
+              - delay: !secret delay_notify_problems
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.low_batteries_alert
