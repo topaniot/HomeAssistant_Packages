@@ -233,6 +233,10 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_in_progress
+        for:
+          hours: 0
+          minutes: 0
+          seconds: 5
       - platform: homeassistant
         event: start
     action:
