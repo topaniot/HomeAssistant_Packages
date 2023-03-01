@@ -1,4 +1,4 @@
-# Version: 2023.02.09-2
+# Version: 2023.03.01-1
 # Package - Low Batteries
 # Count and list of entities device class battery with the value under 30
 #
@@ -47,7 +47,7 @@ template:
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if state.state | int (-1) < threshold | int  %}
+                {% if 0 <= state.state | int (-1) < threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
@@ -61,7 +61,7 @@ template:
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if state.state | int (-1) < threshold | int  %}
+                {% if 0 <= state.state | int (-1) < threshold | int  %}
                   {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
                 {% endif %}
               {% endfor %}
