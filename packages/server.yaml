@@ -82,9 +82,6 @@ homeassistant:
       friendly_name: "|| Disk Use"
     sensor.disk_use_percent:
       friendly_name: "|| Disk Use Percent"
-  # Allow config directory for filesize sensor
-  allowlist_external_dirs:
-    - "/config"
 
 logbook:
   exclude:
