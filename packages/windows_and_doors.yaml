@@ -1,3 +1,4 @@
+# Version: 2023.04.13-1
 # Open Windows Package
 # This package create a sensor with number of open windows
 #
@@ -17,7 +18,11 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/windows_and_doors.yaml
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/windows_and_doors.yaml' %}
+            {{ url + account + file_path }}
+
 
 group:
   ignored_windows:
