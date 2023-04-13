@@ -10,7 +10,10 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/asuswrt.yaml
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/asuswrt.yaml' %}
+            {{ url + account + file_path }}
 
 
 automation:
