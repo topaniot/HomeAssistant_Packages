@@ -1,3 +1,4 @@
+# Version: 2023.04.13-1
 # Package - Problems found
 # List all available problems entities with device class problem
 #
@@ -20,8 +21,12 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/problems.yaml
-
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/problems.yaml' %}
+            {{ url + account + file_path }}
+            
+            
 group:
   ignored_problems:
     name: "|| Ignored Updates"
