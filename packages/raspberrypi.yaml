@@ -1,0 +1,49 @@
+# Version: 2023.04.13-1
+# Senzors and automations specific for Raspberry PI boards.
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - service: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/raspberrypi.yaml' %}
+            {{ url + account + file_path }}
+
+
+sensor:
+  - platform: systemmonitor
+    resources:
+      - type: processor_temperature
+      
+homeassistant:
+  customize:
+    sensor.processor_temperature:
+      friendly_name: "|| Processor Temperature"
+    binary_sensor.rpi_power_status:
+      friendly_name: "|| RPi Power Status"
+      
+automation:
+    # Notify when CPU Temperature is high
+  - id: 'cpu_temp'
+    alias: "|| CPU Temperature"
+    description: ''
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.processor_temperature
+        above: '80'
+    condition: []
+    action:
+      - service: !secret notify_service_server
+        data:
+          message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+      - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 70 }}"
+      - service: !secret notify_service_server
+        data:
+          message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+    mode: single
+    max_exceeded: silent
