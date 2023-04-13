@@ -1,8 +1,7 @@
 # Package Server
-# Version: 2023.04.13-1
+# Version: 2023.04.13-2
 # This package includes default integrations, automations 
 # and sersors for server activity.
-
 
 script:
   # Script to update this package from GitHub
@@ -13,7 +12,16 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/server.yaml
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/server.yaml' %}
+            {{ url + account + file_path }}
+
+input_text:
+  packages_account:
+    name: '|| Packages Account'
+    initial: !secret packages_account
+
 
 http:
   ip_ban_enabled: true
