@@ -269,7 +269,12 @@ automation:
         data:
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
-      
+      - service: !secret notify_service_server
+        data:
+          message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
+    mode: restart
+    
+    # Restart NginX addon weekly
   - id: restart_nginx_addon
     alias: "|| Restart NginX Addon"
     description: ""
@@ -290,8 +295,5 @@ automation:
             data:
               addon: core_nginx_proxy
     mode: restart
-      - service: !secret notify_service_server
-        data:
-          message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
-    mode: restart
+
 
