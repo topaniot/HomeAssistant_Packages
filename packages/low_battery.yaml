@@ -1,4 +1,4 @@
-# Version: 2023.03.01-1
+# Version: 2023.04.13-1
 # Package - Low Batteries
 # Count and list of entities device class battery with the value under 30
 #
@@ -20,8 +20,12 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/low_battery.yaml
-
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/low_battery.yaml' %}
+            {{ url + account + file_path }}
+   
+   
 group:
   ignored_batteries:
     name: "|| Ignored Batteries"
