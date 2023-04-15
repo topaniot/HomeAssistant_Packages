@@ -1,5 +1,5 @@
+# Version: 2023.04.15-1
 # Package Server
-# Version: 2023.04.13-2
 # This package includes default integrations, automations 
 # and sersors for server activity.
 
@@ -152,25 +152,30 @@ automation:
       - service: rest_command.healthchecks
     mode: restart
 
-    # Notificare periodică
-  - id: 'life_bit'
-    alias: "|| Life Bit"
-    description: ''
-    trigger:
-      - platform: time
-        at: '11:00'
-    condition:
-      - condition: time
-        weekday:
-          - thu
-    action:
-      - service: !secret notify_service_server
-        data:
-          message: "Notificare periodică Joi 11:00"
-          data:
-            disable_notification: True
+    # Notify when a nofitication can't be sent
+  - id: failed_notification
+    alias: '|| Failed Notification'
+    description: "Alert when a notification can't be sent."
     mode: single
-    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: system_log_event
+        event_data:
+          level: ERROR
+    condition:
+      - condition: template
+        value_template: '{{ "Error sending message" in trigger.event.data.message[0] }}'
+        enabled: true
+    action:
+      - service: persistent_notification.create
+        data:
+          message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
+          title: Nu s-a putut trimite notificarea!
+          notification_id: failed_notification
+      - service: notify.notify
+        data:
+          title: Eroare notificare!
+          message: A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică!
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
