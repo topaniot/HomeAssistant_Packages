@@ -34,6 +34,10 @@ http:
 downloader:
   download_dir: packages
 
+# Enable log errors to fire events
+system_log:
+  fire_event: true
+  
 recorder:
   # db_url: !secret recorder_db_url
   purge_keep_days: !secret recorder_keep_days
