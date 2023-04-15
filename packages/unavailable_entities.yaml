@@ -1,4 +1,4 @@
-# Version 2023.01.17-01
+# Version 2023.04.13-1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -22,7 +22,10 @@ script:
         data:
           overwrite: true
           url: >-
-            https://raw.githubusercontent.com/topaniot/HomeAssistant_Packages/main/packages/unavailable_entities.yaml
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% set account = states('input_text.packages_account') %}
+            {% set file_path = '/HomeAssistant_Packages/main/packages/unavailable_entities.yaml' %}
+            {{ url + account + file_path }}
 
 group:
   ignored_unavailable:
