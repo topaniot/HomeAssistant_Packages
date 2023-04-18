@@ -1,4 +1,4 @@
-# Version: 2023.04.13-1
+# Version: 2023.04.2
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -238,6 +238,10 @@ automation:
         entity_id: sensor.updates_in_progress
       - platform: homeassistant
         event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - choose:
           - conditions:
