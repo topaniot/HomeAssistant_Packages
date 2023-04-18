@@ -1,4 +1,4 @@
-# Version: 2023.04.13-1
+# Version: 2023.04.2
 # Package - Problems found
 # List all available problems entities with device class problem
 #
@@ -80,6 +80,10 @@ automation:
         entity_id: sensor.problems_detected
       - platform: homeassistant
         event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - choose:
           - conditions:

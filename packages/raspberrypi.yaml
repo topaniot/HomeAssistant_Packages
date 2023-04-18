@@ -1,4 +1,4 @@
-# Version: 2023.04.13-1
+# Version: 2023.04.2
 # Senzors and automations specific for Raspberry PI boards.
 
 script:
@@ -36,7 +36,10 @@ automation:
       - platform: numeric_state
         entity_id: sensor.processor_temperature
         above: '80'
-    condition: []
+    condition: 
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - service: !secret notify_service_server
         data:
