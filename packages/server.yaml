@@ -1,4 +1,4 @@
-# Version: 2023.04.2
+# Version: 2023.04.3
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -127,7 +127,10 @@ automation:
     trigger:
     - platform: homeassistant
       event: start
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
     - service: !secret notify_service_server
       data:
@@ -141,7 +144,10 @@ automation:
     trigger:
     - platform: homeassistant
       event: shutdown
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
     - service: !secret notify_service_server
       data:
@@ -220,7 +226,10 @@ automation:
       - platform: numeric_state
         entity_id: sensor.load_15m
         above: '4'
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - service: !secret notify_service_server
         data:
@@ -240,7 +249,10 @@ automation:
       - platform: numeric_state
         entity_id: sensor.memory_use_percent
         above: '85'
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - service: !secret notify_service_server
         data:
@@ -260,7 +272,10 @@ automation:
       - platform: numeric_state
         entity_id: sensor.disk_use_percent
         above: '70'
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - service: !secret notify_service_server
         data:
