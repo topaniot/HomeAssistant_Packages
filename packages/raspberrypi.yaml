@@ -36,7 +36,10 @@ automation:
       - platform: numeric_state
         entity_id: sensor.processor_temperature
         above: '80'
-    condition: []
+    condition: 
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - service: !secret notify_service_server
         data:
