@@ -1,4 +1,4 @@
-# Version 2023.04.13-1
+# Version 2023.04.2
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -114,6 +114,10 @@ automation:
         entity_id: sensor.unavailable_entities
       - platform: homeassistant
         event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - choose:
           - conditions:
@@ -190,6 +194,10 @@ automation:
         entity_id: sensor.unavailable_sensors
       - platform: homeassistant
         event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - choose:
           - conditions:
