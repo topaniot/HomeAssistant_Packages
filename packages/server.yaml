@@ -292,3 +292,65 @@ automation:
             data:
               addon: core_nginx_proxy
     mode: restart
+
+  - id: maintenance_on_off
+    alias: "|| Maintenance ON/OFF"
+    description: ""
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.updates_in_progress
+    condition: []
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.updates_in_progress
+                below: 1
+            sequence:
+              - service: input_boolean.turn_off
+                data: {}
+                target:
+                  entity_id: input_boolean.maintenance_mode
+          - conditions:
+              - condition: numeric_state
+                entity_id: input_boolean.maintenance_mode
+                above: 2
+            sequence:
+              - service: input_boolean.turn_on
+                data: {}
+                target:
+                  entity_id: input_boolean.maintenance_mode
+    mode: single
+ 
+  - id: maintenance_notifications
+    alias: "|| Maintenance Notifications"
+    description: ""
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.maintenance_mode
+    condition: []
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.maintenance_mode
+                state: "on"
+            sequence:
+              - service: !secret notify_service_server
+                data:
+                  message: >-
+                    Pe parcursul mentenanței pot apărea întreruperi a aplicatiei/dispozitivelor.
+                    Veți primi un mesaj când s-a finalizat mentenanța.
+                  title: Mentenanță în curs!
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.maintenance_mode
+                state: "off"
+            sequence:
+              - service: !secret notify_service_server
+                data:
+                  title: Mentenanță finalizată!
+                  message: "Dacă întâmpinați probleme nu ezitați să ne anunțați"
+    mode: single
