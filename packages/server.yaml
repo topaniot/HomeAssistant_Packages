@@ -1,4 +1,4 @@
-# Version: 2023.04.15-1
+# Version: 2023.04.2
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -22,6 +22,10 @@ input_text:
     name: '|| Packages Account'
     initial: !secret packages_account
 
+input_boolean:
+  maintenance_mode:
+    name: "|| Maintenance Mode"
+    icon: "hass:wrench-clock"
 
 http:
   ip_ban_enabled: true
@@ -37,7 +41,7 @@ downloader:
 # Enable log errors to fire events
 system_log:
   fire_event: true
-  
+
 recorder:
   # db_url: !secret recorder_db_url
   purge_keep_days: !secret recorder_keep_days
@@ -266,7 +270,7 @@ automation:
         data:
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
-    
+
     # Restart NginX addon weekly
   - id: restart_nginx_addon
     alias: "|| Restart NginX Addon"
@@ -288,5 +292,3 @@ automation:
             data:
               addon: core_nginx_proxy
     mode: restart
-
-
