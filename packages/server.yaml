@@ -1,4 +1,4 @@
-# Version: 2023.04.3
+# Version: 2023.04.4
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -329,7 +329,7 @@ automation:
                   entity_id: input_boolean.maintenance_mode
           - conditions:
               - condition: numeric_state
-                entity_id: input_boolean.maintenance_mode
+                entity_id: sensor.updates_in_progress
                 above: 2
             sequence:
               - service: input_boolean.turn_on
