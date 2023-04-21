@@ -359,8 +359,7 @@ automation:
                   message: |
                     🔧 Mentenanță în curs!
                     
-                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor.
-                    Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
+                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
                     
                     ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
           - conditions:
@@ -373,7 +372,6 @@ automation:
                   message: |
                     🎉 Mentenanță finalizată!
                     
-                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile.
-                    Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționarea.
+                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționarea.
                     
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
