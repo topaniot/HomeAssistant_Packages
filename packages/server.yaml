@@ -1,4 +1,4 @@
-# Version: 2023.04.6
+# Version: 2023.04.7
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -372,6 +372,6 @@ automation:
                   message: |
                     🎉 Mentenanță finalizată!
                     
-                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționarea.
+                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
                     
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
