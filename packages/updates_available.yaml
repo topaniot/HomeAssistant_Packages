@@ -1,4 +1,4 @@
-# Version: 2023.04.2
+# Version: 2023.04.4
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -236,6 +236,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_in_progress
+        for: 00:00:10
       - platform: homeassistant
         event: start
     condition:
@@ -255,7 +256,6 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-              - delay: 00:00:10
               - service: !secret notify_service_updates
                 data:
                   message: |
@@ -272,7 +272,6 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: '1'
             sequence:
-              - delay: 00:00:10
               - service: !secret notify_service_updates
                 data:
                   message: |

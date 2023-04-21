@@ -1,4 +1,4 @@
-# Version: 2023.04.4
+# Version: 2023.04.7
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -341,6 +341,7 @@ automation:
   - id: maintenance_notifications
     alias: "|| Maintenance Notifications"
     description: ""
+    mode: single
     trigger:
       - platform: state
         entity_id:
@@ -355,10 +356,12 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
-                  message: >-
-                    Pe parcursul mentenanței pot apărea întreruperi a aplicatiei/dispozitivelor.
-                    Veți primi un mesaj când s-a finalizat mentenanța.
-                  title: Mentenanță în curs!
+                  message: |
+                    🔧 Mentenanță în curs!
+                    
+                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
+                    
+                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
@@ -366,6 +369,9 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
-                  title: Mentenanță finalizată!
-                  message: "Dacă întâmpinați probleme nu ezitați să ne anunțați"
-    mode: single
+                  message: |
+                    🎉 Mentenanță finalizată!
+                    
+                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
+                    
+                    🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
