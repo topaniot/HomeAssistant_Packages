@@ -1,4 +1,4 @@
-# Version: 2023.04.5
+# Version: 2023.04.6
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -356,10 +356,10 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
-                  title: Mentenanță în curs!
                   message: |
-                  
-                    🔧 Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor.
+                    🔧 Mentenanță în curs!
+                    
+                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor.
                     Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
                     
                     ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
@@ -370,11 +370,10 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
-                  title: Mentenanță finalizată!
                   message: |
-                  
-                    🎉 Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile.
+                    🎉 Mentenanță finalizată!
+                    
+                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile.
                     Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționarea.
                     
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
-
