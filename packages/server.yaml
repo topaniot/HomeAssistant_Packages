@@ -356,12 +356,13 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
+                  title: Mentenanță în curs!
                   message: |
+                  
                     🔧 Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor.
                     Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
                     
                     ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
-                  title: 🛠️ Mentenanță în curs!
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
@@ -369,8 +370,9 @@ automation:
             sequence:
               - service: !secret notify_service_server
                 data:
-                  title: 🎉 Mentenanță finalizată!
+                  title: Mentenanță finalizată!
                   message: |
+                  
                     🎉 Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile.
                     Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționarea.
                     
