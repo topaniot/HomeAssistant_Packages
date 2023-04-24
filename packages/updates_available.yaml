@@ -144,7 +144,10 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
       - choose:
           - conditions:
