@@ -1,11 +1,12 @@
-# Version: 2023.04.4
+# Version: 2023.04.5
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
 #
 # You must set in secrets.yaml
 # notify_service_updates: "notify.notify"
-# delay_notify_updates: "24:00:00"
+# 
+# To change the delay create a Delay Updates input number helper with the value of delay in hours
 #
 # If you want to exlcude entities create group ignored_updates in groups.yaml
 #
@@ -46,46 +47,70 @@ template:
         icon: "hass:update"
         state: >
               {% set result = namespace(updates=[]) %}
-                {% for state in states.update 
-                  | selectattr('state', '==', 'on')
-                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
-                %}
-                    {% set result.updates 
+              {% if states.input_number.delay_updates.state is defined %}
+                {% set hours = states('input_number.delay_updates') | int %}
+              {% else %}
+                {% set hours = 10 %}
+              {% endif %}
+              
+              {% for state in states.update 
+                |selectattr('state', '==', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+              %}
+                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                  {% set result.updates 
                       = result.updates + [state.name 
                       ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
                       ~ state.attributes.latest_version ~ ')'] 
                     %}
-                {% endfor %}
-                {% for state in states.binary_sensor
-                  |selectattr('attributes.device_class', 'defined')
-                  |selectattr('attributes.device_class', '==', 'update')
-                  |selectattr('state', 'eq', 'on')
-                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
-                %}
-                    {% set result.updates = result.updates + [state.name ] %}
-                {% endfor %}
+                {% endif %}
+              {% endfor %}
+              
+              {% for state in states.binary_sensor
+                |selectattr('attributes.device_class', 'defined')
+                |selectattr('attributes.device_class', '==', 'update')
+                |selectattr('state', 'eq', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+              %}
+                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                  {% set result.updates = result.updates + [state.name ] %}
+                {% endif %}
+              {% endfor %}
+
               {{ result.updates|count }}
         attributes:
             names: >
               {% set result = namespace(updates=[]) %}
-                {% for state in states.update 
-                  | selectattr('state', '==', 'on')
-                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
-                %}
-                    {% set result.updates 
+              {% if states.input_number.delay_updates.state is defined %}
+                {% set hours = states('input_number.delay_updates') | int %}
+              {% else %}
+                {% set hours = 120 %}
+              {% endif %}
+              
+              {% for state in states.update 
+                |selectattr('state', '==', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+              %}
+                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                  {% set result.updates 
                       = result.updates + [state.name 
                       ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
                       ~ state.attributes.latest_version ~ ')'] 
                     %}
-                {% endfor %}
-                {% for state in states.binary_sensor
-                  |selectattr('attributes.device_class', 'defined')
-                  |selectattr('attributes.device_class', '==', 'update')
-                  |selectattr('state', 'eq', 'on')
-                  |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
-                %}
-                    {% set result.updates = result.updates + [state.name ] %}
-                {% endfor %}
+                {% endif %}
+              {% endfor %}
+              
+              {% for state in states.binary_sensor
+                |selectattr('attributes.device_class', 'defined')
+                |selectattr('attributes.device_class', '==', 'update')
+                |selectattr('state', 'eq', 'on')
+                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+              %}
+                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                  {% set result.updates = result.updates + [state.name ] %}
+                {% endif %}
+              {% endfor %}
+
               {{ result.updates|join (', ') }}
       - name: "|| Updates in Progress"
         icon: "hass:update"
@@ -111,12 +136,6 @@ input_boolean:
     name: "|| Update in Progress Alert"
     icon: "hass:alert-circle"
 
-timer:
-  updates_available:
-    name: '|| Updates Available Timer'
-    duration: !secret delay_notify_updates
-    restore: true
-
 automation:
   # Notify when updates are available
   - id: "updates_available"
@@ -125,55 +144,24 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
-        id: UPDATES_AVAILABLE
-      - platform: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.updates_available
-        id: TIMER_END
-    condition: []
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
     action:
-      - if:
-        - condition: trigger
-          id: UPDATES_AVAILABLE
-        then:
-          - choose:
-              - conditions:
-                  - condition: numeric_state
-                    entity_id: sensor.updates_available
-                    above: 0
-                sequence:
-                  - service: timer.start
-                    data: 
-                      duration: !secret delay_notify_updates
-                    target:
-                      entity_id: timer.updates_available
-              - conditions:
-                  - condition: numeric_state
-                    entity_id: sensor.updates_available
-                    below: 1
-                sequence:
-                  - service: timer.cancel
-                    data: {}
-                    target:
-                      entity_id: timer.updates_available
       - choose:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 above: "0"
                 below: "2"
-              - condition: trigger
-                id: TIMER_END
             sequence:
               - service: !secret notify_service_updates
                 data:
-                  message: >
+                  message: |
                     ⚙️ Este o actualizare disponibilă:
-    
                     – {{ state_attr('sensor.updates_available','names').split(',') |
                     join('
-    
                     –') }}
                   data:
                     disable_notification: true
@@ -186,18 +174,14 @@ automation:
               - condition: numeric_state
                 entity_id: sensor.updates_available
                 above: "1"
-              - condition: trigger
-                id: TIMER_END
             sequence:
               - service: !secret notify_service_updates
                 data:
-                  message: >
+                  message: |
                     ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
                     disponibile:
-    
                     – {{ state_attr('sensor.updates_available','names').split(',') |
                     join('
-    
                     –') }}
                   data:
                     disable_notification: true
