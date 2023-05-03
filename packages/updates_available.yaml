@@ -50,7 +50,7 @@ template:
               {% if states.input_number.delay_updates.state is defined %}
                 {% set hours = states('input_number.delay_updates') | int %}
               {% else %}
-                {% set hours = 10 %}
+                {% set hours = 72 %}
               {% endif %}
               
               {% for state in states.update 
