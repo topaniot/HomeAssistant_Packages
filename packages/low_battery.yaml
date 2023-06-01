@@ -132,6 +132,7 @@ automation:
                 entity_id: input_boolean.low_batteries_alert
                 state: 'on'
             sequence:
+              - delay: !secret delay_notify_problems
               - service: !secret notify_service_battery
                 data:
                   message: |
