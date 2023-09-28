@@ -1,4 +1,4 @@
-# Version: 2023.04.5
+# Version: 2023.09.27
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -50,7 +50,7 @@ template:
               {% if states.input_number.delay_updates.state is defined %}
                 {% set hours = states('input_number.delay_updates') | int %}
               {% else %}
-                {% set hours = 72 %}
+                {% set hours = 120 %}
               {% endif %}
               
               {% for state in states.update 
@@ -84,7 +84,7 @@ template:
               {% if states.input_number.delay_updates.state is defined %}
                 {% set hours = states('input_number.delay_updates') | int %}
               {% else %}
-                {% set hours = 72 %}
+                {% set hours = 120 %}
               {% endif %}
               
               {% for state in states.update 
@@ -284,3 +284,145 @@ automation:
                 target:
                   entity_id: input_boolean.update_in_progress_alert
         default: []
+
+  # Auto install updates
+  - id: "auto_update"
+    alias: "|| Auto Update"
+    description: ""
+    trigger:
+      - platform: time
+        at: 03:30
+    condition: []
+    action:
+      - choose:
+          # Addons Update
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% set result = namespace(updates=[]) %}
+                  {% if states.input_number.delay_autoupdate.state is defined %}
+                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% else %}
+                    {% set hours = 72 %}
+                  {% endif %}
+                  
+                  {% for state in states.update 
+                    |selectattr('state', '==', 'on')
+                    |rejectattr('attributes.device_class', 'defined')
+                    |rejectattr('attributes.device_class', '==', 'firmware')
+                    |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                  %}
+                    {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                      {% set result.updates = result.updates + [state.entity_id] %}
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {{ result.updates|count > 1 }}
+            sequence:
+              - service: update.install
+                data:
+                  backup: true
+                target:
+                  entity_id: >
+                      {% set result = namespace(updates=[]) %}
+                      {% if states.input_number.delay_autoupdate.state is defined %}
+                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                      {% else %}
+                        {% set hours = 72 %}
+                      {% endif %}
+                      
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |rejectattr('attributes.device_class', 'defined')
+                        |rejectattr('attributes.device_class', '==', 'firmware')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                          {% set result.updates = result.updates + [state.entity_id] %}
+                        {% endif %}
+                      {% endfor %}
+                      
+                      {{ result.updates|list }}
+      
+          # Firmware Update
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% set result = namespace(updates=[]) %}
+                  {% if states.input_number.delay_autoupdate.state is defined %}
+                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% else %}
+                    {% set hours = 72 %}
+                  {% endif %}
+                  
+                  {% for state in states.update 
+                    |selectattr('state', '==', 'on')
+                    |selectattr('attributes.device_class', 'defined')
+                    |selectattr('attributes.device_class', '==', 'firmware')
+                    |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                  %}
+                    {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                      {% set result.updates = result.updates + [state.entity_id] %}
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {{ result.updates|count > 1 }}
+            sequence:
+              - service: update.install
+                target:
+                  entity_id: >
+                      {% set result = namespace(updates=[]) %}
+                      {% if states.input_number.delay_autoupdate.state is defined %}
+                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                      {% else %}
+                        {% set hours = 72 %}
+                      {% endif %}
+                      
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |selectattr('attributes.device_class', 'defined')
+                        |selectattr('attributes.device_class', '==', 'firmware')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                        {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                          {% set result.updates = result.updates + [state.entity_id] %}
+                        {% endif %}
+                      {% endfor %}
+                      
+                      {{ result.updates|list }}
+
+          # Core Update
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% if states.input_number.delay_autoupdate.state is defined %}
+                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% else %}
+                    {% set hours = 72 %}
+                  {% endif %}
+                  
+                  {{ as_timestamp(states.update.home_assistant_core_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+            sequence:
+              - service: update.install
+                data:
+                  backup: true
+                target:
+                  entity_id: update.home_assistant_core_update
+
+          # OS Update
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% if states.input_number.delay_autoupdate.state is defined %}
+                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% else %}
+                    {% set hours = 120 %}
+                  {% endif %}
+                  
+                  {{ as_timestamp(states.update.home_assistant_operating_system_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+            sequence:
+              - service: update.install
+                data:
+                  backup: true
+                target:
+                  entity_id: update.home_assistant_operating_system_update
