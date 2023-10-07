@@ -317,7 +317,7 @@ automation:
                     {% endif %}
                   {% endfor %}
                   
-                  {{ result.updates|count > 1 }}
+                  {{ result.updates|count > 0 }}
             sequence:
               - service: update.install
                 data:
@@ -366,7 +366,7 @@ automation:
                     {% endif %}
                   {% endfor %}
                   
-                  {{ result.updates|count > 1 }}
+                  {{ result.updates|count > 0 }}
             sequence:
               - service: update.install
                 target:
