@@ -1,4 +1,4 @@
-# Version: 2023.09.27
+# Version: 2023.10.10
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -308,7 +308,6 @@ automation:
                   
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
-                    |rejectattr('attributes.device_class', 'defined')
                     |rejectattr('attributes.device_class', '==', 'firmware')
                     |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                   %}
@@ -333,7 +332,6 @@ automation:
                       
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
-                        |rejectattr('attributes.device_class', 'defined')
                         |rejectattr('attributes.device_class', '==', 'firmware')
                         |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                       %}
@@ -343,7 +341,72 @@ automation:
                       {% endfor %}
                       
                       {{ result.updates|list }}
-      
+          # ESPHome Update 
+          - conditions:
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: >
+                      {% if states.input_number.delay_autoupdate.state is defined %}
+                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                      {% else %}
+                        {% set hours = 120 %}
+                      {% endif %}
+                      {{ as_timestamp(states.update.esphome_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                  - condition: template
+                    value_template: >
+                      {% set result = namespace(updates=[]) %}
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |selectattr('attributes.title', '==', 'ESPHome')
+                        |rejectattr('entity_id', '==', 'update.esphome_update')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endfor %}
+                      {{ result.updates|count > 0 }}
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: update.esphome_update
+                    state: "on"
+                then:
+                  - service: update.install
+                    data:
+                      backup: true
+                    target:
+                      entity_id: update.esphome_update
+                  - delay: "00:10:00"
+              - if:
+                  - condition: template
+                    value_template: >
+                      {% set result = namespace(updates=[]) %}
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |selectattr('attributes.title', '==', 'ESPHome')
+                        |rejectattr('entity_id', '==', 'update.esphome_update')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endfor %}
+                      {{ result.updates|count > 0 }}
+                then:
+                  - service: update.install
+                    data: {}
+                    target:
+                      entity_id: >
+                          {% set result = namespace(updates=[]) %}
+                          {% for state in states.update 
+                            |selectattr('state', '==', 'on')
+                            |selectattr('attributes.title', '==', 'ESPHome')
+                            |rejectattr('entity_id', '==', 'update.esphome_update')
+                            |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                          %}
+                            {% set result.updates = result.updates + [state.entity_id] %}
+                          {% endfor %}
+                          {{ result.updates|list }}
+
+
           # Firmware Update
           - conditions:
               - condition: template
@@ -357,7 +420,6 @@ automation:
                   
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
-                    |selectattr('attributes.device_class', 'defined')
                     |selectattr('attributes.device_class', '==', 'firmware')
                     |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                   %}
@@ -380,7 +442,6 @@ automation:
                       
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
-                        |selectattr('attributes.device_class', 'defined')
                         |selectattr('attributes.device_class', '==', 'firmware')
                         |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                       %}
@@ -400,7 +461,6 @@ automation:
                   {% else %}
                     {% set hours = 72 %}
                   {% endif %}
-                  
                   {{ as_timestamp(states.update.home_assistant_core_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
             sequence:
               - service: update.install
@@ -418,7 +478,6 @@ automation:
                   {% else %}
                     {% set hours = 120 %}
                   {% endif %}
-                  
                   {{ as_timestamp(states.update.home_assistant_operating_system_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
             sequence:
               - service: update.install
