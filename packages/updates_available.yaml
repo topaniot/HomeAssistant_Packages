@@ -1,4 +1,4 @@
-# Version: 2023.10.10
+# Version: 2023.10.2
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -352,7 +352,12 @@ automation:
                       {% else %}
                         {% set hours = 120 %}
                       {% endif %}
-                      {{ as_timestamp(states.update.esphome_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                      
+                      {% if states.update.esphome_update.state is defined %}
+                        {{ as_timestamp(states.update.esphome_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                      {% else %}
+                        {{ false }}
+                      {% endif %}
                   - condition: template
                     value_template: >
                       {% set result = namespace(updates=[]) %}
@@ -367,9 +372,13 @@ automation:
                       {{ result.updates|count > 0 }}
             sequence:
               - if:
-                  - condition: state
-                    entity_id: update.esphome_update
-                    state: "on"
+                  - condition: template
+                    value_template: >
+                      {% if states.update.esphome_update.state is defined  %}
+                        {{ is_state('update.esphome_update', 'on') }}
+                      {% else %}
+                        {{ false }}
+                      {% endif %}
                 then:
                   - service: update.install
                     data:
