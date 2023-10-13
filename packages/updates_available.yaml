@@ -1,4 +1,4 @@
-# Version: 2023.10.5
+# Version: 2023.10.6
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -160,7 +160,14 @@ automation:
                 above: "0"
                 below: "2"
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     ⚙️ Este o actualizare disponibilă:
@@ -179,7 +186,14 @@ automation:
                 entity_id: sensor.updates_available
                 above: "1"
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
@@ -203,7 +217,14 @@ automation:
                 state: "on"
                 enabled: true
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: 🎉 Dispozitivele și serviciile sunt actualizate!
                   data:
@@ -244,7 +265,14 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     🔧 Este o actualizare în progress:
@@ -260,7 +288,14 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: '1'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     🔧 Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
@@ -279,7 +314,14 @@ automation:
                 entity_id: input_boolean.update_in_progress_alert
                 state: 'on'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: "🎉 Actualizare finalizată!"
                   data:
