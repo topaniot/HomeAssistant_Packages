@@ -24,7 +24,11 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
+            {% if states.input_text.packages_account.state is defined %}
+                {% set account = states('input_text.packages_account') %}
+              {% else %}
+                {% set account = 'topaniot' %}
+            {% endif %}
             {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
             {{ url + account + file_path }}
 
