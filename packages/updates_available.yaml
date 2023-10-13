@@ -1,4 +1,4 @@
-# Version: 2023.10.4
+# Version: 2023.10.5
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -352,7 +352,7 @@ automation:
                       {% if states.input_number.delay_autoupdate.state is defined %}
                         {% set hours = states('input_number.delay_autoupdate') | int %}
                       {% else %}
-                        {% set hours = 120 %}
+                        {% set hours = 96 %}
                       {% endif %}
                       
                       {% if states.update.esphome_update.state is defined %}
