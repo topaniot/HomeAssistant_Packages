@@ -1,4 +1,4 @@
-# Version: 2023.09.27
+# Version: 2023.10.6
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -24,7 +24,11 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
+            {% if states.input_text.packages_account.state is defined %}
+                {% set account = states('input_text.packages_account') %}
+              {% else %}
+                {% set account = 'topaniot' %}
+            {% endif %}
             {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
             {{ url + account + file_path }}
 
@@ -156,7 +160,14 @@ automation:
                 above: "0"
                 below: "2"
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     ⚙️ Este o actualizare disponibilă:
@@ -175,7 +186,14 @@ automation:
                 entity_id: sensor.updates_available
                 above: "1"
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
@@ -199,7 +217,14 @@ automation:
                 state: "on"
                 enabled: true
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: 🎉 Dispozitivele și serviciile sunt actualizate!
                   data:
@@ -240,7 +265,14 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     🔧 Este o actualizare în progress:
@@ -256,7 +288,14 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: '1'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: |
                     🔧 Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
@@ -275,7 +314,14 @@ automation:
                 entity_id: input_boolean.update_in_progress_alert
                 state: 'on'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                    {% else %}
+                      {% set notify_service_updates = 'notify' %}
+                  {% endif %}
+                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
+                  {{ "notify." + notify_service_updates }}
                 data:
                   message: "🎉 Actualizare finalizată!"
                   data:
@@ -295,6 +341,7 @@ automation:
     condition: []
     action:
       - choose:
+      
           # Addons Update
           - conditions:
               - condition: template
@@ -308,8 +355,8 @@ automation:
                   
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
-                    |rejectattr('attributes.device_class', 'defined')
                     |rejectattr('attributes.device_class', '==', 'firmware')
+                    |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update','update.esphome_update'])
                     |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                   %}
                     {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
@@ -333,8 +380,8 @@ automation:
                       
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
-                        |rejectattr('attributes.device_class', 'defined')
                         |rejectattr('attributes.device_class', '==', 'firmware')
+                        |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update'])
                         |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                       %}
                             {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
@@ -343,7 +390,82 @@ automation:
                       {% endfor %}
                       
                       {{ result.updates|list }}
-      
+                      
+          # ESPHome Update 
+          - conditions:
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: >
+                      {% if states.input_number.delay_autoupdate.state is defined %}
+                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                      {% else %}
+                        {% set hours = 96 %}
+                      {% endif %}
+                      
+                      {% if states.update.esphome_update.state is defined %}
+                        {{ as_timestamp(states.update.esphome_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                      {% else %}
+                        {{ false }}
+                      {% endif %}
+                  - condition: template
+                    value_template: >
+                      {% set result = namespace(updates=[]) %}
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |selectattr('attributes.title', '==', 'ESPHome')
+                        |rejectattr('entity_id', '==', 'update.esphome_update')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endfor %}
+                      {{ result.updates|count > 0 }}
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {% if states.update.esphome_update.state is defined  %}
+                        {{ is_state('update.esphome_update', 'on') }}
+                      {% else %}
+                        {{ false }}
+                      {% endif %}
+                then:
+                  - service: update.install
+                    data:
+                      backup: true
+                    target:
+                      entity_id: update.esphome_update
+                  - delay: "00:10:00"
+              - if:
+                  - condition: template
+                    value_template: >
+                      {% set result = namespace(updates=[]) %}
+                      {% for state in states.update 
+                        |selectattr('state', '==', 'on')
+                        |selectattr('attributes.title', '==', 'ESPHome')
+                        |rejectattr('entity_id', '==', 'update.esphome_update')
+                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                      %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endfor %}
+                      {{ result.updates|count > 0 }}
+                then:
+                  - service: update.install
+                    data: {}
+                    target:
+                      entity_id: >
+                          {% set result = namespace(updates=[]) %}
+                          {% for state in states.update 
+                            |selectattr('state', '==', 'on')
+                            |selectattr('attributes.title', '==', 'ESPHome')
+                            |rejectattr('entity_id', '==', 'update.esphome_update')
+                            |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                          %}
+                            {% set result.updates = result.updates + [state.entity_id] %}
+                          {% endfor %}
+                          {{ result.updates|list }}
+
+
           # Firmware Update
           - conditions:
               - condition: template
@@ -357,7 +479,6 @@ automation:
                   
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
-                    |selectattr('attributes.device_class', 'defined')
                     |selectattr('attributes.device_class', '==', 'firmware')
                     |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                   %}
@@ -380,7 +501,6 @@ automation:
                       
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
-                        |selectattr('attributes.device_class', 'defined')
                         |selectattr('attributes.device_class', '==', 'firmware')
                         |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                       %}
@@ -400,7 +520,6 @@ automation:
                   {% else %}
                     {% set hours = 72 %}
                   {% endif %}
-                  
                   {{ as_timestamp(states.update.home_assistant_core_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
             sequence:
               - service: update.install
@@ -418,11 +537,10 @@ automation:
                   {% else %}
                     {% set hours = 120 %}
                   {% endif %}
-                  
                   {{ as_timestamp(states.update.home_assistant_operating_system_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
             sequence:
               - service: update.install
                 data:
-                  backup: true
+                  backup: false
                 target:
                   entity_id: update.home_assistant_operating_system_update
