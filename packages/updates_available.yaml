@@ -341,6 +341,7 @@ automation:
     condition: []
     action:
       - choose:
+      
           # Addons Update
           - conditions:
               - condition: template
@@ -355,7 +356,7 @@ automation:
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
                     |rejectattr('attributes.device_class', '==', 'firmware')
-                    |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update'])
+                    |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update','update.esphome_update'])
                     |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
                   %}
                     {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
@@ -389,6 +390,7 @@ automation:
                       {% endfor %}
                       
                       {{ result.updates|list }}
+                      
           # ESPHome Update 
           - conditions:
               - condition: or
