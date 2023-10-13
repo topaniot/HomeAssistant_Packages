@@ -1,4 +1,4 @@
-# Version: 2023.10.3
+# Version: 2023.10.4
 #
 # Package - Updates Available
 # List all available updates of entities with device class update
@@ -493,6 +493,6 @@ automation:
             sequence:
               - service: update.install
                 data:
-                  backup: true
+                  backup: false
                 target:
                   entity_id: update.home_assistant_operating_system_update
