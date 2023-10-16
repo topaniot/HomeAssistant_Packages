@@ -1,6 +1,6 @@
-# Version: 2023.04.13-1
-# Package Asuswrt
-# For this to work asuswrt integrations needs to be setup.
+# Version: 2023.10.1
+# Asuswrt Package
+# For this to work asuswrt integration needs to be setup.
 
 
 script:
@@ -12,9 +12,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/asuswrt.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'asuswrt.yaml' %}
+            {{ url + account + path + name }}
 
 
 automation:
@@ -28,11 +33,23 @@ automation:
         above: '80'
     condition: []
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_cpu_temperature' ) | float < 75 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
     mode: single
@@ -48,11 +65,23 @@ automation:
         above: '60'
     condition: []
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_2_4ghz_temperature' ) | float < 55 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
     mode: single
@@ -68,11 +97,23 @@ automation:
         above: '60'
     condition: []
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 Asuswrt 5GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_5ghz_temperature' ) | float < 55 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
     mode: single
