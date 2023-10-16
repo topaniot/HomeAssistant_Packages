@@ -1,5 +1,7 @@
-# Version: 2023.04.13-1
+# Version: 2023.10.1
 # Insights package
+#
+# This package create sensors to see statistics from HA instalation.
 
 script:
   # Script to update this package from GitHub
@@ -10,9 +12,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/insights.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'insights.yaml' %}
+            {{ url + account + path + name }}
             
 template:
   - trigger:
