@@ -1,10 +1,12 @@
-# Version 2023.04.2
+# Version 2023.10.1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
-# You must set in secrets.yaml
-# delay_notify_unavailable: 00:10:00
-# notify_service_unavailable: notify.notify
+# To change the delay of unavailable notifications create a input number helper named: "Delay notifiy unavailable"
+# and set the number of minutes to wait until send the notification
+#
+# To change the notification service create an input text helper named: "Notify service unavailable"
+# and put inside the name of the service you want.
 # 
 # If you want to exlcude entities create group ignored_unavailable 
 # and ignored_unavailable_sensors in groups.yaml
@@ -23,9 +25,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/unavailable_entities.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'unavailable_entities.yaml' %}
+            {{ url + account + path + name }}
 
 group:
   ignored_unavailable:
@@ -135,13 +142,26 @@ automation:
                   {{ states('input_number.unavailable_entities_last_triggered') | int
                   != states('sensor.unavailable_entities') | int }}
             sequence:
-              - delay: !secret delay_notify_unavailable
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_unavailable.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.unavailable_entities_last_triggered
                 data:
                   value: "{{ states('sensor.unavailable_entities') | int }}"
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔴 Este un dispozitiv indisponibil:
@@ -156,13 +176,26 @@ automation:
                   {{ states('input_number.unavailable_entities_last_triggered') | int
                   != states('sensor.unavailable_entities') | int }}
             sequence:
-              - delay: !secret delay_notify_unavailable
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_unavailable.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.unavailable_entities_last_triggered
                 data:
                   value: "{{ states('sensor.unavailable_entities') | int }}"
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:
@@ -176,7 +209,13 @@ automation:
                 value_template: >-
                   {{ states('input_number.unavailable_entities_last_triggered') | int > 0 }}
             sequence:
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: "🟢 Toate dispozitivele funcționzează!"
               - service: input_number.set_value
@@ -215,13 +254,26 @@ automation:
                   {{ states('input_number.unavailable_sensors_last_triggered') | int
                   != states('sensor.unavailable_sensors') | int }}
             sequence:
-              - delay: !secret delay_notify_unavailable
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_unavailable.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.unavailable_sensors_last_triggered
                 data:
                   value: "{{ states('sensor.unavailable_sensors') | int }}"
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔴 Este un senzor indisponibil:
@@ -236,13 +288,26 @@ automation:
                   {{ states('input_number.unavailable_sensors_last_triggered') | int
                   != states('sensor.unavailable_sensors') | int }}
             sequence:
-              - delay: !secret delay_notify_unavailable
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_unavailable.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.unavailable_sensors_last_triggered
                 data:
                   value: "{{ states('sensor.unavailable_sensors') | int }}"
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔴 Sunt {{ states('sensor.unavailable_sensors')|int }} senzori indisponibili:
@@ -256,7 +321,13 @@ automation:
                 value_template: >-
                   {{ states('input_number.unavailable_sensors_last_triggered') | int > 0 }}
             sequence:
-              - service: !secret notify_service_unavailable
+              - service: >-
+                  {% if states.input_text.notify_service_unavailable.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_unavailable') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: "🟢 Toți senzorii funcționzează!"
               - service: input_number.set_value
