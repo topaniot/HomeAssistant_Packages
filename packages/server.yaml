@@ -43,13 +43,7 @@ system_log:
   fire_event: true
 
 recorder:
-  purge_keep_days: >-
-    {% if states.input_number.purge_keep_days.state is defined %}
-      {% set days = states('input_number.purge_keep_days') | int %}
-    {% else %}
-      {% set days = 15 %}
-    {% endif %}
-    {{ days }}
+  purge_keep_days: !secret recorder_keep_days
   exclude:
     entities:
       - automation.healthchecks
