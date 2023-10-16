@@ -1,11 +1,13 @@
-# Version: 2023.04.13-1
-# Package - Low Batteries
-# Count and list of entities device class battery with the value under 30
+# Version: 2023.10.1
+# Low Batteries Package
 #
-# You must set in secrets.yaml
-# notify_service_battery: notify.notify
-# delay: !secret delay_notify_problems
-# If you want to exlcude entities create group ignored_entities in groups.yaml
+# Count and list of entities device class battery with the value under 20
+#
+# To change the delay of low battery notifications create a input number helper named: "Delay notifiy battery"
+# and set the number of minutes to wait until send the notification
+#
+# To change the notification service create an input text helper named: "Notify service battery"
+# and put inside the name of the service you want. 
 #
 # Example:
 #  ignored_batteries:
@@ -21,9 +23,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/low_battery.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'low_battery.yaml' %}
+            {{ url + account + path + name }}
    
    
 group:
@@ -44,30 +51,38 @@ template:
       - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% set threshold = 20 %}
+              {% if states.input_number.battery_level_threshold.state is defined %}
+                {% set threshold = states('input_number.battery_level_threshold') | int %}
+              {% else %}
+                {% set threshold = 20 %}
+              {% endif %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor 
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if 0 <= state.state | int (-1) < threshold | int  %}
-                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
-                {% endif %}
+              {% if 0 <= state.state | int (-1) < threshold | int  %}
+                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+              {% endif %}
               {% endfor %}
               {{ result.sensors|count }}
         attributes:
             names: >
-              {% set threshold = 20 %}
+              {% if states.input_number.battery_level_threshold.state is defined %}
+                {% set threshold = states('input_number.battery_level_threshold') | int %}
+              {% else %}
+                {% set threshold = 20 %}
+              {% endif %}
               {% set result = namespace(sensors=[]) %}
               {% for state in states.sensor 
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'battery')
                 |rejectattr('entity_id','in',state_attr('group.ignored_batteries','entity_id')) 
               %}
-                {% if 0 <= state.state | int (-1) < threshold | int  %}
-                  {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
-                {% endif %}
+              {% if 0 <= state.state | int (-1) < threshold | int  %}
+                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+              {% endif %}
               {% endfor %}
               {{ result.sensors|join (', ') }}
 
@@ -99,11 +114,24 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-              - delay: !secret delay_notify_problems
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_battery.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_battery') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.low_batteries_alert
-              - service: !secret notify_service_battery
+              - service: >-
+                  {% if states.input_text.notify_service_battery.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_battery') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚠️ Este un dispozitiv cu baterie descărcată:
@@ -114,11 +142,24 @@ automation:
                 entity_id: sensor.low_batteries
                 above: '1'
             sequence:
-              - delay: !secret delay_notify_problems
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_battery.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_battery') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.low_batteries_alert
-              - service: !secret notify_service_battery
+              - service: >-
+                  {% if states.input_text.notify_service_battery.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_battery') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚠️ Sunt {{ states('sensor.low_batteries')|int }} dispozitive cu bateria descărcată:
@@ -132,8 +173,20 @@ automation:
                 entity_id: input_boolean.low_batteries_alert
                 state: 'on'
             sequence:
-              - delay: !secret delay_notify_problems
-              - service: !secret notify_service_battery
+              - delay: >-
+                    {% if states.input_number.delay_notify_battery.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_battery') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
+              - service: >-
+                  {% if states.input_text.notify_service_battery.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_battery') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔋 Starea bateriilor este bună!
