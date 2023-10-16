@@ -1,10 +1,13 @@
-# Version: 2023.04.2
-# Package - Problems found
+# Version: 2023.10.1
+# Problems found Package
+#
 # List all available problems entities with device class problem
 #
-# You must set in secrets.yaml
-# notify_service_problems: "notify.notify"
-# delay_notify_problems: "00:10:00"
+# To change the delay of problems notifications create a input number helper named: "Delay notifiy problems"
+# and set the number of minutes to wait until send the notification
+#
+# To change the notification service create an input text helper named: "Notify service problems"
+# and put inside the name of the service you want. 
 #
 # If you want to exlcude entities create group ignored_problems in groups.yaml
 #
@@ -22,9 +25,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/problems.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'problems.yaml' %}
+            {{ url + account + path + name }}
             
             
 group:
@@ -101,13 +109,26 @@ automation:
                   {{ states('input_number.problems_detected_last_triggered') | int
                   != states('sensor.problems_detected') | int }}
             sequence:
-              - delay: !secret delay_notify_problems
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_problems.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_problems') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
                   value: "{{ states('sensor.problems_detected') | int }}"
-              - service: !secret notify_service_problems
+              - service: >-
+                  {% if states.input_text.notify_service_problems.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_problems') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚠️ Este o problema:
@@ -122,13 +143,26 @@ automation:
                   {{ states('input_number.problems_detected_last_triggered') | int
                   != states('sensor.problems_detected') | int }}
             sequence:
-              - delay: !secret delay_notify_problems
+              - delay: 
+                  minutes: >-
+                    {% if states.input_number.delay_notify_problems.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_problems') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
               - service: input_number.set_value
                 target:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
                   value: "{{ states('sensor.problems_detected') | int }}"
-              - service: !secret notify_service_problems
+              - service: >-
+                  {% if states.input_text.notify_service_problems.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_problems') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚠️ Sunt {{ states('sensor.problems_detected')|int }} probleme:
@@ -142,7 +176,13 @@ automation:
                 value_template: >-
                   {{ states('input_number.problems_detected_last_triggered') | int > 0 }}
             sequence:
-              - service: !secret notify_service_problems
+              - service: >-
+                  {% if states.input_text.notify_service_problems.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_problems') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: "👌 Probleme rezolvate!"
               - service: input_number.set_value
