@@ -1,4 +1,4 @@
-# Version: 2023.04.13-1
+# Version: 2023.10.1
 # Themes Package
 
 script:
@@ -10,9 +10,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/themes.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'themes.yaml' %}
+            {{ url + account + path + name }}
 frontend:
   themes:
     # This theme removes the backgound of cards.
