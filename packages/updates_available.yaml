@@ -1,4 +1,4 @@
-# Version: 2023.10.7
+# Version: 2023.10.9
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -40,6 +40,11 @@ script:
             {% set name = 'updates_available.yaml' %}
             {{ url + account + path + name }}
 
+group:
+  ignored_updates:
+    name: "|| Ignored Updates"
+    entities: []
+
   turn_off_automations:
     entities:
       - automation.updates_available
@@ -53,6 +58,12 @@ template:
       - name: "|| Updates Available"
         icon: "hass:update"
         state: >
+              {% if states.input_select.ignored_updates.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_updates','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {% set result = namespace(updates=[]) %}
               {% if states.input_number.delay_notify_updates.state is defined %}
                 {% set hours = states('input_number.delay_notify_updates') | int %}
@@ -62,7 +73,7 @@ template:
               
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates 
@@ -87,6 +98,12 @@ template:
               {{ result.updates|count }}
         attributes:
             names: >
+              {% if states.input_select.ignored_updates.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_updates','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {% set result = namespace(updates=[]) %}
               {% if states.input_number.delay_notify_updates.state is defined %}
                 {% set hours = states('input_number.delay_notify_updates') | int %}
@@ -96,7 +113,7 @@ template:
               
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates 
