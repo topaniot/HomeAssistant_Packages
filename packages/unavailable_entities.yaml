@@ -1,20 +1,15 @@
-# Version 2023.10.1
+# Version 2023.10.2
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
-# To change the delay of unavailable notifications create a input number helper named: "Delay notifiy unavailable"
+# To change the delay of unavailable notifications create a input number helper named: "|| Delay Notifiy Unavailable"
 # and set the number of minutes to wait until send the notification
 #
-# To change the notification service create an input text helper named: "Notify service unavailable"
+# To change the notification service create an input text helper named: "|| Notify Service Unavailable"
 # and put inside the name of the service you want.
 # 
-# If you want to exlcude entities create group ignored_unavailable 
-# and ignored_unavailable_sensors in groups.yaml
-#
-# Example:
-#  ignored_unavailable:
-#    entities:
-#       - switch.heater
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Unavailable" 
+# and add all entity id's that you want to exclude as options.
 
 script:
   # Script to update this package from GitHub
@@ -35,13 +30,6 @@ script:
             {{ url + account + path + name }}
 
 group:
-  ignored_unavailable:
-    name: "|| Ingnored Unavailable Devices"
-    entities: []
-  ignored_unavailable_sensors:
-    name: "|| Ingnored Unavailable Sensors"
-    entities: []
-
   turn_off_automations:
     entities:
       - automation.unavailable_entities
@@ -55,18 +43,30 @@ template:
       - name: "|| Unavailable Entities"
         icon: "hass:shape"
         state: >
+              {% if states.input_select.ignored_unavailable.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {{ states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
+                |map(attribute='name')|join(', ')
                 |list|count
               }}
         attributes:
             names: >
+              {% if states.input_select.ignored_unavailable.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {{ states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join(', ')
               }}
 
@@ -77,22 +77,34 @@ template:
       - name: "|| Unavailable Sensors"
         icon: "hass:shape"
         state: >
+              {% if states.input_select.ignored_unavailable.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
                 |selectattr('state', 'in', ['unavailable','unknown','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable_sensors','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |list|count
               }}
         attributes:
             names: >
+              {% if states.input_select.ignored_unavailable.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                  
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
                 |selectattr('state', 'in', ['unavailable','unknown','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_unavailable_sensors','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
 
