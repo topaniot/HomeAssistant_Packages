@@ -3,18 +3,16 @@
 #
 # List all available problems entities with device class problem
 #
-# To change the delay of problems notifications create a input number helper named: "Delay notifiy problems"
-# and set the number of minutes to wait until send the notification
+# To change the delay of problems notifications create a input number helper named: "|| Delay Notifiy Problems"
+# and set the number of minutes to wait until send the notification.
 #
-# To change the notification service create an input text helper named: "Notify service problems"
+# To change the notification service create an input text helper named: "|| Notify Service Problems"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create group ignored_problems in groups.yaml
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Problems" 
+# and add all entity id's that you want to exclude as options.
 #
-# Example:
-# ignored_problems:
-#   entities:
-#     - binary_sensor.sensor_active_2h
+
 
 script:
   # Script to update this package from GitHub
@@ -36,10 +34,6 @@ script:
             
             
 group:
-  ignored_problems:
-    name: "|| Ignored Updates"
-    entities: []
-
   turn_off_automations:
     entities:
       - automation.problems_detected
@@ -52,20 +46,32 @@ template:
       - name: "|| Problems Detected"
         icon: "hass:alert-outline"
         state: >
+              {% if states.input_select.ignored_problems.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_problems','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_problems','entity_id'))
+                |rejectattr('state', 'in', ['on','unknown','unavailable','none'])
+                |rejectattr('entity_id','in', ignored )
                 |list|count 
               }}
         attributes:
             names: >
+              {% if states.input_select.ignored_problems.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_problems','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_problems','entity_id'))
+                |rejectattr('state', 'in', ['on','unknown','unavailable','none'])
+                |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
 
@@ -110,7 +116,7 @@ automation:
                   != states('sensor.problems_detected') | int }}
             sequence:
               - delay: 
-                  minutes: >-
+                  minutes: >
                     {% if states.input_number.delay_notify_problems.state is defined %}
                       {% set minutes = states('input_number.delay_notify_problems') | int %}
                     {% else %}
@@ -122,7 +128,7 @@ automation:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
                   value: "{{ states('sensor.problems_detected') | int }}"
-              - service: >-
+              - service: >
                   {% if states.input_text.notify_service_problems.state is defined %}
                     {% set notify_service = states('input_text.notify_service_problems') %}
                   {% else %}
@@ -139,7 +145,7 @@ automation:
                 entity_id: sensor.problems_detected
                 above: '1'
               - condition: template
-                value_template: >-
+                value_template: >
                   {{ states('input_number.problems_detected_last_triggered') | int
                   != states('sensor.problems_detected') | int }}
             sequence:
