@@ -1,4 +1,4 @@
-# Version: 2023.10.1
+# Version: 2023.10.2
 # Problems found Package
 #
 # List all available problems entities with device class problem
@@ -55,7 +55,7 @@ template:
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['on','unknown','unavailable','none'])
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |list|count 
               }}
@@ -70,7 +70,7 @@ template:
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['on','unknown','unavailable','none'])
+                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
