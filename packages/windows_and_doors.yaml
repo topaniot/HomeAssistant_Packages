@@ -1,13 +1,11 @@
-# Version: 2023.10.1
+# Version: 2023.10.2
 # Open Windows Package
 # This package create a sensor with number of open windows
 #
-# If you want to exlcude entities create group ignored_windows/ignored_doors in groups.yaml
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Doors" 
+# for doors or "|| Ignored Windows" for windows
+# and add all entity id's that you want to exclude as options.
 #
-# Example:
-# ignored_updates:
-#   entities:
-#     - binary_sensor.window
 
 
 script:
@@ -29,16 +27,6 @@ script:
             {{ url + account + path + name }}
 
 
-group:
-  ignored_windows:
-    name: "|| Ignored Windows"
-    entities: []
-
-  ignored_doors:
-    name: "|| Ignored Doors"
-    entities: []
-
-
 template:
   - trigger:
       - platform: time_pattern
@@ -47,39 +35,62 @@ template:
       - name: "Open Windows"
         icon: "hass:window-open"
         state: >
+              {% if states.input_select.ignored_windows.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_windows','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','window')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |list|count 
               }}
         attributes:
             names: >
+              {% if states.input_select.ignored_windows.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_windows','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','window')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_windows','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
 
       - name: "Open Doors"
         icon: "hass:door-open"
         state: >
+              {% if states.input_select.ignored_doors.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_doors','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+              
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','door')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |list|count 
               }}
         attributes:
             names: >
+              {% if states.input_select.ignored_doors.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_doors','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+              
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','door')
                 |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in',state_attr('group.ignored_doors','entity_id'))
+                |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
