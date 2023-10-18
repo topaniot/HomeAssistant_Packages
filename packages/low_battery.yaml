@@ -9,7 +9,7 @@
 # To change the notification service create an input text helper named: "|| Notify Service Batteries"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create an imput select helper named: "|| Ignored Problems" 
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Batteries" 
 # and add all entity id's that you want to exclude as options.
 #
 
