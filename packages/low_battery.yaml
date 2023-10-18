@@ -9,10 +9,9 @@
 # To change the notification service create an input text helper named: "|| Notify Service Batteries"
 # and put inside the name of the service you want. 
 #
-# Example:
-#  ignored_batteries:
-#    entities:
-#       - sensor.iphone_battery_level
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Problems" 
+# and add all entity id's that you want to exclude as options.
+#
 
 script:
   # Script to update this package from GitHub
