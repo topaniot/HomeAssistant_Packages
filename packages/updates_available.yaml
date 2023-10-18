@@ -5,22 +5,18 @@
 # Also send notifications when updates are installed and finished. And if for some reason
 # some updates are not installed you will recieve notification that updates are available.
 #
-# To change the delay of updates notifications create a input number helper named: "Delay notifiy updates"
+# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
 # 
-# To change the delay of installing updates create a input number helper called: "Delay auto update"
+# To change the delay of installing updates create a input number helper called: "|| Delay Auto Update"
 # and set how old should be the update before installing
 #
-# To change the notification service create an input text helper named: "Notify service updates"
+# To change the notification service create an input text helper named: "|| Notify Service Updates"
 # and put inside the name of the service you want. 
 #
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Updates" 
+# and add all entity id's that you want to exclude as options.
 #
-# If you want to exlcude entities from notifications and instalation create group ignored_updates in groups.yaml
-#
-# Example:
-# ignored_updates:
-#   entities:
-#     - update.entity_id
 
 script:
   # Script to update this package from GitHub
@@ -41,10 +37,6 @@ script:
             {{ url + account + path + name }}
 
 group:
-  ignored_updates:
-    name: "|| Ignored Updates"
-    entities: []
-
   turn_off_automations:
     entities:
       - automation.updates_available
@@ -88,7 +80,7 @@ template:
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'update')
                 |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                |rejectattr('entity_id','in', ignored ) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates = result.updates + [state.name ] %}
@@ -128,7 +120,7 @@ template:
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'update')
                 |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates = result.updates + [state.name ] %}
@@ -465,11 +457,11 @@ automation:
                         |selectattr('state', '==', 'on')
                         |selectattr('attributes.title', '==', 'ESPHome')
                         |rejectattr('entity_id', 'in', ['update.esphome_update'])
-                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                        |rejectattr('entity_id','in', ignored )  
                       %}
                         {% set result.updates = result.updates + [state.entity_id] %}
                       {% endfor %}
-                      {{ result.updates|count > 0 }}
+                      {{ result.updates | count > 0 }}
             sequence:
               - if:
                   - condition: template
@@ -495,7 +487,7 @@ automation:
                             |selectattr('state', '==', 'on')
                             |selectattr('attributes.title', '==', 'ESPHome')
                             |rejectattr('entity_id', '==', 'update.esphome_update')
-                            |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                            |rejectattr('entity_id','in', ignored )  
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
@@ -510,7 +502,7 @@ automation:
                             |selectattr('state', '==', 'on')
                             |selectattr('attributes.title', '==', 'ESPHome')
                             |rejectattr('entity_id', '==', 'update.esphome_update')
-                            |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                            |rejectattr('entity_id','in', ignored )  
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
