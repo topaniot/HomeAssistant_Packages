@@ -2,10 +2,10 @@
 # HACS package
 # Notify when there are HACS updates pending.
 #
-# To change the delay of updates notifications create a input number helper named: "Delay notifiy updates"
+# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
 #
-# To change the notification service create an input text helper named: "Notify service updates"
+# To change the notification service create an input text helper named: "|| Notify Service Updates"
 # and put inside the name of the service you want. 
 
 script:
@@ -62,7 +62,7 @@ automation:
                     {% if states.input_number.delay_notify_updates.state is defined %}
                       {% set hours = states('input_number.delay_notify_updates') | int %}
                     {% else %}
-                      {% set hours = 48 %}
+                      {% set hours = 120 %}
                     {% endif %}
                     {{ hours }}
               - service: input_boolean.turn_on
@@ -90,7 +90,7 @@ automation:
                     {% if states.input_number.delay_notify_updates.state is defined %}
                       {% set hours = states('input_number.delay_notify_updates') | int %}
                     {% else %}
-                      {% set hours = 48 %}
+                      {% set hours = 120 %}
                     {% endif %}
                     {{ hours }}
               - service: input_boolean.turn_on
