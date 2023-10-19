@@ -1,19 +1,22 @@
-# Version: 2023.10.6
+# Version: 2023.10.9
+# Updates Available Package
 #
-# Package - Updates Available
-# List all available updates of entities with device class update
+# Auto update all addons, firmware, core, os.
+# Also send notifications when updates are installed and finished. And if for some reason
+# some updates are not installed you will recieve notification that updates are available.
 #
-# You must set in secrets.yaml
-# notify_service_updates: "notify.notify"
+# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
+# and set the number of hours to wait until send the notification
 # 
-# To change the delay create a Delay Updates input number helper with the value of delay in hours
+# To change the delay of installing updates create a input number helper called: "|| Delay Auto Update"
+# and set how old should be the update before installing
 #
-# If you want to exlcude entities create group ignored_updates in groups.yaml
+# To change the notification service create an input text helper named: "|| Notify Service Updates"
+# and put inside the name of the service you want. 
 #
-# Example:
-# ignored_updates:
-#   entities:
-#     - binary_sensor.updater
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Updates" 
+# and add all entity id's that you want to exclude as options.
+#
 
 script:
   # Script to update this package from GitHub
@@ -25,18 +28,15 @@ script:
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
             {% if states.input_text.packages_account.state is defined %}
-                {% set account = states('input_text.packages_account') %}
-              {% else %}
-                {% set account = 'topaniot' %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
             {% endif %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-            {{ url + account + file_path }}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'updates_available.yaml' %}
+            {{ url + account + path + name }}
 
 group:
-  ignored_updates:
-    name: "|| Ignored Updates"
-    entities: []
-
   turn_off_automations:
     entities:
       - automation.updates_available
@@ -50,16 +50,22 @@ template:
       - name: "|| Updates Available"
         icon: "hass:update"
         state: >
+              {% if states.input_select.ignored_updates.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_updates','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {% set result = namespace(updates=[]) %}
-              {% if states.input_number.delay_updates.state is defined %}
-                {% set hours = states('input_number.delay_updates') | int %}
+              {% if states.input_number.delay_notify_updates.state is defined %}
+                {% set hours = states('input_number.delay_notify_updates') | int %}
               {% else %}
                 {% set hours = 120 %}
               {% endif %}
               
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates 
@@ -74,7 +80,7 @@ template:
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'update')
                 |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                |rejectattr('entity_id','in', ignored ) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates = result.updates + [state.name ] %}
@@ -84,16 +90,22 @@ template:
               {{ result.updates|count }}
         attributes:
             names: >
+              {% if states.input_select.ignored_updates.state is defined %}
+                {% set ignored = state_attr('input_select.ignored_updates','options') %}
+              {% else %}
+                {% set ignored = [] %}
+              {% endif %}
+                    
               {% set result = namespace(updates=[]) %}
-              {% if states.input_number.delay_updates.state is defined %}
-                {% set hours = states('input_number.delay_updates') | int %}
+              {% if states.input_number.delay_notify_updates.state is defined %}
+                {% set hours = states('input_number.delay_notify_updates') | int %}
               {% else %}
                 {% set hours = 120 %}
               {% endif %}
               
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates 
@@ -108,7 +120,7 @@ template:
                 |selectattr('attributes.device_class', 'defined')
                 |selectattr('attributes.device_class', '==', 'update')
                 |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id')) 
+                |rejectattr('entity_id','in', ignored) 
               %}
                 {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                   {% set result.updates = result.updates + [state.name ] %}
@@ -162,12 +174,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚙️ Este o actualizare disponibilă:
@@ -188,12 +199,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
@@ -219,12 +229,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: 🎉 Dispozitivele și serviciile sunt actualizate!
                   data:
@@ -267,12 +276,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔧 Este o actualizare în progress:
@@ -290,12 +298,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔧 Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
@@ -316,12 +323,11 @@ automation:
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service_updates = states('input_text.notify_service_updates') %}
+                      {% set notify_service = states('input_text.notify_service_updates') %}
                     {% else %}
-                      {% set notify_service_updates = 'notify' %}
+                      {% set notify_service = 'notify' %}
                   {% endif %}
-                  {% set file_path = '/HomeAssistant_Packages/main/packages/updates_available.yaml' %}
-                  {{ "notify." + notify_service_updates }}
+                  {{ "notify." + notify_service }}
                 data:
                   message: "🎉 Actualizare finalizată!"
                   data:
@@ -346,9 +352,15 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
+                  {% if states.input_select.ignored_updates.state is defined %}
+                    {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                  {% else %}
+                    {% set ignored = [] %}
+                  {% endif %}
+                    
                   {% set result = namespace(updates=[]) %}
-                  {% if states.input_number.delay_autoupdate.state is defined %}
-                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% if states.input_number.delay_auto_update.state is defined %}
+                    {% set hours = states('input_number.delay_auto_update') | int %}
                   {% else %}
                     {% set hours = 72 %}
                   {% endif %}
@@ -356,8 +368,13 @@ automation:
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
                     |rejectattr('attributes.device_class', '==', 'firmware')
-                    |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update','update.esphome_update'])
-                    |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                    |rejectattr('entity_id','in', ignored ) 
+                    |rejectattr('entity_id', 'in', 
+                      [
+                        'update.home_assistant_operating_system_update',
+                        'update.home_assistant_core_update',
+                        'update.esphome_update'
+                      ])
                   %}
                     {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                       {% set result.updates = result.updates + [state.entity_id] %}
@@ -371,25 +388,36 @@ automation:
                   backup: true
                 target:
                   entity_id: >
-                      {% set result = namespace(updates=[]) %}
-                      {% if states.input_number.delay_autoupdate.state is defined %}
-                        {% set hours = states('input_number.delay_autoupdate') | int %}
-                      {% else %}
-                        {% set hours = 72 %}
+                    {% if states.input_select.ignored_updates.state is defined %}
+                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                    {% else %}
+                      {% set ignored = [] %}
+                    {% endif %}
+                      
+                    {% set result = namespace(updates=[]) %}
+                    {% if states.input_number.delay_auto_update.state is defined %}
+                      {% set hours = states('input_number.delay_auto_update') | int %}
+                    {% else %}
+                      {% set hours = 72 %}
+                    {% endif %}
+                    
+                    {% for state in states.update 
+                      |selectattr('state', '==', 'on')
+                      |rejectattr('attributes.device_class', '==', 'firmware')
+                      |rejectattr('entity_id','in', ignored ) 
+                      |rejectattr('entity_id', 'in', 
+                        [
+                          'update.home_assistant_operating_system_update',
+                          'update.home_assistant_core_update',
+                          'update.esphome_update'
+                        ])
+                    %}
+                      {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
                       {% endif %}
-                      
-                      {% for state in states.update 
-                        |selectattr('state', '==', 'on')
-                        |rejectattr('attributes.device_class', '==', 'firmware')
-                        |rejectattr('entity_id', 'in', ['update.home_assistant_operating_system_update','update.home_assistant_core_update'])
-                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
-                      %}
-                            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                          {% set result.updates = result.updates + [state.entity_id] %}
-                        {% endif %}
-                      {% endfor %}
-                      
-                      {{ result.updates|list }}
+                    {% endfor %}
+                    
+                    {{ result.updates|list }}
                       
           # ESPHome Update 
           - conditions:
@@ -397,29 +425,43 @@ automation:
                 conditions:
                   - condition: template
                     value_template: >
-                      {% if states.input_number.delay_autoupdate.state is defined %}
-                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                      {% if states.input_select.ignored_updates.state is defined %}
+                        {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                      {% else %}
+                        {% set ignored = [] %}
+                      {% endif %}
+
+                      {% set result = namespace(updates=[]) %}
+                      {% if states.input_number.delay_auto_update.state is defined %}
+                        {% set hours = states('input_number.delay_auto_update') | int %}
                       {% else %}
                         {% set hours = 96 %}
                       {% endif %}
-                      
-                      {% if states.update.esphome_update.state is defined %}
-                        {{ as_timestamp(states.update.esphome_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
-                      {% else %}
-                        {{ false }}
-                      {% endif %}
+
+                      {% for state in states.update 
+                        |selectattr('state', 'eq', 'on')
+                        |selectattr('entity_id', 'in', ['update.esphome_update' ])
+                        |rejectattr('entity_id','in', ignored )  
+                      %}
+                        {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                          {% set result.updates = result.updates + [state.entity_id] %}
+                        {% endif %}
+                      {% endfor %}
+
+                      {{ result.updates | count > 0 }}
+
                   - condition: template
                     value_template: >
                       {% set result = namespace(updates=[]) %}
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
                         |selectattr('attributes.title', '==', 'ESPHome')
-                        |rejectattr('entity_id', '==', 'update.esphome_update')
-                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                        |rejectattr('entity_id', 'in', ['update.esphome_update'])
+                        |rejectattr('entity_id','in', ignored )  
                       %}
                         {% set result.updates = result.updates + [state.entity_id] %}
                       {% endfor %}
-                      {{ result.updates|count > 0 }}
+                      {{ result.updates | count > 0 }}
             sequence:
               - if:
                   - condition: template
@@ -435,20 +477,21 @@ automation:
                       backup: true
                     target:
                       entity_id: update.esphome_update
-                  - delay: "00:10:00"
+                  - delay: 
+                      minutes: 10
               - if:
                   - condition: template
                     value_template: >
-                      {% set result = namespace(updates=[]) %}
-                      {% for state in states.update 
-                        |selectattr('state', '==', 'on')
-                        |selectattr('attributes.title', '==', 'ESPHome')
-                        |rejectattr('entity_id', '==', 'update.esphome_update')
-                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
-                      %}
-                        {% set result.updates = result.updates + [state.entity_id] %}
-                      {% endfor %}
-                      {{ result.updates|count > 0 }}
+                          {% set result = namespace(updates=[]) %}
+                          {% for state in states.update 
+                            |selectattr('state', '==', 'on')
+                            |selectattr('attributes.title', '==', 'ESPHome')
+                            |rejectattr('entity_id', '==', 'update.esphome_update')
+                            |rejectattr('entity_id','in', ignored )  
+                          %}
+                            {% set result.updates = result.updates + [state.entity_id] %}
+                          {% endfor %}
+                          {{ result.updates|count > 0 }}
                 then:
                   - service: update.install
                     data: {}
@@ -459,28 +502,33 @@ automation:
                             |selectattr('state', '==', 'on')
                             |selectattr('attributes.title', '==', 'ESPHome')
                             |rejectattr('entity_id', '==', 'update.esphome_update')
-                            |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                            |rejectattr('entity_id','in', ignored )  
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
                           {{ result.updates|list }}
 
-
           # Firmware Update
           - conditions:
               - condition: template
                 value_template: >
-                  {% set result = namespace(updates=[]) %}
-                  {% if states.input_number.delay_autoupdate.state is defined %}
-                    {% set hours = states('input_number.delay_autoupdate') | int %}
+                  {% if states.input_select.ignored_updates.state is defined %}
+                    {% set ignored = state_attr('input_select.ignored_updates','options') %}
                   {% else %}
-                    {% set hours = 72 %}
+                    {% set ignored = [] %}
                   {% endif %}
+                  
+                  {% set result = namespace(updates=[]) %}
+                    {% if states.input_number.delay_auto_update.state is defined %}
+                      {% set hours = states('input_number.delay_auto_update') | int %}
+                    {% else %}
+                      {% set hours = 72 %}
+                    {% endif %}
                   
                   {% for state in states.update 
                     |selectattr('state', '==', 'on')
                     |selectattr('attributes.device_class', '==', 'firmware')
-                    |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
+                    |rejectattr('entity_id','in', ignored )
                   %}
                     {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
                       {% set result.updates = result.updates + [state.entity_id] %}
@@ -492,35 +540,59 @@ automation:
               - service: update.install
                 target:
                   entity_id: >
-                      {% set result = namespace(updates=[]) %}
-                      {% if states.input_number.delay_autoupdate.state is defined %}
-                        {% set hours = states('input_number.delay_autoupdate') | int %}
+                    {% if states.input_select.ignored_updates.state is defined %}
+                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                    {% else %}
+                      {% set ignored = [] %}
+                    {% endif %}
+                    
+                    {% set result = namespace(updates=[]) %}
+                      {% if states.input_number.delay_auto_update.state is defined %}
+                        {% set hours = states('input_number.delay_auto_update') | int %}
                       {% else %}
                         {% set hours = 72 %}
                       {% endif %}
-                      
-                      {% for state in states.update 
-                        |selectattr('state', '==', 'on')
-                        |selectattr('attributes.device_class', '==', 'firmware')
-                        |rejectattr('entity_id','in',state_attr('group.ignored_updates','entity_id'))  
-                      %}
-                        {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                          {% set result.updates = result.updates + [state.entity_id] %}
-                        {% endif %}
-                      {% endfor %}
-                      
-                      {{ result.updates|list }}
+                    
+                    {% for state in states.update 
+                      |selectattr('state', '==', 'on')
+                      |selectattr('attributes.device_class', '==', 'firmware')
+                      |rejectattr('entity_id','in', ignored )
+                    %}
+                      {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+                    
+                    {{ result.updates|list }}
 
           # Core Update
           - conditions:
               - condition: template
                 value_template: >
-                  {% if states.input_number.delay_autoupdate.state is defined %}
-                    {% set hours = states('input_number.delay_autoupdate') | int %}
-                  {% else %}
-                    {% set hours = 72 %}
-                  {% endif %}
-                  {{ as_timestamp(states.update.home_assistant_core_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                    {% if states.input_select.ignored_updates.state is defined %}
+                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                    {% else %}
+                      {% set ignored = [] %}
+                    {% endif %}
+
+                    {% set result = namespace(updates=[]) %}
+                    {% if states.input_number.delay_auto_update.state is defined %}
+                      {% set hours = states('input_number.delay_auto_update') | int %}
+                    {% else %}
+                      {% set hours = 72 %}
+                    {% endif %}
+
+                    {% for state in states.update 
+                      |selectattr('state', 'eq', 'on')
+                      |selectattr('entity_id', 'in', ['update.home_assistant_core_update' ])
+                      |rejectattr('entity_id','in', ignored )  
+                    %}
+                      {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+
+                    {{ result.updates | count > 0 }}
             sequence:
               - service: update.install
                 data:
@@ -532,12 +604,30 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                  {% if states.input_number.delay_autoupdate.state is defined %}
-                    {% set hours = states('input_number.delay_autoupdate') | int %}
-                  {% else %}
-                    {% set hours = 120 %}
-                  {% endif %}
-                  {{ as_timestamp(states.update.home_assistant_operating_system_update.last_changed) | int + 60*60*hours < as_timestamp(now()) | int }}
+                    {% if states.input_select.ignored_updates.state is defined %}
+                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                    {% else %}
+                      {% set ignored = [] %}
+                    {% endif %}
+
+                    {% set result = namespace(updates=[]) %}
+                    {% if states.input_number.delay_auto_update.state is defined %}
+                      {% set hours = states('input_number.delay_auto_update') | int %}
+                    {% else %}
+                      {% set hours = 120 %}
+                    {% endif %}
+
+                    {% for state in states.update 
+                      |selectattr('state', 'eq', 'on')
+                      |selectattr('entity_id', 'in', ['update.home_assistant_operating_system_update' ])
+                      |rejectattr('entity_id','in', ignored )  
+                    %}
+                      {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                        {% set result.updates = result.updates + [state.entity_id] %}
+                      {% endif %}
+                    {% endfor %}
+
+                    {{ result.updates | count > 0 }}
             sequence:
               - service: update.install
                 data:

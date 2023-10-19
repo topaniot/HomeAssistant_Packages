@@ -1,4 +1,4 @@
-# Version: 2023.04.7
+# Version: 2023.10.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -13,14 +13,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/server.yaml' %}
-            {{ url + account + file_path }}
-
-input_text:
-  packages_account:
-    name: '|| Packages Account'
-    initial: !secret packages_account
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'server.yaml' %}
+            {{ url + account + path + name }}
 
 input_boolean:
   maintenance_mode:
@@ -43,7 +43,6 @@ system_log:
   fire_event: true
 
 recorder:
-  # db_url: !secret recorder_db_url
   purge_keep_days: !secret recorder_keep_days
   exclude:
     entities:
@@ -120,6 +119,7 @@ automation:
       target:
         entity_id: script.update_packages
     mode: single
+
     # Notify on server start using defined service
   - id: 'server_start'
     alias: "|| Server Start"
@@ -132,7 +132,14 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     action:
-    - service: !secret notify_service_server
+    - service: >-
+        {% if states.input_text.notify_service_server.state is defined %}
+          {% set notify_service = states('input_text.notify_service_server') %}
+        {% else %}
+          {% set notify_service = 'notify' %}
+        {% endif %}
+          
+        {{ "notify." + notify_service }}
       data:
         message: ▶️ Serverul a pornit!
     mode: single
@@ -149,7 +156,14 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     action:
-    - service: !secret notify_service_server
+    - service: >-
+        {% if states.input_text.notify_service_server.state is defined %}
+          {% set notify_service = states('input_text.notify_service_server') %}
+        {% else %}
+          {% set notify_service = 'notify' %}
+        {% endif %}
+          
+        {{ "notify." + notify_service }}
       data:
         message: ⏹️ Serverul s-a oprit!
     mode: single
@@ -231,11 +245,25 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+           
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - wait_template: "{{ states( 'sensor.load_15m' ) | float < 3 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+           
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
@@ -254,11 +282,24 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+           
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 80 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
@@ -277,11 +318,23 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     action:
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
-      - service: !secret notify_service_server
+      - service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {% set notify_service = states('input_text.notify_service_server') %}
+          {% else %}
+            {% set notify_service = 'notify' %}
+          {% endif %}
+          {{ "notify." + notify_service }}
         data:
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
@@ -354,7 +407,13 @@ automation:
                 entity_id: input_boolean.maintenance_mode
                 state: "on"
             sequence:
-              - service: !secret notify_service_server
+              - service: >-
+                  {% if states.input_text.notify_service_server.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_server') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🔧 Mentenanță în curs!
@@ -367,7 +426,13 @@ automation:
                 entity_id: input_boolean.maintenance_mode
                 state: "off"
             sequence:
-              - service: !secret notify_service_server
+              - service: >-
+                  {% if states.input_text.notify_service_server.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_server') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     🎉 Mentenanță finalizată!

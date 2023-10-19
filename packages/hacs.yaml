@@ -1,12 +1,12 @@
-# Version: 2023.04.13-1
+# Version: 2023.10.1
 # HACS package
 # Notify when there are HACS updates pending.
 #
+# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
+# and set the number of hours to wait until send the notification
 #
-# You must set in secrets.yaml
-# notify_service_updates: "notify.notify"
-# delay_notify_updates: "24:00:00"
-
+# To change the notification service create an input text helper named: "|| Notify Service Updates"
+# and put inside the name of the service you want. 
 
 script:
   # Script to update this package from GitHub
@@ -17,9 +17,14 @@ script:
           overwrite: true
           url: >-
             {% set url = 'https://raw.githubusercontent.com/' %}
-            {% set account = states('input_text.packages_account') %}
-            {% set file_path = '/HomeAssistant_Packages/main/packages/hacs.yaml' %}
-            {{ url + account + file_path }}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'hacs.yaml' %}
+            {{ url + account + path + name }}
 
 input_boolean:
   updates_available_alert_hacs:
@@ -52,11 +57,24 @@ automation:
                 above: '0'
                 below: '2'
             sequence:
-              - delay: !secret delay_notify_updates
+              - delay: 
+                  hours: >-
+                    {% if states.input_number.delay_notify_updates.state is defined %}
+                      {% set hours = states('input_number.delay_notify_updates') | int %}
+                    {% else %}
+                      {% set hours = 120 %}
+                    {% endif %}
+                    {{ hours }}
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚙️ Este o actualizare HACS disponibilă!
@@ -67,11 +85,24 @@ automation:
                 entity_id: sensor.hacs
                 above: '1'
             sequence:
-              - delay: !secret delay_notify_updates
+              - delay: 
+                  hours: >-
+                    {% if states.input_number.delay_notify_updates.state is defined %}
+                      {% set hours = states('input_number.delay_notify_updates') | int %}
+                    {% else %}
+                      {% set hours = 120 %}
+                    {% endif %}
+                    {{ hours }}
               - service: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: |
                     ⚙️ Sunt {{ states('sensor.hacs') }} actualizari HACS disponibile!
@@ -85,7 +116,13 @@ automation:
                 entity_id: input_boolean.updates_available_alert_hacs
                 state: 'on'
             sequence:
-              - service: !secret notify_service_updates
+              - service: >-
+                  {% if states.input_text.notify_service_updates.state is defined %}
+                    {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% else %}
+                    {% set notify_service = 'notify' %}
+                  {% endif %}
+                  {{ "notify." + notify_service }}
                 data:
                   message: "🎉 HACS este actualizat!"
                   data:
