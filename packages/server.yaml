@@ -6,7 +6,7 @@
 script:
   # Script to update this package from GitHub
   update_packages:
-    alias: "|| Update Packages"
+    alias: "ΙΙ Update Packages"
     sequence:
       - service: downloader.download_file
         data:
@@ -24,7 +24,7 @@ script:
 
 input_boolean:
   maintenance_mode:
-    name: "|| Maintenance Mode"
+    name: "ΙΙ Maintenance Mode"
     icon: "hass:wrench-clock"
 
 http:
@@ -81,17 +81,17 @@ sensor:
 homeassistant:
   customize:
     sensor.processor_use:
-      friendly_name: "|| Processor Use"
+      friendly_name: "ΙΙ Processor Use"
     sensor.load_15m:
-      friendly_name: "|| Load (15m)"
+      friendly_name: "ΙΙ Load (15m)"
     sensor.memory_use_percent:
-      friendly_name: "|| Memory Use"
+      friendly_name: "ΙΙ Memory Use"
     sensor.swap_use_percent:
-      friendly_name: "|| Swap Use"
+      friendly_name: "ΙΙ Swap Use"
     sensor.disk_use:
-      friendly_name: "|| Disk Use"
+      friendly_name: "ΙΙ Disk Use"
     sensor.disk_use_percent:
-      friendly_name: "|| Disk Use Percent"
+      friendly_name: "ΙΙ Disk Use Percent"
 
 logbook:
   exclude:
@@ -102,13 +102,13 @@ logbook:
 
 group:
   turn_off_automations:
-    name: "|| Turn OFF Automations"
+    name: "ΙΙ Turn OFF Automations"
     entities: []
 
 automation:
     # Update Packages on server STOP
   - id: 'update_on_server_stop'
-    alias: "|| Update Packages on STOP"
+    alias: "ΙΙ Update Packages on STOP"
     description: ''
     trigger:
     - platform: homeassistant
@@ -122,7 +122,7 @@ automation:
 
     # Notify on server start using defined service
   - id: 'server_start'
-    alias: "|| Server Start"
+    alias: "ΙΙ Server Start"
     description: ''
     trigger:
     - platform: homeassistant
@@ -146,7 +146,7 @@ automation:
 
     # Notify on server Stop using defined service
   - id: 'server_stop'
-    alias: "|| Server Stop"
+    alias: "ΙΙ Server Stop"
     description: ''
     trigger:
     - platform: homeassistant
@@ -170,7 +170,7 @@ automation:
 
     # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
-    alias: "|| HealthChecks"
+    alias: "ΙΙ HealthChecks"
     description: ''
     trigger:
       - platform: time_pattern
@@ -182,7 +182,7 @@ automation:
 
     # Notify when a nofitication can't be sent
   - id: failed_notification
-    alias: '|| Failed Notification'
+    alias: 'ΙΙ Failed Notification'
     description: "Alert when a notification can't be sent."
     mode: single
     trigger:
@@ -207,7 +207,7 @@ automation:
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
-    alias: "|| Update Packages"
+    alias: "ΙΙ Update Packages"
     description: ''
     trigger:
       - platform: state
@@ -234,7 +234,7 @@ automation:
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
   - id: 'cpu_load_15m'
-    alias: "|| CPU Load"
+    alias: "ΙΙ CPU Load"
     description: ''
     trigger:
       - platform: numeric_state
@@ -271,7 +271,7 @@ automation:
 
     # Notify when RAM is almost full
   - id: 'ram_usage'
-    alias: "|| RAM Usage"
+    alias: "ΙΙ RAM Usage"
     description: ''
     trigger:
       - platform: numeric_state
@@ -307,7 +307,7 @@ automation:
 
     # Notify when storage is almost full
   - id: 'disk_usage'
-    alias: "|| Disk Usage"
+    alias: "ΙΙ Disk Usage"
     description: ''
     trigger:
       - platform: numeric_state
@@ -341,7 +341,7 @@ automation:
 
     # Restart NginX addon weekly
   - id: restart_nginx_addon
-    alias: "|| Restart NginX Addon"
+    alias: "ΙΙ Restart NginX Addon"
     description: ""
     trigger:
       - platform: time
@@ -362,7 +362,7 @@ automation:
     mode: restart
 
   - id: maintenance_on_off
-    alias: "|| Maintenance ON/OFF"
+    alias: "ΙΙ Maintenance ON/OFF"
     description: ""
     trigger:
       - platform: state
@@ -392,7 +392,7 @@ automation:
     mode: single
  
   - id: maintenance_notifications
-    alias: "|| Maintenance Notifications"
+    alias: "ΙΙ Maintenance Notifications"
     description: ""
     mode: single
     trigger:
