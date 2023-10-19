@@ -5,16 +5,16 @@
 # Also send notifications when updates are installed and finished. And if for some reason
 # some updates are not installed you will recieve notification that updates are available.
 #
-# To change the delay of updates notifications create a input number helper named: "ΙΙ Delay Notifiy Updates"
+# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
 # 
-# To change the delay of installing updates create a input number helper called: "ΙΙ Delay Auto Update"
+# To change the delay of installing updates create a input number helper called: "|| Delay Auto Update"
 # and set how old should be the update before installing
 #
-# To change the notification service create an input text helper named: "ΙΙ Notify Service Updates"
+# To change the notification service create an input text helper named: "|| Notify Service Updates"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create an imput select helper named: "ΙΙ Ignored Updates" 
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Updates" 
 # and add all entity id's that you want to exclude as options.
 #
 
@@ -47,7 +47,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: "ΙΙ Updates Available"
+      - name: "|| Updates Available"
         icon: "hass:update"
         state: >
               {% if states.input_select.ignored_updates.state is defined %}
@@ -128,7 +128,7 @@ template:
               {% endfor %}
 
               {{ result.updates|join (', ') }}
-      - name: "ΙΙ Updates in Progress"
+      - name: "|| Updates in Progress"
         icon: "hass:update"
         state: >
               {{ states.update
@@ -146,16 +146,16 @@ template:
 
 input_boolean:
   update_available_alert:
-    name: "ΙΙ Update Available Alert"
+    name: "|| Update Available Alert"
     icon: "hass:alert-circle"
   update_in_progress_alert:
-    name: "ΙΙ Update in Progress Alert"
+    name: "|| Update in Progress Alert"
     icon: "hass:alert-circle"
 
 automation:
   # Notify when updates are available
   - id: "updates_available"
-    alias: "ΙΙ Updates Available"
+    alias: "|| Updates Available"
     description: ""
     trigger:
       - platform: state
@@ -249,7 +249,7 @@ automation:
 
 # Notify when updates are in progress
   - id: "updates_in_progress"
-    alias: "ΙΙ Updates in Progress"
+    alias: "|| Updates in Progress"
     mode: restart
     trigger:
       - platform: state
@@ -339,7 +339,7 @@ automation:
 
   # Auto install updates
   - id: "auto_update"
-    alias: "ΙΙ Auto Update"
+    alias: "|| Auto Update"
     description: ""
     trigger:
       - platform: time

@@ -3,13 +3,13 @@
 #
 # Count and list of entities device class battery with the value under 20
 #
-# To change the delay of low battery notifications create a input number helper named: "ΙΙ Delay Notifiy Batteries"
+# To change the delay of low battery notifications create a input number helper named: "|| Delay Notifiy Batteries"
 # and set the number of minutes to wait until send the notification
 #
-# To change the notification service create an input text helper named: "ΙΙ Notify Service Batteries"
+# To change the notification service create an input text helper named: "|| Notify Service Batteries"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create an imput select helper named: "ΙΙ Ignored Batteries" 
+# If you want to exlcude entities create an imput select helper named: "|| Ignored Batteries" 
 # and add all entity id's that you want to exclude as options.
 #
 
@@ -43,7 +43,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: "ΙΙ Low Batteries"
+      - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
               {% if states.input_select.ignored_batteries.state is defined %}
@@ -97,12 +97,12 @@ template:
 
 input_boolean:
   low_batteries_alert:
-    name: "ΙΙ Low Batteries Alert"
+    name: "|| Low Batteries Alert"
     icon: "hass:alert-circle"
 
 automation:
   - id: "low_batteries"
-    alias: "ΙΙ Low Batteries"
+    alias: "|| Low Batteries"
     mode: restart
     trigger:
       - platform: state

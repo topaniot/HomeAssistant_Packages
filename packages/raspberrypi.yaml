@@ -29,14 +29,14 @@ sensor:
 homeassistant:
   customize:
     sensor.processor_temperature:
-      friendly_name: "ΙΙ Processor Temperature"
+      friendly_name: "|| Processor Temperature"
     binary_sensor.rpi_power_status:
-      friendly_name: "ΙΙ RPi Power Status"
+      friendly_name: "|| RPi Power Status"
       
 automation:
     # Notify when CPU Temperature is high
   - id: 'cpu_temp'
-    alias: "ΙΙ CPU Temperature"
+    alias: "|| CPU Temperature"
     description: ''
     trigger:
       - platform: numeric_state
