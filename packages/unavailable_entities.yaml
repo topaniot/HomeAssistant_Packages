@@ -52,7 +52,7 @@ template:
               {{ states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
-                |map(attribute='name')|join(', ')
+                |rejectattr('entity_id','in', ignored )
                 |list|count
               }}
         attributes:
