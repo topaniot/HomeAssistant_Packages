@@ -411,14 +411,10 @@ automation:
                   - condition: template
                     value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
                 then:
-                  - wait_for_trigger:
-                      - platform: state
-                        entity_id:
-                          - sensor.updates_in_progress
-                        for:
-                          seconds: 10
-                    timeout:
-                      minutes: 1
+                  - wait_template: >-
+                      {{ as_timestamp(sensor.updates_in_progress) | int + 10 < as_timestamp(now()) | int }}
+                    continue_on_timeout: true
+                    timeout: "00:01:00"
               - service: >-
                   {% if states.input_text.notify_service_server.state is defined %}
                     {% set notify_service = states('input_text.notify_service_server') %}
@@ -433,7 +429,7 @@ automation:
                     Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
                     
                     ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
-                    {% if states.sensor.updates_in_progress.state is defined %}
+                    {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
                     – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
                     –') }}
