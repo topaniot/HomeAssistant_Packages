@@ -412,7 +412,7 @@ automation:
                     value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
                 then:
                   - wait_template: >-
-                      {{ as_timestamp(sensor.updates_in_progress) | int + 10 < as_timestamp(now()) | int }}
+                      {{ as_timestamp(states.sensor.updates_in_progress.last_updated) | int + 10 < as_timestamp(now()) | int }}
                     continue_on_timeout: true
                     timeout: "00:01:00"
               - service: >-
