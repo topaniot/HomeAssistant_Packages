@@ -424,17 +424,15 @@ automation:
                   {{ "notify." + notify_service }}
                 data:
                   message: |
-                    🔧 Mentenanță în curs!
-                    
-                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
-                    
-                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
+                    ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
                     – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
                     –') }}
                     {% endif %}
-                    
+                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
+
+                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.   
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
