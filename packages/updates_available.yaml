@@ -452,6 +452,12 @@ automation:
 
                   - condition: template
                     value_template: >
+                      {% if states.input_select.ignored_updates.state is defined %}
+                        {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                      {% else %}
+                        {% set ignored = [] %}
+                      {% endif %}
+                      
                       {% set result = namespace(updates=[]) %}
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
@@ -461,6 +467,7 @@ automation:
                       %}
                         {% set result.updates = result.updates + [state.entity_id] %}
                       {% endfor %}
+                      
                       {{ result.updates | count > 0 }}
             sequence:
               - if:
@@ -482,6 +489,12 @@ automation:
               - if:
                   - condition: template
                     value_template: >
+                          {% if states.input_select.ignored_updates.state is defined %}
+                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                          {% else %}
+                            {% set ignored = [] %}
+                          {% endif %}
+                          
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
                             |selectattr('state', '==', 'on')
@@ -491,12 +504,19 @@ automation:
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
+                          
                           {{ result.updates|count > 0 }}
                 then:
                   - service: update.install
                     data: {}
                     target:
                       entity_id: >
+                          {% if states.input_select.ignored_updates.state is defined %}
+                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                          {% else %}
+                            {% set ignored = [] %}
+                          {% endif %}
+              
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
                             |selectattr('state', '==', 'on')
@@ -506,6 +526,7 @@ automation:
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
+                          
                           {{ result.updates|list }}
 
           # Firmware Update
