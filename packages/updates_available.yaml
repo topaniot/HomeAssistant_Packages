@@ -1,4 +1,4 @@
-# Version: 2023.10.10
+# Version: 2023.10.11
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -388,8 +388,6 @@ automation:
                   {{ result.updates|count > 0 }}
             sequence:
               - service: update.install
-                data:
-                  backup: true
                 target:
                   entity_id: >
                     {% if states.input_select.ignored_updates.state is defined %}
@@ -655,7 +653,5 @@ automation:
                     {{ result.updates | count > 0 }}
             sequence:
               - service: update.install
-                data:
-                  backup: false
                 target:
                   entity_id: update.home_assistant_operating_system_update
