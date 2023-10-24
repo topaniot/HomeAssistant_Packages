@@ -133,6 +133,10 @@ automation:
         entity_id: sensor.unavailable_entities
       - platform: homeassistant
         event: start
+      - platform: state
+        entity_id:
+          - input_boolean.maintenance_mode
+        to: "off"
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode

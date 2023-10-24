@@ -85,7 +85,7 @@ input_number:
     step: 1
 
 automation:
-  # Notify when updates are available
+  # Notify when problems are detected
   - id: "problems_detected"
     alias: "|| Problems Detected"
     mode: restart
@@ -94,6 +94,10 @@ automation:
         entity_id: sensor.problems_detected
       - platform: homeassistant
         event: start
+      - platform: state
+        entity_id:
+          - input_boolean.maintenance_mode
+        to: "off"
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode

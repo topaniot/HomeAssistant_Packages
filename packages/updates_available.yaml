@@ -1,4 +1,4 @@
-# Version: 2023.10.9
+# Version: 2023.10.11
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -160,6 +160,10 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_available
+      - platform: state
+        entity_id:
+          - input_boolean.maintenance_mode
+        to: "off"
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -384,8 +388,6 @@ automation:
                   {{ result.updates|count > 0 }}
             sequence:
               - service: update.install
-                data:
-                  backup: true
                 target:
                   entity_id: >
                     {% if states.input_select.ignored_updates.state is defined %}
@@ -452,6 +454,12 @@ automation:
 
                   - condition: template
                     value_template: >
+                      {% if states.input_select.ignored_updates.state is defined %}
+                        {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                      {% else %}
+                        {% set ignored = [] %}
+                      {% endif %}
+                      
                       {% set result = namespace(updates=[]) %}
                       {% for state in states.update 
                         |selectattr('state', '==', 'on')
@@ -461,6 +469,7 @@ automation:
                       %}
                         {% set result.updates = result.updates + [state.entity_id] %}
                       {% endfor %}
+                      
                       {{ result.updates | count > 0 }}
             sequence:
               - if:
@@ -482,6 +491,12 @@ automation:
               - if:
                   - condition: template
                     value_template: >
+                          {% if states.input_select.ignored_updates.state is defined %}
+                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                          {% else %}
+                            {% set ignored = [] %}
+                          {% endif %}
+                          
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
                             |selectattr('state', '==', 'on')
@@ -491,12 +506,19 @@ automation:
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
+                          
                           {{ result.updates|count > 0 }}
                 then:
                   - service: update.install
                     data: {}
                     target:
                       entity_id: >
+                          {% if states.input_select.ignored_updates.state is defined %}
+                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
+                          {% else %}
+                            {% set ignored = [] %}
+                          {% endif %}
+              
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
                             |selectattr('state', '==', 'on')
@@ -506,6 +528,7 @@ automation:
                           %}
                             {% set result.updates = result.updates + [state.entity_id] %}
                           {% endfor %}
+                          
                           {{ result.updates|list }}
 
           # Firmware Update
@@ -630,7 +653,5 @@ automation:
                     {{ result.updates | count > 0 }}
             sequence:
               - service: update.install
-                data:
-                  backup: false
                 target:
                   entity_id: update.home_assistant_operating_system_update
