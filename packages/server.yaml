@@ -117,7 +117,7 @@ automation:
       allowed_methods:
         - PUT
       local_only: false
-      webhook_id: update_packages
+      webhook_id: !secret update_packages_webhook
     condition: []
     action:
     - service: script.turn_on
