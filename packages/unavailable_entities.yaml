@@ -87,7 +87,7 @@ template:
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
-                |selectattr('state', 'in', ['unavailable','unknown','none'])
+                |selectattr('state', 'in', ['unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |list|count
               }}
@@ -103,7 +103,7 @@ template:
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
-                |selectattr('state', 'in', ['unavailable','unknown','none'])
+                |selectattr('state', 'in', ['unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")
               }}
