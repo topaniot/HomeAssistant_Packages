@@ -43,7 +43,6 @@ system_log:
   fire_event: true
 
 recorder:
-  purge_keep_days: !secret recorder_keep_days
   exclude:
     entities:
       - automation.healthchecks
