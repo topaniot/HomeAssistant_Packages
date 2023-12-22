@@ -1,4 +1,4 @@
-# Version 2023.10.2
+# Version 2023.12.1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -86,7 +86,7 @@ template:
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
-                |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
+                |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
                 |selectattr('state', 'in', ['unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |list|count
@@ -102,7 +102,7 @@ template:
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
-                |selectattr('attributes.device_class','in',['temperature','energy','window','door'])
+                |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
                 |selectattr('state', 'in', ['unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
                 |map(attribute='name')|join (", ")

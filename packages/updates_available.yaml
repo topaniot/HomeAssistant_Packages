@@ -1,4 +1,4 @@
-# Version: 2023.10.11
+# Version: 2023.12.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -60,7 +60,7 @@ template:
               {% if states.input_number.delay_notify_updates.state is defined %}
                 {% set hours = states('input_number.delay_notify_updates') | int %}
               {% else %}
-                {% set hours = 120 %}
+                {% set hours = 144 %}
               {% endif %}
               
               {% for state in states.update 
@@ -100,7 +100,7 @@ template:
               {% if states.input_number.delay_notify_updates.state is defined %}
                 {% set hours = states('input_number.delay_notify_updates') | int %}
               {% else %}
-                {% set hours = 120 %}
+                {% set hours = 144 %}
               {% endif %}
               
               {% for state in states.update 
@@ -437,7 +437,7 @@ automation:
                       {% if states.input_number.delay_auto_update.state is defined %}
                         {% set hours = states('input_number.delay_auto_update') | int %}
                       {% else %}
-                        {% set hours = 96 %}
+                        {% set hours = 120 %}
                       {% endif %}
 
                       {% for state in states.update 
@@ -545,7 +545,7 @@ automation:
                     {% if states.input_number.delay_auto_update.state is defined %}
                       {% set hours = states('input_number.delay_auto_update') | int %}
                     {% else %}
-                      {% set hours = 72 %}
+                      {% set hours = 96 %}
                     {% endif %}
                   
                   {% for state in states.update 
@@ -573,7 +573,7 @@ automation:
                       {% if states.input_number.delay_auto_update.state is defined %}
                         {% set hours = states('input_number.delay_auto_update') | int %}
                       {% else %}
-                        {% set hours = 72 %}
+                        {% set hours = 96 %}
                       {% endif %}
                     
                     {% for state in states.update 
