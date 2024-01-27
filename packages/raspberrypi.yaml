@@ -1,4 +1,4 @@
-# Version: 2023.10.1
+# Version: 2024.01.1
 #
 # Senzors and automations specific for Raspberry PI boards.
 
@@ -19,19 +19,6 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'raspberrypi.yaml' %}
             {{ url + account + path + name }}
-
-
-sensor:
-  - platform: systemmonitor
-    resources:
-      - type: processor_temperature
-      
-homeassistant:
-  customize:
-    sensor.processor_temperature:
-      friendly_name: "|| Processor Temperature"
-    binary_sensor.rpi_power_status:
-      friendly_name: "|| RPi Power Status"
       
 automation:
     # Notify when CPU Temperature is high
