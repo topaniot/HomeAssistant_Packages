@@ -1,4 +1,4 @@
-# Version: 2023.10.2
+# Version: 2024.01.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -63,34 +63,6 @@ notify:
   - platform: telegram
     name: tiot_telegram
     chat_id: !secret telegram_notify_chat_id
-
-sensor:
-    # Server sensors
-  - platform: systemmonitor
-    resources:
-      - type: processor_use
-      - type: swap_use_percent
-      - type: load_15m
-      - type: memory_use_percent
-      - type: disk_use_percent
-        arg: /
-      - type: disk_use
-        arg: /
-
-homeassistant:
-  customize:
-    sensor.processor_use:
-      friendly_name: "|| Processor Use"
-    sensor.load_15m:
-      friendly_name: "|| Load (15m)"
-    sensor.memory_use_percent:
-      friendly_name: "|| Memory Use"
-    sensor.swap_use_percent:
-      friendly_name: "|| Swap Use"
-    sensor.disk_use:
-      friendly_name: "|| Disk Use"
-    sensor.disk_use_percent:
-      friendly_name: "|| Disk Use Percent"
 
 logbook:
   exclude:
