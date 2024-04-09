@@ -46,11 +46,7 @@ template:
       - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% if states.input_select.ignored_batteries.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_batteries','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
@@ -71,11 +67,7 @@ template:
               {{ result.sensors|count }}
         attributes:
             names: >
-              {% if states.input_select.ignored_batteries.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_batteries','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
