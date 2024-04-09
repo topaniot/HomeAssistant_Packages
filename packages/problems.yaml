@@ -1,4 +1,4 @@
-# Version: 2023.10.2
+# Version: 2024.04.1
 # Problems found Package
 #
 # List all available problems entities with device class problem
@@ -46,11 +46,7 @@ template:
       - name: "|| Problems Detected"
         icon: "hass:alert-outline"
         state: >
-              {% if states.input_select.ignored_problems.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_problems','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
@@ -61,11 +57,7 @@ template:
               }}
         attributes:
             names: >
-              {% if states.input_select.ignored_problems.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_problems','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
