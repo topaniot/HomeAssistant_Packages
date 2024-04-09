@@ -1,4 +1,4 @@
-# Version: 2023.12.1
+# Version: 2024.04.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -50,11 +50,7 @@ template:
       - name: "|| Updates Available"
         icon: "hass:update"
         state: >
-              {% if states.input_select.ignored_updates.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_updates','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% set result = namespace(updates=[]) %}
               {% if states.input_number.delay_notify_updates.state is defined %}
@@ -90,11 +86,7 @@ template:
               {{ result.updates|count }}
         attributes:
             names: >
-              {% if states.input_select.ignored_updates.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_updates','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% set result = namespace(updates=[]) %}
               {% if states.input_number.delay_notify_updates.state is defined %}
@@ -356,11 +348,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                  {% if states.input_select.ignored_updates.state is defined %}
-                    {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                  {% else %}
-                    {% set ignored = [] %}
-                  {% endif %}
+                  {% set ignored = label_entities('ignore') %}
                     
                   {% set result = namespace(updates=[]) %}
                   {% if states.input_number.delay_auto_update.state is defined %}
@@ -390,11 +378,7 @@ automation:
               - service: update.install
                 target:
                   entity_id: >
-                    {% if states.input_select.ignored_updates.state is defined %}
-                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                    {% else %}
-                      {% set ignored = [] %}
-                    {% endif %}
+                    {% set ignored = label_entities('ignore') %}
                       
                     {% set result = namespace(updates=[]) %}
                     {% if states.input_number.delay_auto_update.state is defined %}
@@ -427,11 +411,7 @@ automation:
                 conditions:
                   - condition: template
                     value_template: >
-                      {% if states.input_select.ignored_updates.state is defined %}
-                        {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                      {% else %}
-                        {% set ignored = [] %}
-                      {% endif %}
+                      {% set ignored = label_entities('ignore') %}
 
                       {% set result = namespace(updates=[]) %}
                       {% if states.input_number.delay_auto_update.state is defined %}
@@ -454,11 +434,7 @@ automation:
 
                   - condition: template
                     value_template: >
-                      {% if states.input_select.ignored_updates.state is defined %}
-                        {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                      {% else %}
-                        {% set ignored = [] %}
-                      {% endif %}
+                      {% set ignored = label_entities('ignore') %}
                       
                       {% set result = namespace(updates=[]) %}
                       {% for state in states.update 
@@ -491,11 +467,7 @@ automation:
               - if:
                   - condition: template
                     value_template: >
-                          {% if states.input_select.ignored_updates.state is defined %}
-                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                          {% else %}
-                            {% set ignored = [] %}
-                          {% endif %}
+                          {% set ignored = label_entities('ignore') %}
                           
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
@@ -513,11 +485,7 @@ automation:
                     data: {}
                     target:
                       entity_id: >
-                          {% if states.input_select.ignored_updates.state is defined %}
-                            {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                          {% else %}
-                            {% set ignored = [] %}
-                          {% endif %}
+                          {% set ignored = label_entities('ignore') %}
               
                           {% set result = namespace(updates=[]) %}
                           {% for state in states.update 
@@ -535,11 +503,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                  {% if states.input_select.ignored_updates.state is defined %}
-                    {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                  {% else %}
-                    {% set ignored = [] %}
-                  {% endif %}
+                  {% set ignored = label_entities('ignore') %}
                   
                   {% set result = namespace(updates=[]) %}
                     {% if states.input_number.delay_auto_update.state is defined %}
@@ -563,11 +527,7 @@ automation:
               - service: update.install
                 target:
                   entity_id: >
-                    {% if states.input_select.ignored_updates.state is defined %}
-                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                    {% else %}
-                      {% set ignored = [] %}
-                    {% endif %}
+                    {% set ignored = label_entities('ignore') %}
                     
                     {% set result = namespace(updates=[]) %}
                       {% if states.input_number.delay_auto_update.state is defined %}
@@ -592,11 +552,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                    {% if states.input_select.ignored_updates.state is defined %}
-                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                    {% else %}
-                      {% set ignored = [] %}
-                    {% endif %}
+                    {% set ignored = label_entities('ignore') %}
 
                     {% set result = namespace(updates=[]) %}
                     {% if states.input_number.delay_auto_update.state is defined %}
@@ -627,11 +583,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                    {% if states.input_select.ignored_updates.state is defined %}
-                      {% set ignored = state_attr('input_select.ignored_updates','options') %}
-                    {% else %}
-                      {% set ignored = [] %}
-                    {% endif %}
+                    {% set ignored = label_entities('ignore') %}
 
                     {% set result = namespace(updates=[]) %}
                     {% if states.input_number.delay_auto_update.state is defined %}
