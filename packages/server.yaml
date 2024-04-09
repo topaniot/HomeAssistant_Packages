@@ -1,4 +1,4 @@
-# Version: 2024.01.1
+# Version: 2024.4.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -34,9 +34,6 @@ http:
   use_x_forwarded_for: true
   trusted_proxies:
     - 172.30.33.0/24
-
-downloader:
-  download_dir: packages
 
 # Enable log errors to fire events
 system_log:
