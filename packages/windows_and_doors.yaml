@@ -1,4 +1,4 @@
-# Version: 2023.10.2
+# Version: 2024.04.1
 # Open Windows Package
 # This package create a sensor with number of open windows
 #
@@ -35,11 +35,8 @@ template:
       - name: "Open Windows"
         icon: "hass:window-open"
         state: >
-              {% if states.input_select.ignored_windows.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_windows','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
+              
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','eq','window')
@@ -49,11 +46,7 @@ template:
               }}
         attributes:
             names: >
-              {% if states.input_select.ignored_windows.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_windows','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
 
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
@@ -66,11 +59,7 @@ template:
       - name: "Open Doors"
         icon: "hass:door-open"
         state: >
-              {% if states.input_select.ignored_doors.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_doors','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
               
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
@@ -81,11 +70,7 @@ template:
               }}
         attributes:
             names: >
-              {% if states.input_select.ignored_doors.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_doors','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
               
               {{ states.binary_sensor
                 |selectattr('attributes.device_class','defined')
