@@ -1,4 +1,4 @@
-# Version 2023.12.1
+# Version 2024.04.1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -43,11 +43,7 @@ template:
       - name: "|| Unavailable Entities"
         icon: "hass:shape"
         state: >
-              {% if states.input_select.ignored_unavailable.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {{ states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
@@ -57,11 +53,7 @@ template:
               }}
         attributes:
             names: >
-              {% if states.input_select.ignored_unavailable.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {{ states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
@@ -77,11 +69,7 @@ template:
       - name: "|| Unavailable Sensors"
         icon: "hass:shape"
         state: >
-              {% if states.input_select.ignored_unavailable.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
@@ -93,11 +81,7 @@ template:
               }}
         attributes:
             names: >
-              {% if states.input_select.ignored_unavailable.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_unavailable','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                   
               {{ states
                 |selectattr('domain','in',['sensor','binary_sensor'])
