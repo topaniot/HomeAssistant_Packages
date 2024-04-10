@@ -171,6 +171,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
@@ -196,6 +198,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
@@ -226,6 +230,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
@@ -273,6 +279,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
@@ -295,6 +303,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
@@ -320,6 +330,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set notify_service = 'notify' %}
                   {% endif %}
