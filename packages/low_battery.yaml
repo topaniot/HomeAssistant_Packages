@@ -1,4 +1,4 @@
-# Version: 2023.10.1
+# Version: 2024.04.1
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -46,11 +46,7 @@ template:
       - name: "|| Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% if states.input_select.ignored_batteries.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_batteries','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
@@ -71,11 +67,7 @@ template:
               {{ result.sensors|count }}
         attributes:
             names: >
-              {% if states.input_select.ignored_batteries.state is defined %}
-                {% set ignored = state_attr('input_select.ignored_batteries','options') %}
-              {% else %}
-                {% set ignored = [] %}
-              {% endif %}
+              {% set ignored = label_entities('ignore') %}
                     
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
@@ -137,6 +129,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}
@@ -165,6 +159,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}
@@ -192,6 +188,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}

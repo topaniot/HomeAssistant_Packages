@@ -71,6 +71,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}
@@ -89,6 +91,8 @@ automation:
                   hours: >-
                     {% if states.input_number.delay_notify_updates.state is defined %}
                       {% set hours = states('input_number.delay_notify_updates') | int %}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {% set notify_service = states('input_text.notify_service') %}
                     {% else %}
                       {% set hours = 120 %}
                     {% endif %}
@@ -99,6 +103,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}
@@ -119,6 +125,8 @@ automation:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
+                  {% elif states.input_text.notify_service.state is defined %}
+                    {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
                     {% set notify_service = 'notify' %}
                   {% endif %}
