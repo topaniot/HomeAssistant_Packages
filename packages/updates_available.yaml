@@ -1,4 +1,4 @@
-# Version: 2024.06.1
+# Version: 2024.06.2
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -7,16 +7,15 @@
 #
 # To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
-# 
+#
 # To change the delay of installing updates create a input number helper called: "|| Delay Auto Update"
 # and set how old should be the update before installing
 #
 # To change the notification service create an input text helper named: "|| Notify Service Updates"
-# and put inside the name of the service you want. 
+# and put inside the name of the service you want.
 #
-# If you want to exlcude entities create a label named: "Ignored" 
+# If you want to exlcude entities create a label named: "Ignored"
 # and apply it to all entities that you want to exclude
-
 
 script:
   # Script to update this package from GitHub
@@ -50,91 +49,91 @@ template:
       - name: "|| Updates Available"
         icon: "hass:update"
         state: >
-              {% set ignored = label_entities('ignore') %}
-                    
-              {% set result = namespace(updates=[]) %}
-              {% if states.input_number.delay_notify_updates.state is defined %}
-                {% set hours = states('input_number.delay_notify_updates') | int %}
-              {% else %}
-                {% set hours = 144 %}
-              {% endif %}
-              
-              {% for state in states.update 
-                |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                  {% set result.updates 
-                      = result.updates + [state.name 
-                      ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                      ~ state.attributes.latest_version ~ ')'] 
-                    %}
-                {% endif %}
-              {% endfor %}
-              
-              {% for state in states.binary_sensor
-                |selectattr('attributes.device_class', 'defined')
-                |selectattr('attributes.device_class', '==', 'update')
-                |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in', ignored ) 
-              %}
-                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                  {% set result.updates = result.updates + [state.name ] %}
-                {% endif %}
-              {% endfor %}
+          {% set ignored = label_entities('ignore') %}
+                
+          {% set result = namespace(updates=[]) %}
+          {% if states.input_number.delay_notify_updates.state is defined %}
+            {% set hours = states('input_number.delay_notify_updates') | int %}
+          {% else %}
+            {% set hours = 144 %}
+          {% endif %}
 
-              {{ result.updates|count }}
+          {% for state in states.update 
+            |selectattr('state', '==', 'on')
+            |rejectattr('entity_id','in', ignored) 
+          %}
+            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+              {% set result.updates 
+                  = result.updates + [state.name 
+                  ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                  ~ state.attributes.latest_version ~ ')'] 
+                %}
+            {% endif %}
+          {% endfor %}
+
+          {% for state in states.binary_sensor
+            |selectattr('attributes.device_class', 'defined')
+            |selectattr('attributes.device_class', '==', 'update')
+            |selectattr('state', 'eq', 'on')
+            |rejectattr('entity_id','in', ignored ) 
+          %}
+            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+              {% set result.updates = result.updates + [state.name ] %}
+            {% endif %}
+          {% endfor %}
+
+          {{ result.updates|count }}
         attributes:
-            names: >
-              {% set ignored = label_entities('ignore') %}
-                    
-              {% set result = namespace(updates=[]) %}
-              {% if states.input_number.delay_notify_updates.state is defined %}
-                {% set hours = states('input_number.delay_notify_updates') | int %}
-              {% else %}
-                {% set hours = 144 %}
-              {% endif %}
-              
-              {% for state in states.update 
-                |selectattr('state', '==', 'on')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                  {% set result.updates 
-                      = result.updates + [state.name 
-                      ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                      ~ state.attributes.latest_version ~ ')'] 
-                    %}
-                {% endif %}
-              {% endfor %}
-              
-              {% for state in states.binary_sensor
-                |selectattr('attributes.device_class', 'defined')
-                |selectattr('attributes.device_class', '==', 'update')
-                |selectattr('state', 'eq', 'on')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-                {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                  {% set result.updates = result.updates + [state.name ] %}
-                {% endif %}
-              {% endfor %}
+          names: >
+            {% set ignored = label_entities('ignore') %}
+                  
+            {% set result = namespace(updates=[]) %}
+            {% if states.input_number.delay_notify_updates.state is defined %}
+              {% set hours = states('input_number.delay_notify_updates') | int %}
+            {% else %}
+              {% set hours = 144 %}
+            {% endif %}
 
-              {{ result.updates|join (', ') }}
+            {% for state in states.update 
+              |selectattr('state', '==', 'on')
+              |rejectattr('entity_id','in', ignored) 
+            %}
+              {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                {% set result.updates 
+                    = result.updates + [state.name 
+                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                    ~ state.attributes.latest_version ~ ')'] 
+                  %}
+              {% endif %}
+            {% endfor %}
+
+            {% for state in states.binary_sensor
+              |selectattr('attributes.device_class', 'defined')
+              |selectattr('attributes.device_class', '==', 'update')
+              |selectattr('state', 'eq', 'on')
+              |rejectattr('entity_id','in', ignored) 
+            %}
+              {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                {% set result.updates = result.updates + [state.name ] %}
+              {% endif %}
+            {% endfor %}
+
+            {{ result.updates|join (', ') }}
       - name: "|| Updates in Progress"
         icon: "hass:update"
         state: >
-              {{ states.update
-                |selectattr('attributes.in_progress','defined')
-                |selectattr('attributes.in_progress','true')
-                |list|count
-              }}
+          {{ states.update
+            |selectattr('attributes.in_progress','defined')
+            |selectattr('attributes.in_progress','true')
+            |list|count
+          }}
         attributes:
-            names: >
-              {{ states.update
-                |selectattr('attributes.in_progress','defined')
-                |selectattr('attributes.in_progress','true')
-                |map(attribute='name')|join (", ")
-              }}
+          names: >
+            {{ states.update
+              |selectattr('attributes.in_progress','defined')
+              |selectattr('attributes.in_progress','true')
+              |map(attribute='name')|join (", ")
+            }}
 
 input_boolean:
   update_available_alert:
@@ -248,8 +247,7 @@ automation:
         default: []
     mode: restart
 
-
-# Notify when updates are in progress
+  # Notify when updates are in progress
   - id: "updates_in_progress"
     alias: "|| Updates in Progress"
     mode: restart
@@ -273,8 +271,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                above: '0'
-                below: '2'
+                above: "0"
+                below: "2"
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -298,7 +296,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                above: '1'
+                above: "1"
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -322,10 +320,10 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                below: '1'
+                below: "1"
               - condition: state
                 entity_id: input_boolean.update_in_progress_alert
-                state: 'on'
+                state: "on"
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -354,7 +352,6 @@ automation:
         at: 03:30
     condition: []
     action:
-
       # Addons Update
       - if:
           - condition: template
@@ -367,7 +364,7 @@ automation:
               {% else %}
                 {% set hours = 72 %}
               {% endif %}
-              
+
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
                 |rejectattr('attributes.device_class', '==', 'firmware')
@@ -383,7 +380,7 @@ automation:
                   {% set result.updates = result.updates + [state.entity_id] %}
                 {% endif %}
               {% endfor %}
-              
+
               {{ result.updates|count > 0 }}
         then:
           - service: update.install
@@ -397,7 +394,7 @@ automation:
                 {% else %}
                   {% set hours = 72 %}
                 {% endif %}
-                
+
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
                   |rejectattr('attributes.device_class', '==', 'firmware')
@@ -413,23 +410,22 @@ automation:
                     {% set result.updates = result.updates + [state.entity_id] %}
                   {% endif %}
                 {% endfor %}
-                
-                {{ result.updates|list }}
 
+                {{ result.updates|list }}
 
       # Firmware Update
       - if:
           - condition: template
             value_template: >
               {% set ignored = label_entities('ignore') %}
-              
+
               {% set result = namespace(updates=[]) %}
                 {% if states.input_number.delay_auto_update.state is defined %}
                   {% set hours = states('input_number.delay_auto_update') | int %}
                 {% else %}
                   {% set hours = 96 %}
                 {% endif %}
-              
+
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
                 |selectattr('attributes.device_class', '==', 'firmware')
@@ -439,21 +435,21 @@ automation:
                   {% set result.updates = result.updates + [state.entity_id] %}
                 {% endif %}
               {% endfor %}
-              
+
               {{ result.updates|count > 0 }}
         then:
           - service: update.install
             target:
               entity_id: >
                 {% set ignored = label_entities('ignore') %}
-                
+
                 {% set result = namespace(updates=[]) %}
                   {% if states.input_number.delay_auto_update.state is defined %}
                     {% set hours = states('input_number.delay_auto_update') | int %}
                   {% else %}
                     {% set hours = 96 %}
                   {% endif %}
-                
+
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
                   |selectattr('attributes.device_class', '==', 'firmware')
@@ -463,50 +459,49 @@ automation:
                     {% set result.updates = result.updates + [state.entity_id] %}
                   {% endif %}
                 {% endfor %}
-                
+
                 {{ result.updates|list }}
 
-
-      # ESPHome Update 
+      # ESPHome Update
       - if:
-        - condition: or
-          conditions:
-            - condition: template
-              value_template: >
-                {% set ignored = label_entities('ignore') %}
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: >
+                  {% set ignored = label_entities('ignore') %}
 
-                {% set result = namespace(updates=[]) %}
-                {% if states.input_number.delay_auto_update.state is defined %}
-                  {% set hours = states('input_number.delay_auto_update') | int %}
-                {% else %}
-                  {% set hours = 120 %}
-                {% endif %}
-
-                {% for state in states.update 
-                  |selectattr('state', 'eq', 'on')
-                  |selectattr('entity_id', 'in', ['update.esphome_update' ])
-                  |rejectattr('entity_id','in', ignored )  
-                %}
-                  {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                    {% set result.updates = result.updates + [state.entity_id] %}
+                  {% set result = namespace(updates=[]) %}
+                  {% if states.input_number.delay_auto_update.state is defined %}
+                    {% set hours = states('input_number.delay_auto_update') | int %}
+                  {% else %}
+                    {% set hours = 120 %}
                   {% endif %}
-                {% endfor %}
-                {{ result.updates | count > 0 }}
-            - condition: template
-              value_template: >
-                {% set ignored = label_entities('ignore') %}
-                
-                {% set result = namespace(updates=[]) %}
-                {% for state in states.update 
-                  |selectattr('state', '==', 'on')
-                  |selectattr('attributes.title', '==', 'ESPHome')
-                  |rejectattr('entity_id', 'in', ['update.esphome_update'])
-                  |rejectattr('entity_id','in', ignored )  
-                %}
-                  {% set result.updates = result.updates + [state.entity_id] %}
-                {% endfor %}
-                
-                {{ result.updates | count > 0 }}
+
+                  {% for state in states.update 
+                    |selectattr('state', 'eq', 'on')
+                    |selectattr('entity_id', 'in', ['update.esphome_update' ])
+                    |rejectattr('entity_id','in', ignored )  
+                  %}
+                    {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
+                      {% set result.updates = result.updates + [state.entity_id] %}
+                    {% endif %}
+                  {% endfor %}
+                  {{ result.updates | count > 0 }}
+              - condition: template
+                value_template: >
+                  {% set ignored = label_entities('ignore') %}
+
+                  {% set result = namespace(updates=[]) %}
+                  {% for state in states.update 
+                    |selectattr('state', '==', 'on')
+                    |selectattr('attributes.title', '==', 'ESPHome')
+                    |rejectattr('entity_id', 'in', ['update.esphome_update'])
+                    |rejectattr('entity_id','in', ignored )  
+                  %}
+                    {% set result.updates = result.updates + [state.entity_id] %}
+                  {% endfor %}
+
+                  {{ result.updates | count > 0 }}
         then:
           - if:
               - condition: template
@@ -522,48 +517,54 @@ automation:
                   backup: true
                 target:
                   entity_id: update.esphome_update
-              - delay: 
+              - delay:
                   minutes: 10
           - if:
               - condition: template
                 value_template: >
-                      {% set ignored = label_entities('ignore') %}
-                      
-                      {% set result = namespace(updates=[]) %}
-                      {% for state in states.update 
-                        |selectattr('state', '==', 'on')
-                        |selectattr('attributes.title', '==', 'ESPHome')
-                        |rejectattr('entity_id', '==', 'update.esphome_update')
-                        |rejectattr('entity_id','in', ignored )  
-                      %}
-                        {% set result.updates = result.updates + [state.entity_id] %}
-                      {% endfor %}
-                      
-                      {{ result.updates|count > 0 }}
+                  {% set ignored = label_entities('ignore') %}
+
+                  {% set result = namespace(updates=[]) %}
+                  {% for state in states.update 
+                    |selectattr('state', '==', 'on')
+                    |selectattr('attributes.title', '==', 'ESPHome')
+                    |rejectattr('entity_id', '==', 'update.esphome_update')
+                    |rejectattr('entity_id','in', ignored )  
+                  %}
+                    {% set result.updates = result.updates + [state.entity_id] %}
+                  {% endfor %}
+
+                  {{ result.updates|count > 0 }}
             then:
               - service: update.install
                 data: {}
                 target:
                   entity_id: >
-                      {% set ignored = label_entities('ignore') %}
-          
-                      {% set result = namespace(updates=[]) %}
-                      {% for state in states.update 
-                        |selectattr('state', '==', 'on')
-                        |selectattr('attributes.title', '==', 'ESPHome')
-                        |rejectattr('entity_id', '==', 'update.esphome_update')
-                        |rejectattr('entity_id','in', ignored )  
-                      %}
-                        {% set result.updates = result.updates + [state.entity_id] %}
-                      {% endfor %}
-                      
-                      {{ result.updates|list }}
+                    {% set ignored = label_entities('ignore') %}
 
+                    {% set result = namespace(updates=[]) %}
+                    {% for state in states.update 
+                      |selectattr('state', '==', 'on')
+                      |selectattr('attributes.title', '==', 'ESPHome')
+                      |rejectattr('entity_id', '==', 'update.esphome_update')
+                      |rejectattr('entity_id','in', ignored )  
+                    %}
+                      {% set result.updates = result.updates + [state.entity_id] %}
+                    {% endfor %}
+
+                    {{ result.updates|list }}
+
+      # Wait for all updates to be installed
+      - wait_for_trigger:
+          - platform: numeric_state
+            entity_id:
+              - sensor.updates_in_progress
+            below: 1
 
       # Core Update
       - if:
-        - condition: template
-          value_template: >
+          - condition: template
+            value_template: >
               {% set ignored = label_entities('ignore') %}
 
               {% set result = namespace(updates=[]) %}
@@ -591,10 +592,17 @@ automation:
             target:
               entity_id: update.home_assistant_core_update
 
+      # Wait for all updates to be installed
+      - wait_for_trigger:
+          - platform: numeric_state
+            entity_id:
+              - sensor.updates_in_progress
+            below: 1
+
       # OS Update
       - if:
-        - condition: template
-          value_template: >
+          - condition: template
+            value_template: >
               {% set ignored = label_entities('ignore') %}
 
               {% set result = namespace(updates=[]) %}
