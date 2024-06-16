@@ -1,4 +1,4 @@
-# Version: 2024.06.2
+# Version: 2024.06.3
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -355,7 +355,7 @@ automation:
       # Addons Update
       - if:
           - condition: template
-            value_template: >
+            value_template: |-
               {% set ignored = label_entities('ignore') %}
                 
               {% set result = namespace(updates=[]) %}
@@ -385,7 +385,7 @@ automation:
         then:
           - service: update.install
             target:
-              entity_id: >
+              entity_id: |-
                 {% set ignored = label_entities('ignore') %}
                   
                 {% set result = namespace(updates=[]) %}
@@ -416,7 +416,7 @@ automation:
       # Firmware Update
       - if:
           - condition: template
-            value_template: >
+            value_template: |-
               {% set ignored = label_entities('ignore') %}
 
               {% set result = namespace(updates=[]) %}
@@ -440,7 +440,7 @@ automation:
         then:
           - service: update.install
             target:
-              entity_id: >
+              entity_id: |-
                 {% set ignored = label_entities('ignore') %}
 
                 {% set result = namespace(updates=[]) %}
@@ -467,7 +467,7 @@ automation:
           - condition: or
             conditions:
               - condition: template
-                value_template: >
+                value_template: |-
                   {% set ignored = label_entities('ignore') %}
 
                   {% set result = namespace(updates=[]) %}
@@ -488,7 +488,7 @@ automation:
                   {% endfor %}
                   {{ result.updates | count > 0 }}
               - condition: template
-                value_template: >
+                value_template: |-
                   {% set ignored = label_entities('ignore') %}
 
                   {% set result = namespace(updates=[]) %}
@@ -505,7 +505,7 @@ automation:
         then:
           - if:
               - condition: template
-                value_template: >
+                value_template: |-
                   {% if states.update.esphome_update.state is defined  %}
                     {{ is_state('update.esphome_update', 'on') }}
                   {% else %}
@@ -521,7 +521,7 @@ automation:
                   minutes: 10
           - if:
               - condition: template
-                value_template: >
+                value_template: |-
                   {% set ignored = label_entities('ignore') %}
 
                   {% set result = namespace(updates=[]) %}
@@ -539,7 +539,7 @@ automation:
               - service: update.install
                 data: {}
                 target:
-                  entity_id: >
+                  entity_id: |-
                     {% set ignored = label_entities('ignore') %}
 
                     {% set result = namespace(updates=[]) %}
@@ -554,17 +554,13 @@ automation:
 
                     {{ result.updates|list }}
 
-      # Wait for all updates to be installed
-      - wait_for_trigger:
-          - platform: numeric_state
-            entity_id:
-              - sensor.updates_in_progress
-            below: 1
+      # Wait to finish updates in progress
+      - wait_template: "{{ states('sensor.updates_in_progress') | int == 0 }}"
 
       # Core Update
       - if:
           - condition: template
-            value_template: >
+            value_template: |-
               {% set ignored = label_entities('ignore') %}
 
               {% set result = namespace(updates=[]) %}
@@ -592,17 +588,13 @@ automation:
             target:
               entity_id: update.home_assistant_core_update
 
-      # Wait for all updates to be installed
-      - wait_for_trigger:
-          - platform: numeric_state
-            entity_id:
-              - sensor.updates_in_progress
-            below: 1
+      # Wait to finish updates in progress
+      - wait_template: "{{ states('sensor.updates_in_progress') | int == 0 }}"
 
       # OS Update
       - if:
           - condition: template
-            value_template: >
+            value_template: |-
               {% set ignored = label_entities('ignore') %}
 
               {% set result = namespace(updates=[]) %}
