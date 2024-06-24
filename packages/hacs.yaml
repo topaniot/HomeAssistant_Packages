@@ -1,11 +1,11 @@
-# Version: 2023.10.1
+# Version: 2024.06.1
 # HACS package
 # Notify when there are HACS updates pending.
 #
-# To change the delay of updates notifications create a input number helper named: "|| Delay Notifiy Updates"
+# To change the delay of updates notifications create a input number helper named: " Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
 #
-# To change the notification service create an input text helper named: "|| Notify Service Updates"
+# To change the notification service create an input text helper named: " Notify Service Updates"
 # and put inside the name of the service you want. 
 
 script:
@@ -28,7 +28,7 @@ script:
 
 input_boolean:
   updates_available_alert_hacs:
-    name: "|| Updates Available Alert HACS"
+    name: " Updates Available Alert HACS"
     icon: "hass:alert-circle"
 
 group:
@@ -39,7 +39,7 @@ group:
 automation:
   # Notify when updates are available
   - id: "updates_available_hacs"
-    alias: "|| Updates Available HACS"
+    alias: " Updates Available HACS"
     mode: restart
     trigger:
       - platform: state
