@@ -26,22 +26,22 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-    - name: "|| Total Entities"
+    - name: " Total Entities"
       icon: hass:shape
       state: "{{ states | count }}"
 
-    - name: "|| Total Automations"
+    - name: " Total Automations"
       icon: hass:robot
       state: "{{ states.automation | count }}"
     
-    - name: "|| Total Lights"
+    - name: " Total Lights"
       icon: hass:lightbulb-multiple-outline
       state: "{{ states.light | count }}"
 
-    - name: "|| Total Switches"
+    - name: " Total Switches"
       icon: hass:light-switch
       state: "{{ states.switch | count }}"
 
-    - name: "|| Total Sensors"
+    - name: " Total Sensors"
       icon: hass:signal-variant
       state: "{{ states.sensor | count + states.binary_sensor | count }}"

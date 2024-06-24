@@ -1,14 +1,14 @@
-# Version 2024.04.1
+# Version 2024.06.1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
-# To change the delay of unavailable notifications create a input number helper named: "|| Delay Notifiy Unavailable"
+# To change the delay of unavailable notifications create a input number helper named: " Delay Notifiy Unavailable"
 # and set the number of minutes to wait until send the notification
 #
-# To change the notification service create an input text helper named: "|| Notify Service Unavailable"
+# To change the notification service create an input text helper named: " Notify Service Unavailable"
 # and put inside the name of the service you want.
 # 
-# If you want to exlcude entities create an imput select helper named: "|| Ignored Unavailable" 
+# If you want to exlcude entities create an imput select helper named: " Ignored Unavailable" 
 # and add all entity id's that you want to exclude as options.
 
 script:
@@ -40,7 +40,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: "|| Unavailable Entities"
+      - name: " Unavailable Entities"
         icon: "hass:shape"
         state: >
               {% set ignored = label_entities('ignore') %}
@@ -66,7 +66,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: "|| Unavailable Sensors"
+      - name: " Unavailable Sensors"
         icon: "hass:shape"
         state: >
               {% set ignored = label_entities('ignore') %}
@@ -94,14 +94,14 @@ template:
 
 input_number:
   unavailable_entities_last_triggered:
-    name: "|| Unavailable Entities Last Triggered"
+    name: " Unavailable Entities Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
     max: 99999
     step: 1
   unavailable_sensors_last_triggered:
-    name: "|| Unavailable Sensors Last Triggered"
+    name: " Unavailable Sensors Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
@@ -110,7 +110,7 @@ input_number:
 
 automation:
   - id: "unavailable_entities"
-    alias: "|| Unavailable Entities"
+    alias: " Unavailable Entities"
     mode: restart
     trigger:
       - platform: state
@@ -232,7 +232,7 @@ automation:
         default: []
 
   - id: "unavailable_sensors"
-    alias: "|| Unavailable Sensors"
+    alias: " Unavailable Sensors"
     mode: restart
     trigger:
       - platform: state
