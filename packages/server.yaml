@@ -91,6 +91,11 @@ automation:
     - service: script.turn_on
       target:
         entity_id: script.update_packages
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 5
+        milliseconds: 0
     mode: single
 
     # Notify on server start using defined service
