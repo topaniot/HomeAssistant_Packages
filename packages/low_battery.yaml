@@ -1,4 +1,4 @@
-# Version: 2024.06.1
+# Version: 2024.07.1
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -9,9 +9,8 @@
 # To change the notification service create an input text helper named: " Notify Service Batteries"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create an imput select helper named: " Ignored Batteries" 
-# and add all entity id's that you want to exclude as options.
-#
+# If you want to exlcude entities assign a label named Ignore to them.
+
 
 script:
   # Script to update this package from GitHub
@@ -30,13 +29,11 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'low_battery.yaml' %}
             {{ url + account + path + name }}
-   
-   
+
 group:
   turn_off_automations:
     entities:
       - automation.low_batteries
-
 
 template:
   - trigger:
@@ -86,6 +83,30 @@ template:
               {% endif %}
               {% endfor %}
               {{ result.sensors|join (', ') }}
+    binary_sensor:
+      - name: " Batteries OK"
+        icon: "hass:battery-heart-variant"
+        state: >
+              {% set ignored = label_entities('ignore') %}
+                    
+              {% if states.input_number.battery_level_threshold.state is defined %}
+                {% set threshold = states('input_number.battery_level_threshold') | int + 10 %}
+              {% else %}
+                {% set threshold = 30 %}
+              {% endif %}
+              
+              {% set result = namespace(sensors=[]) %}
+              {% for state in states.sensor 
+                |selectattr('attributes.device_class', 'defined')
+                |selectattr('attributes.device_class', '==', 'battery')
+                |rejectattr('entity_id','in', ignored) 
+              %}
+              {% if 0 <= state.state | int (-1) < threshold | int  %}
+                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+              {% endif %}
+              {% endfor %}
+              {{ result.sensors|count == 0 }}
+
 
 input_boolean:
   low_batteries_alert:
@@ -100,6 +121,8 @@ automation:
       - platform: state
         entity_id: sensor.low_batteries
         to: ~
+      - platform: state
+        entity_id: binary_sensor.batteries_ok
       - platform: homeassistant
         event: start
     action:
@@ -171,20 +194,13 @@ automation:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.low_batteries
-                below: '1'
+              - condition: state
+                entity_id: binary_sensor.batteries_ok
+                state: 'on'
               - condition: state
                 entity_id: input_boolean.low_batteries_alert
                 state: 'on'
             sequence:
-              - delay: >-
-                    {% if states.input_number.delay_notify_batteries.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_batteries') | int %}
-                    {% else %}
-                      {% set minutes = 10 %}
-                    {% endif %}
-                    {{ minutes }}
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
