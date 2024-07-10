@@ -1,4 +1,4 @@
-# Version: 2024.06.1
+# Version: 2024.07.2
 #
 # Senzors and automations specific for Raspberry PI boards.
 
@@ -23,7 +23,7 @@ script:
 automation:
     # Notify when CPU Temperature is high
   - id: 'cpu_temp'
-    alias: " CPU Temperature"
+    alias: "𐃏 CPU Temperature"
     description: ''
     trigger:
       - platform: numeric_state
