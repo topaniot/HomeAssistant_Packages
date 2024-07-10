@@ -1,12 +1,12 @@
-# Version: 2024.07.2
+# Version: 2024.07.3
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
 #
-# To change the delay of low battery notifications create a input number helper named: " Delay Notifiy Batteries"
+# To change the delay of low battery notifications create a input number helper named: "𐃏 Delay Notifiy Batteries"
 # and set the number of minutes to wait until send the notification
 #
-# To change the notification service create an input text helper named: " Notify Service Batteries"
+# To change the notification service create an input text helper named: "𐃏 Notify Service Batteries"
 # and put inside the name of the service you want. 
 #
 # If you want to exlcude entities assign a label named Ignore to them.
@@ -40,7 +40,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: " Low Batteries"
+      - name: "𐃏 Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
               {% set ignored = label_entities('ignore') %}
@@ -84,7 +84,7 @@ template:
               {% endfor %}
               {{ result.sensors|join (', ') }}
     binary_sensor:
-      - name: " Batteries OK"
+      - name: "𐃏 Batteries OK"
         icon: "hass:battery-heart-variant"
         state: >
               {% set ignored = label_entities('ignore') %}
@@ -109,7 +109,7 @@ template:
 
 input_number:
   low_batteries_last_triggered:
-    name: " Low Batteries Last Triggered"
+    name: "𐃏 Low Batteries Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
@@ -118,7 +118,7 @@ input_number:
 
 automation:
   - id: "low_batteries"
-    alias: " Low Batteries"
+    alias: "𐃏 Low Batteries"
     mode: restart
     trigger:
       - platform: state
