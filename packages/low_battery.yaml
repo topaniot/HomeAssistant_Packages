@@ -1,4 +1,4 @@
-# Version: 2024.07.1
+# Version: 2024.07.2
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -107,11 +107,14 @@ template:
               {% endfor %}
               {{ result.sensors|count == 0 }}
 
-
-input_boolean:
-  low_batteries_alert:
-    name: " Low Batteries Alert"
+input_number:
+  low_batteries_last_triggered:
+    name: " Low Batteries Last Triggered"
     icon: "hass:alert-circle"
+    mode: box
+    min: 0
+    max: 99999
+    step: 1
 
 automation:
   - id: "low_batteries"
@@ -137,6 +140,10 @@ automation:
                 entity_id: sensor.low_batteries
                 above: '0'
                 below: '2'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.low_batteries_last_triggered') | int
+                  != states('sensor.low_batteries') | int }}
             sequence:
               - delay: 
                   minutes: >-
@@ -146,9 +153,6 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.low_batteries_alert
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
@@ -163,10 +167,19 @@ automation:
                     ⚠️ Este un dispozitiv cu baterie descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ states('sensor.low_batteries') | int }}"
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries
                 above: '1'
+              - condition: template
+                value_template: >-
+                  {{ states('input_number.low_batteries_last_triggered') | int
+                  != states('sensor.low_batteries') | int }}
             sequence:
               - delay: 
                   minutes: >-
@@ -176,9 +189,6 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.low_batteries_alert
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
@@ -193,6 +203,11 @@ automation:
                     ⚠️ Sunt {{ states('sensor.low_batteries') | int }} dispozitive cu bateria descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ states('sensor.low_batteries') | int }}"
           - conditions:
               - condition: state
                 entity_id: binary_sensor.batteries_ok
@@ -216,4 +231,9 @@ automation:
               - service: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.low_batteries_alert
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ states('sensor.low_batteries') | int }}"
         default: []
