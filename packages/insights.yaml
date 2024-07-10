@@ -1,4 +1,4 @@
-# Version: 2023.10.1
+# Version: 2023.10.2
 # Insights package
 #
 # This package create sensors to see statistics from HA instalation.
@@ -26,22 +26,22 @@ template:
       - platform: time_pattern
         minutes: "/1"
     sensor:
-    - name: " Total Entities"
+    - name: "𐃏 Total Entities"
       icon: hass:shape
       state: "{{ states | count }}"
 
-    - name: " Total Automations"
+    - name: "𐃏 Total Automations"
       icon: hass:robot
       state: "{{ states.automation | count }}"
     
-    - name: " Total Lights"
+    - name: "𐃏 Total Lights"
       icon: hass:lightbulb-multiple-outline
       state: "{{ states.light | count }}"
 
-    - name: " Total Switches"
+    - name: "𐃏 Total Switches"
       icon: hass:light-switch
       state: "{{ states.switch | count }}"
 
-    - name: " Total Sensors"
+    - name: "𐃏 Total Sensors"
       icon: hass:signal-variant
       state: "{{ states.sensor | count + states.binary_sensor | count }}"
