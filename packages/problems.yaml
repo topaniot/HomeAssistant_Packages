@@ -1,15 +1,15 @@
-# Version: 2024.06.1
+# Version: 2024.06.2
 # Problems found Package
 #
 # List all available problems entities with device class problem
 #
-# To change the delay of problems notifications create a input number helper named: " Delay Notifiy Problems"
+# To change the delay of problems notifications create a input number helper named: "𐃏 Delay Notifiy Problems"
 # and set the number of minutes to wait until send the notification.
 #
-# To change the notification service create an input text helper named: " Notify Service Problems"
+# To change the notification service create an input text helper named: "𐃏 Notify Service Problems"
 # and put inside the name of the service you want. 
 #
-# If you want to exlcude entities create an imput select helper named: " Ignored Problems" 
+# If you want to exlcude entities create an imput select helper named: "𐃏 Ignored Problems" 
 # and add all entity id's that you want to exclude as options.
 #
 
@@ -43,7 +43,7 @@ template:
       - platform: time_pattern
         seconds: "/1"
     sensor:
-      - name: " Problems Detected"
+      - name: "𐃏 Problems Detected"
         icon: "hass:alert-outline"
         state: >
               {% set ignored = label_entities('ignore') %}
@@ -69,7 +69,7 @@ template:
 
 input_number:
   problems_detected_last_triggered:
-    name: " Problems Detected Last Triggered"
+    name: "𐃏 Problems Detected Last Triggered"
     icon: "hass:alert-circle"
     mode: box
     min: 0
@@ -79,7 +79,7 @@ input_number:
 automation:
   # Notify when problems are detected
   - id: "problems_detected"
-    alias: " Problems Detected"
+    alias: "𐃏 Problems Detected"
     mode: restart
     trigger:
       - platform: state

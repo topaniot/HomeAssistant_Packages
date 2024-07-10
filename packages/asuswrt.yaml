@@ -25,7 +25,7 @@ script:
 automation:
 # Notify when CPU Temperature is high
   - id: 'asuswrt_cpu_temp'
-    alias: " Asuswrt CPU Temperature"
+    alias: "𐃏 Asuswrt CPU Temperature"
     description: ''
     trigger:
       - platform: numeric_state
@@ -61,7 +61,7 @@ automation:
 
 # Notify when 2.4GHz Temperature is high
   - id: 'asuswrt_24ghz_temp'
-    alias: " Asuswrt 2.4GHz Temperature"
+    alias: "𐃏 Asuswrt 2.4GHz Temperature"
     description: ''
     trigger:
       - platform: numeric_state
@@ -97,7 +97,7 @@ automation:
 
 # Notify when 5GHz Temperature is high
   - id: 'asuswrt_5ghz_temp'
-    alias: " Asuswrt 5GHz Temperature"
+    alias: "𐃏 Asuswrt 5GHz Temperature"
     description: ''
     trigger:
       - platform: numeric_state
