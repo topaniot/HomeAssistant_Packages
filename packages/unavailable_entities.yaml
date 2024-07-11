@@ -29,12 +29,6 @@ script:
             {% set name = 'unavailable_entities.yaml' %}
             {{ url + account + path + name }}
 
-group:
-  turn_off_automations:
-    entities:
-      - automation.unavailable_entities
-      - automation.unavailable_sensors
-
 template:
   - trigger:
       - platform: time_pattern
