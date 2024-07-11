@@ -1,4 +1,4 @@
-# Version 2024.07.1
+# Version 2024.07.2
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -119,13 +119,10 @@ automation:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
+      - condition: template
+        value_template: "{{ states.sensor.unavailable_entities.state is defined }}"
     action:
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.unavailable_entities
-                state: unknown
-            sequence: []
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
@@ -237,13 +234,10 @@ automation:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
+      - condition: template
+        value_template: "{{ states.sensor.unavailable_sensors.state is defined }}"
     action:
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.unavailable_sensors
-                state: unknown
-            sequence: []
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_sensors
