@@ -1,4 +1,4 @@
-# Version: 2024.07.3
+# Version: 2024.07.4
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -123,6 +123,17 @@ automation:
         entity_id: binary_sensor.batteries_ok
       - platform: homeassistant
         event: start
+    condition:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: sensor.low_batteries
+            state: unknown
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.batteries_ok
+            state: unknown
     action:
       - choose:
           - conditions:
