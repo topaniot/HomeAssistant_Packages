@@ -35,12 +35,6 @@ script:
             {% set name = 'updates_available.yaml' %}
             {{ url + account + path + name }}
 
-group:
-  turn_off_automations:
-    entities:
-      - automation.updates_available
-      - automation.updates_in_progress
-
 template:
   - trigger:
       - platform: time_pattern
