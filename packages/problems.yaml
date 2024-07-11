@@ -32,11 +32,6 @@ script:
             {% set name = 'problems.yaml' %}
             {{ url + account + path + name }}
             
-            
-group:
-  turn_off_automations:
-    entities:
-      - automation.problems_detected
 
 template:
   - trigger:
