@@ -30,11 +30,6 @@ script:
             {% set name = 'low_battery.yaml' %}
             {{ url + account + path + name }}
 
-group:
-  turn_off_automations:
-    entities:
-      - automation.low_batteries
-
 template:
   - trigger:
       - platform: time_pattern
