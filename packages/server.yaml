@@ -198,7 +198,7 @@ automation:
     condition: []
     action:
       - delay:
-          seconds: 10
+          seconds: 5
       - service: homeassistant.reload_all
     mode: restart
 
