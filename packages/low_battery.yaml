@@ -1,4 +1,4 @@
-# Version: 2024.07.3
+# Version: 2024.07.6
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -29,11 +29,6 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'low_battery.yaml' %}
             {{ url + account + path + name }}
-
-group:
-  turn_off_automations:
-    entities:
-      - automation.low_batteries
 
 template:
   - trigger:
@@ -128,13 +123,13 @@ automation:
         entity_id: binary_sensor.batteries_ok
       - platform: homeassistant
         event: start
+    condition:
+      - condition: template
+        value_template: "{{ states.sensor.low_batteries.state is defined }}"
+      - condition: template
+        value_template: "{{ states.binary_sensor.batteries_ok.state is defined }}"
     action:
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.low_batteries
-                state: unknown
-            sequence: []
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries

@@ -1,4 +1,4 @@
-# Version: 2024.07.1
+# Version: 2024.07.6
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -34,12 +34,6 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'updates_available.yaml' %}
             {{ url + account + path + name }}
-
-group:
-  turn_off_automations:
-    entities:
-      - automation.updates_available
-      - automation.updates_in_progress
 
 template:
   - trigger:
@@ -159,6 +153,8 @@ automation:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
+      - condition: template
+        value_template: "{{ states.sensor.updates_available.state is defined }}"
     action:
       - choose:
           - conditions:
@@ -254,20 +250,18 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.updates_in_progress
-        for: 00:00:10
       - platform: homeassistant
         event: start
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
+      - condition: template
+        value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
     action:
+      - delay:
+          seconds: 10
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.updates_in_progress
-                state: unknown
-            sequence: []
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress

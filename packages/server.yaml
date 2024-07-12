@@ -1,4 +1,4 @@
-# Version: 2024.7.1
+# Version: 2024.7.3
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -68,11 +68,6 @@ logbook:
       - sensor.*_load_*
       - sensor.load_*
 
-group:
-  turn_off_automations:
-    name: "𐃏 Turn OFF Automations"
-    entities: []
-
 automation:
     # Update Packages on server STOP
   - id: 'update_on_server_stop'
@@ -91,11 +86,6 @@ automation:
     - service: script.turn_on
       target:
         entity_id: script.update_packages
-    - delay:
-        hours: 0
-        minutes: 0
-        seconds: 5
-        milliseconds: 0
     mode: single
 
     # Notify on server start using defined service
@@ -148,6 +138,8 @@ automation:
         {{ "notify." + notify_service }}
       data:
         message: ⏹️ Serverul s-a oprit!
+    - delay:
+        seconds: 10
     mode: single
 
     # Ping healthchecks.io every minute
@@ -198,20 +190,9 @@ automation:
         to: 'off'
     condition: []
     action:
-      - service: automation.turn_off
-        target:
-          entity_id: group.turn_off_automations
-      - service: input_boolean.reload
-      - service: input_number.reload
-      - service: input_text.reload
-      - service: template.reload
-      - service: group.reload
-      - service: script.reload
-      - service: homeassistant.reload_core_config
-      - service: automation.turn_on
-        target:
-          entity_id: group.turn_off_automations
-      - service: automation.reload
+      - delay:
+          seconds: 10
+      - service: homeassistant.reload_all
     mode: restart
 
     # Notify when CPU load 15m is above 4 and when goes back below 3
@@ -235,7 +216,7 @@ automation:
           {% else %}
             {% set notify_service = 'notify' %}
           {% endif %}
-           
+          
           {{ "notify." + notify_service }}
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
@@ -248,7 +229,7 @@ automation:
           {% else %}
             {% set notify_service = 'notify' %}
           {% endif %}
-           
+          
           {{ "notify." + notify_service }}
         data:
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
@@ -276,7 +257,7 @@ automation:
           {% else %}
             {% set notify_service = 'notify' %}
           {% endif %}
-           
+          
           {{ "notify." + notify_service }}
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
@@ -362,7 +343,9 @@ automation:
       - platform: state
         entity_id:
           - sensor.updates_in_progress
-    condition: []
+    condition:
+      - condition: template
+        value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
     action:
       - choose:
           - conditions:
@@ -384,7 +367,7 @@ automation:
                 target:
                   entity_id: input_boolean.maintenance_mode
     mode: single
- 
+
   - id: maintenance_notifications
     alias: "𐃏 Maintenance Notifications"
     description: ""
