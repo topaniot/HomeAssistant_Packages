@@ -1,4 +1,4 @@
-# Version: 2024.07.5
+# Version: 2024.07.6
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -259,8 +259,6 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
     action:
-      - wait_template: "{{ states.sensor.updates_in_progress.state is defined }}"
-        continue_on_timeout: false
       - delay:
           seconds: 10
       - choose:
