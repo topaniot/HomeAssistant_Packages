@@ -1,4 +1,4 @@
-# Version: 2024.7.2
+# Version: 2024.7.3
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -343,7 +343,9 @@ automation:
       - platform: state
         entity_id:
           - sensor.updates_in_progress
-    condition: []
+    condition:
+      - condition: template
+        value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
     action:
       - choose:
           - conditions:
