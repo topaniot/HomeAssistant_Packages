@@ -1,4 +1,4 @@
-# Version: 2024.07.3
+# Version: 2024.07.4
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -259,8 +259,6 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
     action:
-      - delay:
-          seconds: 10
       - choose:
           - conditions:
               - condition: numeric_state
@@ -268,6 +266,8 @@ automation:
                 above: "0"
                 below: "2"
             sequence:
+              - delay:
+                  seconds: 10
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
@@ -292,6 +292,8 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: "1"
             sequence:
+              - delay:
+                  seconds: 10
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
@@ -319,6 +321,8 @@ automation:
                 entity_id: input_boolean.update_in_progress_alert
                 state: "on"
             sequence:
+              - delay:
+                  seconds: 10
               - service: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
