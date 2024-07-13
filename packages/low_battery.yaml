@@ -1,4 +1,4 @@
-# Version: 2024.07.6
+# Version: 2024.07.7
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -207,9 +207,6 @@ automation:
               - condition: state
                 entity_id: binary_sensor.batteries_ok
                 state: 'on'
-              - condition: state
-                entity_id: input_boolean.low_batteries_alert
-                state: 'on'
             sequence:
               - service: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
@@ -223,9 +220,6 @@ automation:
                 data:
                   message: |
                     🔋 Starea bateriilor este bună!
-              - service: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.low_batteries_alert
               - service: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
