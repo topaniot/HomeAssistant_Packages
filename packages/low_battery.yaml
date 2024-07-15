@@ -1,4 +1,4 @@
-# Version: 2024.07.8
+# Version: 2024.07.9
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -132,6 +132,8 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.low_batteries_offset.state is defined }}"
     action:
+      - delay:
+          seconds: 1
       - choose:
           - conditions:
               - condition: numeric_state
@@ -140,12 +142,17 @@ automation:
                 below: '2'
               - condition: template
                 value_template: >-
-                  {{ states('input_number.low_batteries_last_triggered') | int
-                  != states('sensor.low_batteries') | int }}
-              - condition: template
-                value_template: >-
-                  {{ states('sensor.low_batteries') | int
-                  == states('sensor.low_batteries_offset') | int }}
+                  {% if states('input_number.low_batteries_last_triggered') | int 
+                      < states('sensor.low_batteries') | int %}
+                    true
+                  {% elif states('input_number.low_batteries_last_triggered') | int 
+                        > states('sensor.low_batteries') | int 
+                      and states('sensor.low_batteries') | int 
+                      == states('sensor.low_batteries_offset') | int %}
+                    true
+                  {% else %}
+                    false
+                  {% endif %}
             sequence:
               - delay: 
                   minutes: >-
@@ -180,12 +187,18 @@ automation:
                 above: '1'
               - condition: template
                 value_template: >-
-                  {{ states('input_number.low_batteries_last_triggered') | int
-                  != states('sensor.low_batteries') | int }}
-              - condition: template
-                value_template: >-
-                  {{ states('sensor.low_batteries') | int
-                  == states('sensor.low_batteries_offset') | int }}
+                  {% if states('input_number.low_batteries_last_triggered') | int 
+                      < states('sensor.low_batteries') | int %}
+                    true
+                  {% elif states('input_number.low_batteries_last_triggered') | int 
+                        > states('sensor.low_batteries') | int 
+                      and states('sensor.low_batteries') | int 
+                      == states('sensor.low_batteries_offset') | int %}
+                    true
+                  {% else %}
+                    false
+                  {% endif %}
+
             sequence:
               - delay: 
                   minutes: >-
