@@ -1,4 +1,4 @@
-# Version: 2024.7.3
+# Version: 2024.12.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -195,14 +195,14 @@ automation:
       - service: homeassistant.reload_all
     mode: restart
 
-    # Notify when CPU load 15m is above 4 and when goes back below 3
+    # Notify when CPU load 15m is above 10 and when goes back below 4
   - id: 'cpu_load_15m'
     alias: "𐃏 CPU Load"
     description: ''
     trigger:
       - platform: numeric_state
         entity_id: sensor.load_15m
-        above: '4'
+        above: '10'
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -220,7 +220,7 @@ automation:
           {{ "notify." + notify_service }}
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - wait_template: "{{ states( 'sensor.load_15m' ) | float < 3 }}"
+      - wait_template: "{{ states( 'sensor.load_15m' ) | float < 4 }}"
       - service: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
