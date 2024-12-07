@@ -243,7 +243,7 @@ automation:
     trigger:
       - platform: numeric_state
         entity_id: sensor.memory_use_percent
-        above: '85'
+        above: '90'
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
