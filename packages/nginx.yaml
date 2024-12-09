@@ -1,0 +1,22 @@
+automation:
+    # Restart NginX addon weekly
+  - id: restart_nginx_addon
+    alias: "𐃏 Restart NginX Addon"
+    description: ""
+    trigger:
+      - platform: time
+        at: "05:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - fri
+    action:
+      - if:
+          - condition: template
+            value_template: >-
+              {{ states('update.nginx_home_assistant_ssl_proxy_update') is defined }}
+        then:
+          - service: hassio.addon_restart
+            data:
+              addon: core_nginx_proxy
+    mode: restart
