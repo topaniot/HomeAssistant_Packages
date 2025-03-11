@@ -86,6 +86,8 @@ automation:
     - service: script.turn_on
       target:
         entity_id: script.update_packages
+    - delay:
+        seconds: 10
     mode: single
 
     # Notify on server start using defined service
@@ -138,8 +140,6 @@ automation:
         {{ "notify." + notify_service }}
       data:
         message: ⏹️ Serverul s-a oprit!
-    - delay:
-        seconds: 10
     mode: single
 
     # Ping healthchecks.io every minute
