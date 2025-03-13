@@ -1,12 +1,11 @@
-# Version: 2024.07.2
-#
+# Version: 2025.3.1
 # Senzors and automations specific for Raspberry PI boards.
 
 script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -25,16 +24,16 @@ automation:
   - id: 'cpu_temp'
     alias: "𐃏 CPU Temperature"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.processor_temperature
         above: '80'
     condition: 
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -46,7 +45,7 @@ automation:
         data:
           message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 70 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
