@@ -1,4 +1,4 @@
-# Version: 2023.10.2
+# Version: 2025.3.1
 # Insights package
 #
 # This package create sensors to see statistics from HA instalation.
@@ -7,7 +7,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -23,7 +23,7 @@ script:
             
 template:
   - trigger:
-      - platform: time_pattern
+      - trigger: time_pattern
         minutes: "/1"
     sensor:
     - name: "𐃏 Total Entities"
