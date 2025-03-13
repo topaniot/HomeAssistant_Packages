@@ -1,4 +1,4 @@
-# Version: 2024.06.1
+# Version: 2025.3.1
 # Asuswrt Package
 # For this to work asuswrt integration needs to be setup.
 
@@ -7,7 +7,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -27,13 +27,13 @@ automation:
   - id: 'asuswrt_cpu_temp'
     alias: "𐃏 Asuswrt CPU Temperature"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.asuswrt_cpu_temperature
         above: '80'
     condition: []
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -45,7 +45,7 @@ automation:
         data:
           message: "🟡 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_cpu_temperature' ) | float < 75 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -63,13 +63,13 @@ automation:
   - id: 'asuswrt_24ghz_temp'
     alias: "𐃏 Asuswrt 2.4GHz Temperature"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.asuswrt_2_4ghz_temperature
         above: '60'
     condition: []
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -81,7 +81,7 @@ automation:
         data:
           message: "🟡 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_2_4ghz_temperature' ) | float < 55 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -99,13 +99,13 @@ automation:
   - id: 'asuswrt_5ghz_temp'
     alias: "𐃏 Asuswrt 5GHz Temperature"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.asuswrt_5ghz_temperature
         above: '60'
     condition: []
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -117,7 +117,7 @@ automation:
         data:
           message: "🟡 Asuswrt 5GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
       - wait_template: "{{ states( 'sensor.asuswrt_5ghz_temperature' ) | float < 55 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
