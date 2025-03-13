@@ -1,4 +1,4 @@
-# Version: 2024.06.1
+# Version: 2025.3.1
 # HACS package
 # Notify when there are HACS updates pending.
 #
@@ -12,7 +12,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -36,8 +36,8 @@ automation:
   - id: "updates_available_hacs"
     alias: "𐃏 Updates Available HACS"
     mode: restart
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.hacs
     action:
       - choose:
@@ -60,10 +60,10 @@ automation:
                       {% set hours = 120 %}
                     {% endif %}
                     {{ hours }}
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -92,10 +92,10 @@ automation:
                       {% set hours = 120 %}
                     {% endif %}
                     {{ hours }}
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -117,7 +117,7 @@ automation:
                 entity_id: input_boolean.updates_available_alert_hacs
                 state: 'on'
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                     {% set notify_service = states('input_text.notify_service_updates') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -130,7 +130,7 @@ automation:
                   message: "🎉 HACS este actualizat!"
                   data:
                     disable_notification: True
-              - service: input_boolean.turn_off
+              - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.updates_available_alert_hacs
         default: []
