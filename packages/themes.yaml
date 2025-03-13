@@ -1,11 +1,11 @@
-# Version: 2023.10.1
+# Version: 2025.3.1
 # Themes Package
 
 script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
