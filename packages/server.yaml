@@ -174,10 +174,6 @@ automation:
           message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
-      - action: notify.notify
-        data:
-          title: Eroare notificare!
-          message: A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică!
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
