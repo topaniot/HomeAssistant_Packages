@@ -1,4 +1,4 @@
-# Version: 2024.07.6
+# Version: 2025.3.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -21,7 +21,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -37,7 +37,7 @@ script:
 
 template:
   - trigger:
-      - platform: time_pattern
+      - trigger: time_pattern
         seconds: "/1"
     sensor:
       - name: "𐃏 Updates Available"
@@ -142,10 +142,10 @@ automation:
   - id: "updates_available"
     alias: "𐃏 Updates Available"
     description: ""
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.updates_available
-      - platform: state
+      - trigger: state
         entity_id:
           - input_boolean.maintenance_mode
         to: "off"
@@ -155,7 +155,7 @@ automation:
         state: "off"
       - condition: template
         value_template: "{{ states.sensor.updates_available.state is defined }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: numeric_state
@@ -163,7 +163,7 @@ automation:
                 above: "0"
                 below: "2"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -180,7 +180,7 @@ automation:
                     –') }}
                   data:
                     disable_notification: true
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
                 data: {}
@@ -190,7 +190,7 @@ automation:
                 entity_id: sensor.updates_available
                 above: "1"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -208,7 +208,7 @@ automation:
                     –') }}
                   data:
                     disable_notification: true
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
                 data: {}
@@ -222,7 +222,7 @@ automation:
                 state: "on"
                 enabled: true
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -235,7 +235,7 @@ automation:
                   message: 🎉 Dispozitivele și serviciile sunt actualizate!
                   data:
                     disable_notification: true
-              - service: input_boolean.turn_off
+              - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_alert
                 data: {}
@@ -247,10 +247,10 @@ automation:
   - id: "updates_in_progress"
     alias: "𐃏 Updates in Progress"
     mode: restart
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.updates_in_progress
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
     condition:
       - condition: state
@@ -258,7 +258,7 @@ automation:
         state: "off"
       - condition: template
         value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
-    action:
+    actions:
       - delay:
           seconds: 10
       - choose:
@@ -268,7 +268,7 @@ automation:
                 above: "0"
                 below: "2"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -284,7 +284,7 @@ automation:
                     –') }}
                   data:
                     disable_notification: True
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_in_progress_alert
           - conditions:
@@ -292,7 +292,7 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: "1"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -308,7 +308,7 @@ automation:
                     –') }}
                   data:
                     disable_notification: True
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_in_progress_alert
           - conditions:
@@ -319,7 +319,7 @@ automation:
                 entity_id: input_boolean.update_in_progress_alert
                 state: "on"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
                       {% set notify_service = states('input_text.notify_service_updates') %}
                     {% elif states.input_text.notify_service.state is defined %}
@@ -332,7 +332,7 @@ automation:
                   message: "🎉 Actualizare finalizată!"
                   data:
                     disable_notification: True
-              - service: input_boolean.turn_off
+              - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_in_progress_alert
         default: []
@@ -341,8 +341,8 @@ automation:
   - id: "auto_update"
     alias: "𐃏 Auto Update"
     description: ""
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: 03:30
     condition: []
     action:
@@ -377,7 +377,7 @@ automation:
 
               {{ result.updates|count > 0 }}
         then:
-          - service: update.install
+          - action: update.install
             target:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
@@ -432,7 +432,7 @@ automation:
 
               {{ result.updates|count > 0 }}
         then:
-          - service: update.install
+          - action: update.install
             target:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
@@ -506,7 +506,7 @@ automation:
                     {{ false }}
                   {% endif %}
             then:
-              - service: update.install
+              - action: update.install
                 data:
                   backup: true
                 target:
@@ -530,7 +530,7 @@ automation:
 
                   {{ result.updates|count > 0 }}
             then:
-              - service: update.install
+              - action: update.install
                 data: {}
                 target:
                   entity_id: |-
@@ -576,7 +576,7 @@ automation:
 
               {{ result.updates | count > 0 }}
         then:
-          - service: update.install
+          - action: update.install
             data:
               backup: true
             target:
@@ -610,6 +610,6 @@ automation:
 
               {{ result.updates | count > 0 }}
         then:
-          - service: update.install
+          - action: update.install
             target:
               entity_id: update.home_assistant_operating_system_update

@@ -1,4 +1,4 @@
-# Version: 2024.08.1
+# Version: 2025.3.1
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -16,7 +16,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -32,7 +32,7 @@ script:
 
 template:
   - trigger:
-      - platform: time_pattern
+      - trigger: time_pattern
         seconds: "/1"
     sensor:
       - name: "𐃏 Low Batteries"
@@ -118,13 +118,13 @@ automation:
     alias: "𐃏 Low Batteries"
     mode: restart
     trigger:
-      - platform: state
+      - trigger: state
         entity_id: sensor.low_batteries
         to: ~
-      - platform: state
+      - trigger: state
         entity_id: sensor.low_batteries_offset
         to: ~
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
     condition:
       - condition: template
@@ -162,7 +162,7 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -176,7 +176,7 @@ automation:
                     ⚠️ Este un dispozitiv cu baterie descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
                 data:
@@ -208,7 +208,7 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -222,7 +222,7 @@ automation:
                     ⚠️ Sunt {{ states('sensor.low_batteries') | int }} dispozitive cu bateria descărcată:
                     – {{ state_attr('sensor.low_batteries','names').split(',') | join('
                     –') }}
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
                 data:
@@ -234,7 +234,7 @@ automation:
               - condition: template
                 value_template: "{{ states('input_number.low_batteries_last_triggered') | int != states('sensor.low_batteries') | int }}"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_batteries.state is defined %}
                     {% set notify_service = states('input_text.notify_service_batteries') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -246,7 +246,7 @@ automation:
                 data:
                   message: |
                     🔋 Starea bateriilor este bună!
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
                 data:

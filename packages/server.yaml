@@ -1,4 +1,4 @@
-# Version: 2025.03.1
+# Version: 2025.3.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -8,7 +8,7 @@ script:
   update_packages:
     alias: "𐃏 Update Packages"
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -73,34 +73,36 @@ automation:
   - id: 'update_on_server_stop'
     alias: "𐃏 Update Packages on STOP"
     description: ''
-    trigger:
-    - platform: homeassistant
+    triggers:
+    - trigger: homeassistant
       event: shutdown
-    - platform: webhook
+    - trigger: webhook
       allowed_methods:
         - PUT
       local_only: false
       webhook_id: !secret update_packages_webhook
     condition: []
-    action:
-    - service: script.turn_on
+    actions:
+    - action: script.turn_on
       target:
         entity_id: script.update_packages
+    - delay:
+        seconds: 10
     mode: single
 
     # Notify on server start using defined service
   - id: 'server_start'
     alias: "𐃏 Server Start"
     description: ''
-    trigger:
-    - platform: homeassistant
+    triggers:
+    - trigger: homeassistant
       event: start
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-    - service: >-
+    actions:
+    - action: >-
         {% if states.input_text.notify_service_server.state is defined %}
           {% set notify_service = states('input_text.notify_service_server') %}
         {% elif states.input_text.notify_service.state is defined %}
@@ -118,15 +120,15 @@ automation:
   - id: 'server_stop'
     alias: "𐃏 Server Stop"
     description: ''
-    trigger:
-    - platform: homeassistant
+    triggers:
+    - trigger: homeassistant
       event: shutdown
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-    - service: >-
+    actions:
+    - action: >-
         {% if states.input_text.notify_service_server.state is defined %}
           {% set notify_service = states('input_text.notify_service_server') %}
         {% elif states.input_text.notify_service.state is defined %}
@@ -138,20 +140,18 @@ automation:
         {{ "notify." + notify_service }}
       data:
         message: ⏹️ Serverul s-a oprit!
-    - delay:
-        seconds: 10
     mode: single
 
     # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
     alias: "𐃏 HealthChecks"
     description: ''
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: /1
     condition: []
-    action:
-      - service: rest_command.healthchecks
+    actions:
+      - action: rest_command.healthchecks
     mode: restart
 
     # Notify when a nofitication can't be sent
@@ -159,56 +159,52 @@ automation:
     alias: '𐃏 Failed Notification'
     description: "Alert when a notification can't be sent."
     mode: single
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: system_log_event
         event_data:
           level: ERROR
-    condition:
+    conditions:
       - condition: template
         value_template: '{{ "Error sending message" in trigger.event.data.message[0] }}'
         enabled: true
-    action:
-      - service: persistent_notification.create
+    actions:
+      - action: persistent_notification.create
         data:
           message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
-      - service: notify.notify
-        data:
-          title: Eroare notificare!
-          message: A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică!
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
     alias: "𐃏 Update Packages"
     description: ''
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: script.update_packages
         from: 'on'
         to: 'off'
     condition: []
-    action:
+    actions:
       - delay:
           seconds: 10
-      - service: homeassistant.reload_all
+      - action: homeassistant.reload_all
     mode: restart
 
     # Notify when CPU load 15m is above 10 and when goes back below 4
   - id: 'cpu_load_15m'
     alias: "𐃏 CPU Load"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.load_15m
         above: '10'
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -221,7 +217,7 @@ automation:
         data:
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - wait_template: "{{ states( 'sensor.load_15m' ) | float < 4 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -240,16 +236,16 @@ automation:
   - id: 'ram_usage'
     alias: "𐃏 RAM Usage"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.memory_use_percent
         above: '90'
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -262,7 +258,7 @@ automation:
         data:
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 80 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -280,16 +276,16 @@ automation:
   - id: 'disk_usage'
     alias: "𐃏 Disk Usage"
     description: ''
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.disk_use_percent
         above: '70'
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
-    action:
-      - service: >-
+    actions:
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -301,7 +297,7 @@ automation:
         data:
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
-      - service: >-
+      - action: >-
           {% if states.input_text.notify_service_server.state is defined %}
             {% set notify_service = states('input_text.notify_service_server') %}
           {% elif states.input_text.notify_service.state is defined %}
@@ -318,8 +314,8 @@ automation:
   - id: maintenance_on_off
     alias: "𐃏 Maintenance ON/OFF"
     description: ""
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - sensor.updates_in_progress
     condition:
@@ -332,7 +328,7 @@ automation:
                 entity_id: sensor.updates_in_progress
                 below: 1
             sequence:
-              - service: input_boolean.turn_off
+              - action: input_boolean.turn_off
                 data: {}
                 target:
                   entity_id: input_boolean.maintenance_mode
@@ -341,7 +337,7 @@ automation:
                 entity_id: sensor.updates_in_progress
                 above: 2
             sequence:
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 data: {}
                 target:
                   entity_id: input_boolean.maintenance_mode
@@ -351,12 +347,12 @@ automation:
     alias: "𐃏 Maintenance Notifications"
     description: ""
     mode: single
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - input_boolean.maintenance_mode
     condition: []
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -371,7 +367,7 @@ automation:
                       {{ as_timestamp(states.sensor.updates_in_progress.last_updated) | int + 10 < as_timestamp(now()) | int }}
                     continue_on_timeout: true
                     timeout: "00:01:00"
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_server.state is defined %}
                     {% set notify_service = states('input_text.notify_service_server') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -396,7 +392,7 @@ automation:
                 entity_id: input_boolean.maintenance_mode
                 state: "off"
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_server.state is defined %}
                     {% set notify_service = states('input_text.notify_service_server') %}
                   {% elif states.input_text.notify_service.state is defined %}

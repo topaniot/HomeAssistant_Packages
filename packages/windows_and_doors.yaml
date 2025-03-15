@@ -1,4 +1,4 @@
-# Version: 2024.07.1
+# Version: 2025.3.1
 # Open Windows Package
 # This package create a sensor with number of open windows
 #
@@ -12,7 +12,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -29,7 +29,7 @@ script:
 
 template:
   - trigger:
-      - platform: time_pattern
+      - trigger: time_pattern
         seconds: "/1"
     sensor:
       - name: "Open Windows"

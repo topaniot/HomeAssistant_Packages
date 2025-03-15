@@ -1,4 +1,4 @@
-# Version: 2024.07.1
+# Version: 2025.3.1
 # Problems found Package
 #
 # List all available problems entities with device class problem
@@ -18,7 +18,7 @@ script:
   # Script to update this package from GitHub
   update_packages:
     sequence:
-      - service: downloader.download_file
+      - action: downloader.download_file
         data:
           overwrite: true
           url: >-
@@ -35,7 +35,7 @@ script:
 
 template:
   - trigger:
-      - platform: time_pattern
+      - trigger: time_pattern
         seconds: "/1"
     sensor:
       - name: "𐃏 Problems Detected"
@@ -77,11 +77,11 @@ automation:
     alias: "𐃏 Problems Detected"
     mode: restart
     trigger:
-      - platform: state
+      - trigger: state
         entity_id: sensor.problems_detected
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
-      - platform: state
+      - trigger: state
         entity_id:
           - input_boolean.maintenance_mode
         to: "off"
@@ -111,12 +111,12 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
                   value: "{{ states('sensor.problems_detected') | int }}"
-              - service: >
+              - action: >
                   {% if states.input_text.notify_service_problems.state is defined %}
                     {% set notify_service = states('input_text.notify_service_problems') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -147,12 +147,12 @@ automation:
                       {% set minutes = 10 %}
                     {% endif %}
                     {{ minutes }}
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
                   value: "{{ states('sensor.problems_detected') | int }}"
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_problems.state is defined %}
                     {% set notify_service = states('input_text.notify_service_problems') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -174,7 +174,7 @@ automation:
                 value_template: >-
                   {{ states('input_number.problems_detected_last_triggered') | int > 0 }}
             sequence:
-              - service: >-
+              - action: >-
                   {% if states.input_text.notify_service_problems.state is defined %}
                     {% set notify_service = states('input_text.notify_service_problems') %}
                   {% elif states.input_text.notify_service.state is defined %}
@@ -185,7 +185,7 @@ automation:
                   {{ "notify." + notify_service }}
                 data:
                   message: "👌 Probleme rezolvate!"
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: input_number.problems_detected_last_triggered
                 data:
