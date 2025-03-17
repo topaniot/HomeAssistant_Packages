@@ -1,4 +1,4 @@
-# Version: 2025.3.1
+# Version: 2025.3.2
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -378,6 +378,8 @@ automation:
               {{ result.updates|count > 0 }}
         then:
           - action: update.install
+            data:
+              backup: true
             target:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
