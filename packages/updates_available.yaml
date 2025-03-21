@@ -1,4 +1,4 @@
-# Version: 2025.3.2
+# Version: 2025.3.3
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -578,8 +578,22 @@ automation:
                   backup: true
                 target:
                   entity_id: update.esphome_update
-              - delay:
-                  minutes: 10
+              - wait_template: |-
+                  {% set ignored = label_entities('ignore') %}
+
+                  {% set result = namespace(updates=[]) %}
+                  {% for state in states.update 
+                    |selectattr('state', '==', 'on')
+                    |selectattr('attributes.title', '==', 'ESPHome')
+                    |rejectattr('entity_id', 'in', ['update.esphome_update'])
+                    |rejectattr('entity_id','in', ignored )  
+                  %}
+                    {% set result.updates = result.updates + [state.entity_id] %}
+                  {% endfor %}
+
+                  {{ result.updates | count > 0 }}
+                continue_on_timeout: true
+                timeout: "00:30:00"
           - if:
               - condition: template
                 value_template: |-
