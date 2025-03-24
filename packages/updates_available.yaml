@@ -1,4 +1,4 @@
-# Version: 2025.3.4
+# Version: 2025.3.5
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -342,8 +342,14 @@ automation:
     alias: "𐃏 Auto Update"
     description: ""
     triggers:
-      - trigger: time
-        at: 03:30
+      - trigger: template
+        value_template: |-
+          {% if states.input_datetime.auto_update_time.state is defined %}
+            {% set time = states('input_datetime.auto_update_time')  %}
+          {% else %}
+            {% set time = "3:30:00" %}
+          {% endif %}
+          {{ time == now().timestamp() | timestamp_custom('%H:%M:%S') }} 
     condition: []
     action:
       # Addons Update
