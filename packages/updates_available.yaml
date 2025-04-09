@@ -1,4 +1,4 @@
-# Version: 2025.3.5
+# Version: 2025.4.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -347,7 +347,7 @@ automation:
           {% if states.input_datetime.auto_update_time.state is defined %}
             {% set time = states('input_datetime.auto_update_time')  %}
           {% else %}
-            {% set time = "3:30:00" %}
+            {% set time = "03:30:00" %}
           {% endif %}
           {{ time == now().timestamp() | timestamp_custom('%H:%M:%S') }} 
     condition: []
