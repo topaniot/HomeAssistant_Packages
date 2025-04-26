@@ -1,4 +1,4 @@
-# Version: 2025.4.4
+# Version: 2025.4.5
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -386,7 +386,6 @@ automation:
                       {% else %}
                         {% set hours = hours_map.get(update_status, 120) %}
                       {% endif %}
-                      {{ hours }}
                       {% if as_timestamp(state.last_changed) | int + 60 * 60 * hours < as_timestamp(now()) | int %}
                           {% set result.updates = result.updates + [state.entity_id] %}
                       {% endif %}
@@ -429,7 +428,6 @@ automation:
                       {% else %}
                         {% set hours = hours_map.get(update_status, 120) %}
                       {% endif %}
-                      {{ hours }}
                       {% if as_timestamp(state.last_changed) | int + 60 * 60 * hours < as_timestamp(now()) | int %}
                           {% set result.updates = result.updates + [state.entity_id] %}
                       {% endif %}
@@ -577,7 +575,6 @@ automation:
                       {% else %}
                         {% set hours = hours_map.get(update_status, 120) %}
                       {% endif %}
-                      {{ hours }}
                       {% if as_timestamp(state.last_changed) | int + 60 * 60 * hours < as_timestamp(now()) | int %}
                           {% set result.updates = result.updates + [state.entity_id] %}
                       {% endif %}
@@ -609,7 +606,6 @@ automation:
                       {% else %}
                         {% set hours = hours_map.get(update_status, 120) %}
                       {% endif %}
-                      {{ hours }}
                       {% if as_timestamp(state.last_changed) | int + 60 * 60 * hours < as_timestamp(now()) | int %}
                           {% set result.updates = result.updates + [state.entity_id] %}
                       {% endif %}
