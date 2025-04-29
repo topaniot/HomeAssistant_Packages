@@ -8,8 +8,9 @@
 # To change the delay of updates notifications create a input number helper named: "𐃏 Delay Notifiy Updates"
 # and set the number of hours to wait until send the notification
 #
-# To change the delay of installing updates create a input number helper called: "𐃏 Delay Auto Update"
-# and set how old should be the update before installing
+# To change the delay of installing updates create a input number helper called: "𐃏 Delay Update"
+# and set how old should be the update before installing. for minor updates create "𐃏 Delay Update minor"
+#
 #
 # To change the notification service create an input text helper named: "𐃏 Notify Service Updates"
 # and put inside the name of the service you want.
