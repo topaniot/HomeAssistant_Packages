@@ -1,4 +1,4 @@
-# Version: 2025.4.8
+# Version: 2025.5.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -662,7 +662,7 @@ automation:
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
                 |selectattr('attributes.title', '==', 'ESPHome')
-                |rejectattr('entity_id', '==', 'update.esphome_device_builder_update', 'update.esphome_update' )
+                |rejectattr('entity_id', 'in', 'update.esphome_device_builder_update', 'update.esphome_update' )
                 |rejectattr('entity_id','in', ignored )  
               %}
                 {% set result.updates = result.updates + [state.entity_id] %}
@@ -681,7 +681,7 @@ automation:
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
                   |selectattr('attributes.title', '==', 'ESPHome')
-                  |rejectattr('entity_id', '==', 'update.esphome_device_builder_update', 'update.esphome_update' )
+                  |rejectattr('entity_id', 'in', 'update.esphome_device_builder_update', 'update.esphome_update' )
                   |rejectattr('entity_id','in', ignored )  
                 %}
                   {% set result.updates = result.updates + [state.entity_id] %}
