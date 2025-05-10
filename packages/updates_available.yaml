@@ -360,7 +360,7 @@ automation:
             value_template: |-
               {% set ignored = label_entities('ignore') %}
               {% set result = namespace(updates=[]) %}
-              {% set hours_map = {0: 24, 1: 72} %}
+              {% set hours_map = {0: 24, 1: 120} %}
 
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
@@ -401,7 +401,7 @@ automation:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
                 {% set result = namespace(updates=[]) %}
-                {% set hours_map = {0: 24, 1: 72} %}
+                {% set hours_map = {0: 24, 1: 120} %}
 
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
@@ -443,7 +443,7 @@ automation:
             value_template: |-
                 {% set ignored = label_entities('ignore') %}
                 {% set result = namespace(updates=[]) %}
-                {% set hours_map = {0: 24, 1: 72} %}
+                {% set hours_map = {0: 24, 1: 120} %}
                 
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
@@ -485,7 +485,7 @@ automation:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
                 {% set result = namespace(updates=[]) %}
-                {% set hours_map = {0: 24, 1: 72} %}
+                {% set hours_map = {0: 24, 1: 120} %}
                 
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
