@@ -1,4 +1,4 @@
-# Version: 2025.5.2
+# Version: 2025.5.3
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -345,12 +345,17 @@ automation:
     triggers:
       - trigger: template
         value_template: |-
+          {% set current_day = now().weekday() %}
           {% if states.input_datetime.auto_update_time.state is defined %}
-            {% set time = states('input_datetime.auto_update_time')  %}
+              {% set time = states('input_datetime.auto_update_time') %}
+              {% set allow_update = true %}
+          {% elif current_day in [0, 1, 2, 3] %}
+              {% set time = "03:30:00" %}
+              {% set allow_update = true %}
           {% else %}
-            {% set time = "03:30:00" %}
+              {% set allow_update = false %}
           {% endif %}
-          {{ time == now().timestamp() | timestamp_custom('%H:%M:%S') }} 
+          {{ allow_update and time == now().timestamp() | timestamp_custom('%H:%M:%S') }}
     condition: []
     action:
 
