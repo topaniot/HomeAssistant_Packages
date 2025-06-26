@@ -1,4 +1,4 @@
-# Version: 2025.5.3
+# Version: 2025.5.4
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -677,7 +677,6 @@ automation:
         then:
           - action: update.install
             continue_on_error: true
-            data: {}
             target:
               entity_id: |-
                 {% set ignored = label_entities('ignore') %}
@@ -734,8 +733,6 @@ automation:
         then:
           - action: update.install
             continue_on_error: true
-            data:
-              backup: true
             target:
               entity_id: update.home_assistant_core_update
 
