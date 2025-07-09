@@ -49,18 +49,6 @@ rest_command:
   healthchecks:
     url: !secret healthchecks
 
-#Telegram bot
-telegram_bot:
-  - platform: polling
-    api_key: !secret telegram_api_key
-    allowed_chat_ids: !secret telegram_allowed_chat_ids
-
-notify:
-    # Telegram notify
-  - platform: telegram
-    name: tiot_telegram
-    chat_id: !secret telegram_notify_chat_id
-
 logbook:
   exclude:
     entity_globs:
