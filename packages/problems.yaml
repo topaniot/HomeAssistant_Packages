@@ -1,4 +1,4 @@
-# Version: 2025.3.1
+# Version: 2025.7.1
 # Problems found Package
 #
 # List all available problems entities with device class problem
@@ -122,9 +122,9 @@ automation:
                   {% elif states.input_text.notify_service.state is defined %}
                     {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
-                    {% set notify_service = 'notify' %}
+                    {% set notify_service = 'notify.notify' %}
                   {% endif %}
-                  {{ "notify." + notify_service }}
+                  {{ notify_service }}
                 data:
                   message: |
                     ⚠️ Este o problema:
@@ -158,9 +158,9 @@ automation:
                   {% elif states.input_text.notify_service.state is defined %}
                     {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
-                    {% set notify_service = 'notify' %}
+                    {% set notify_service = 'notify.notify' %}
                   {% endif %}
-                  {{ "notify." + notify_service }}
+                  {{ notify_service }}
                 data:
                   message: |
                     ⚠️ Sunt {{ states('sensor.problems_detected')|int }} probleme:
@@ -180,9 +180,9 @@ automation:
                   {% elif states.input_text.notify_service.state is defined %}
                     {% set notify_service = states('input_text.notify_service') %}
                   {% else %}
-                    {% set notify_service = 'notify' %}
+                    {% set notify_service = 'notify.notify' %}
                   {% endif %}
-                  {{ "notify." + notify_service }}
+                  {{ notify_service }}
                 data:
                   message: "👌 Probleme rezolvate!"
               - action: input_number.set_value
