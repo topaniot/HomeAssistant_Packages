@@ -1,4 +1,4 @@
-# Version: 2025.5.4
+# Version: 2025.10.1
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -144,8 +144,21 @@ automation:
     alias: "𐃏 Updates Available"
     description: ""
     triggers:
-      - trigger: state
-        entity_id: sensor.updates_available
+      - trigger: template
+        value_template: |-
+          {% set current_day = now().weekday() %}
+          {% if states.input_datetime.notify_updates_time.state is defined %}
+              {% set time = states('input_datetime.notify_updates_time') %}
+              {% set allow_update = true %}
+          {% elif current_day in [0, 1, 2, 3] %}
+              {% set time = "10:00:00" %}
+              {% set allow_update = true %}
+          {% else %}
+              {% set allow_update = false %}
+          {% endif %}
+          {{ allow_update and time == now().timestamp() | timestamp_custom('%H:%M:%S') }}
+      # - trigger: state
+      #   entity_id: sensor.updates_available
       - trigger: state
         entity_id:
           - input_boolean.maintenance_mode
