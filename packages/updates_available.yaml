@@ -1,4 +1,4 @@
-# Version: 2025.5.4
+# Version: 2025.10.2
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -45,75 +45,76 @@ template:
         icon: "hass:update"
         state: >
           {% set ignored = label_entities('ignore') %}
-                
           {% set result = namespace(updates=[]) %}
-          {% if states.input_number.delay_notify_updates.state is defined %}
-            {% set hours = states('input_number.delay_notify_updates') | int %}
-          {% else %}
-            {% set hours = 144 %}
-          {% endif %}
+          {% set hours_map = {0: 48, 1: 144} %}
 
           {% for state in states.update 
             |selectattr('state', '==', 'on')
-            |rejectattr('entity_id','in', ignored) 
-          %}
-            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-              {% set result.updates 
-                  = result.updates + [state.name 
-                  ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                  ~ state.attributes.latest_version ~ ')'] 
-                %}
-            {% endif %}
-          {% endfor %}
-
-          {% for state in states.binary_sensor
-            |selectattr('attributes.device_class', 'defined')
-            |selectattr('attributes.device_class', '==', 'update')
-            |selectattr('state', 'eq', 'on')
             |rejectattr('entity_id','in', ignored ) 
           %}
-            {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-              {% set result.updates = result.updates + [state.name ] %}
+            {% set current = state_attr(state.entity_id, 'installed_version') %}
+            {% set latest = state_attr(state.entity_id, 'latest_version') %}
+            {% if current and latest %}
+              {% set cp = current.split('.') %}
+              {% set lp = latest.split('.') %}
+              {# If only the patch differs then it's a minor update (update_status = 0), otherwise it's major (update_status = 1) #}
+              {% set update_status = 0 if cp[0] == lp[0] and cp[1] == lp[1] and cp[2] != lp[2] else 1 %}
+              {# For minor update use delay_update_minor, for major update use delay_update #}
+              {% set hours = (states('input_number.delay_update_minor')|int + 24)
+                  if update_status == 0 and states('input_number.delay_update_minor') not in ['unknown', None]
+                  else ((states('input_number.delay_update')|int + 24)
+                  if update_status == 1 and states('input_number.delay_update') not in ['unknown', None]
+                  else hours_map[update_status])
+              %}
+              {% if as_timestamp(state.last_changed) + 3600 * hours < as_timestamp(now()) %}
+                {% set result.updates 
+                = result.updates + [state.name 
+                ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                ~ state.attributes.latest_version ~ ')'] 
+                %}
+                
+              {% endif %}
             {% endif %}
           {% endfor %}
-
+          
           {{ result.updates|count }}
         attributes:
           names: >
             {% set ignored = label_entities('ignore') %}
-                  
             {% set result = namespace(updates=[]) %}
-            {% if states.input_number.delay_notify_updates.state is defined %}
-              {% set hours = states('input_number.delay_notify_updates') | int %}
-            {% else %}
-              {% set hours = 144 %}
-            {% endif %}
+            {% set hours_map = {0: 48, 1: 144} %}
 
             {% for state in states.update 
               |selectattr('state', '==', 'on')
-              |rejectattr('entity_id','in', ignored) 
+              |rejectattr('entity_id','in', ignored ) 
             %}
-              {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                {% set result.updates 
-                    = result.updates + [state.name 
-                    ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
-                    ~ state.attributes.latest_version ~ ')'] 
+              {% set current = state_attr(state.entity_id, 'installed_version') %}
+              {% set latest = state_attr(state.entity_id, 'latest_version') %}
+              {% if current and latest %}
+                {% set cp = current.split('.') %}
+                {% set lp = latest.split('.') %}
+                {# If only the patch differs then it's a minor update (update_status = 0), otherwise it's major (update_status = 1) #}
+                {% set update_status = 0 if cp[0] == lp[0] and cp[1] == lp[1] and cp[2] != lp[2] else 1 %}
+                {# For minor update use delay_update_minor, for major update use delay_update #}
+                {% set hours = (states('input_number.delay_update_minor')|int + 24)
+                    if update_status == 0 and states('input_number.delay_update_minor') not in ['unknown', None]
+                    else ((states('input_number.delay_update')|int + 24)
+                    if update_status == 1 and states('input_number.delay_update') not in ['unknown', None]
+                    else hours_map[update_status])
+                %}
+                {% if as_timestamp(state.last_changed) + 3600 * hours < as_timestamp(now()) %}
+                  {% set result.updates 
+                  = result.updates + [state.name 
+                  ~ ' (' ~ state.attributes.installed_version ~ ' -> ' 
+                  ~ state.attributes.latest_version ~ ')'] 
                   %}
-              {% endif %}
-            {% endfor %}
-
-            {% for state in states.binary_sensor
-              |selectattr('attributes.device_class', 'defined')
-              |selectattr('attributes.device_class', '==', 'update')
-              |selectattr('state', 'eq', 'on')
-              |rejectattr('entity_id','in', ignored) 
-            %}
-              {% if as_timestamp(state.last_changed) | int + 60*60*hours < as_timestamp(now()) | int %}
-                {% set result.updates = result.updates + [state.name ] %}
+                  
+                {% endif %}
               {% endif %}
             {% endfor %}
 
             {{ result.updates|join (', ') }}
+
       - name: "𐃏 Updates in Progress"
         icon: "hass:update"
         state: >
@@ -144,8 +145,21 @@ automation:
     alias: "𐃏 Updates Available"
     description: ""
     triggers:
-      - trigger: state
-        entity_id: sensor.updates_available
+      - trigger: template
+        value_template: |-
+          {% set current_day = now().weekday() %}
+          {% if states.input_datetime.notify_updates_time.state is defined %}
+              {% set time = states('input_datetime.notify_updates_time') %}
+              {% set allow_update = true %}
+          {% elif current_day in [0, 1, 2, 3] %}
+              {% set time = "10:00:00" %}
+              {% set allow_update = true %}
+          {% else %}
+              {% set allow_update = false %}
+          {% endif %}
+          {{ allow_update and time == now().timestamp() | timestamp_custom('%H:%M:%S') }}
+      # - trigger: state
+      #   entity_id: sensor.updates_available
       - trigger: state
         entity_id:
           - input_boolean.maintenance_mode
