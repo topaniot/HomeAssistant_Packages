@@ -1,4 +1,4 @@
-# Version: 2025.7.1
+# Version: 2025.12.1
 # Low Batteries Package
 #
 # Count and list of entities device class battery with the value under 20
@@ -138,8 +138,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries
-                above: '0'
-                below: '2'
+                above: 0
+                below: 2
               - condition: template
                 value_template: >-
                   {% if states('input_number.low_batteries_last_triggered') | int 
@@ -184,7 +184,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries
-                above: '1'
+                above: 1
               - condition: template
                 value_template: >-
                   {% if states('input_number.low_batteries_last_triggered') | int 
@@ -230,7 +230,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.low_batteries_offset
-                below: '1'
+                below: 1
               - condition: template
                 value_template: "{{ states('input_number.low_batteries_last_triggered') | int != states('sensor.low_batteries') | int }}"
             sequence:
