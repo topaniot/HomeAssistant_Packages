@@ -1,4 +1,4 @@
-# Version 2025.7.1
+# Version 2025.12.1
 # Package - Unavailable Entities
 # Count and list of devices and sensors with a state of unavailable
 #
@@ -126,8 +126,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
-                above: '0'
-                below: '2'
+                above: 0
+                below: 2
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_entities_last_triggered') | int
@@ -163,7 +163,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
-                above: '1'
+                above: 1
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_entities_last_triggered') | int
@@ -199,7 +199,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_entities
-                below: '1'
+                below: 1
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_entities_last_triggered') | int > 0 }}
@@ -241,8 +241,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_sensors
-                above: '0'
-                below: '2'
+                above: 0
+                below: 2
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_sensors_last_triggered') | int
@@ -278,7 +278,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_sensors
-                above: '1'
+                above: 1
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_sensors_last_triggered') | int
@@ -314,7 +314,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.unavailable_sensors
-                below: '1'
+                below: 1
               - condition: template
                 value_template: >-
                   {{ states('input_number.unavailable_sensors_last_triggered') | int > 0 }}
