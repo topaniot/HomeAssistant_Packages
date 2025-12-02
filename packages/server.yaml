@@ -1,4 +1,4 @@
-# Version: 2025.7.2
+# Version: 2025.12.1
 # Package Server
 # This package includes default integrations, automations 
 # and sersors for server activity.
@@ -186,7 +186,7 @@ automation:
     triggers:
       - trigger: numeric_state
         entity_id: sensor.load_15m
-        above: '10'
+        above: 10
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -227,7 +227,7 @@ automation:
     triggers:
       - trigger: numeric_state
         entity_id: sensor.memory_use_percent
-        above: '90'
+        above: 90
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -267,7 +267,7 @@ automation:
     triggers:
       - trigger: numeric_state
         entity_id: sensor.disk_use_percent
-        above: '70'
+        above: 70
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
