@@ -1,4 +1,4 @@
-# Version: 2025.12.1
+# Version: 2025.12.2
 # Updates Available Package
 #
 # Auto update all addons, firmware, core, os.
@@ -175,8 +175,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                above: "0"
-                below: "2"
+                above: 0
+                below: 2
             sequence:
               - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -203,7 +203,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                above: "1"
+                above: 1
             sequence:
               - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -231,7 +231,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_available
-                below: "1"
+                below: 1
               - condition: state
                 entity_id: input_boolean.update_available_alert
                 state: "on"
@@ -280,8 +280,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                above: "0"
-                below: "2"
+                above: 0
+                below: 2
             sequence:
               - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -305,7 +305,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                above: "1"
+                above: 1
             sequence:
               - action: >-
                   {% if states.input_text.notify_service_updates.state is defined %}
@@ -329,7 +329,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
-                below: "1"
+                below: 1
               - condition: state
                 entity_id: input_boolean.update_in_progress_alert
                 state: "on"
@@ -380,7 +380,6 @@ automation:
               {% set ignored = label_entities('ignore') %}
               {% set result = namespace(updates=[]) %}
               {% set hours_map = {0: 24, 1: 120} %}
-
               {% for state in states.update 
                 |selectattr('state', '==', 'on')
                 |rejectattr('attributes.device_class', '==', 'firmware')
@@ -420,7 +419,6 @@ automation:
                 {% set ignored = label_entities('ignore') %}
                 {% set result = namespace(updates=[]) %}
                 {% set hours_map = {0: 24, 1: 120} %}
-
                 {% for state in states.update 
                   |selectattr('state', '==', 'on')
                   |rejectattr('attributes.device_class', '==', 'firmware')
