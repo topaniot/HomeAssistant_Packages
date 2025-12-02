@@ -1,4 +1,4 @@
-# Version: 2025.7.1
+# Version: 2025.12.1
 # Problems found Package
 #
 # List all available problems entities with device class problem
@@ -96,8 +96,8 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.problems_detected
-                above: '0'
-                below: '2'
+                above: 0
+                below: 2
               - condition: template
                 value_template: >-
                   {{ states('input_number.problems_detected_last_triggered') | int
@@ -133,7 +133,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.problems_detected
-                above: '1'
+                above: 1
               - condition: template
                 value_template: >
                   {{ states('input_number.problems_detected_last_triggered') | int
@@ -169,7 +169,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.problems_detected
-                below: '1'
+                below: 1
               - condition: template
                 value_template: >-
                   {{ states('input_number.problems_detected_last_triggered') | int > 0 }}
