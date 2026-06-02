@@ -1,15 +1,36 @@
-# Version: 2025.12.1
-# Low Batteries Package
+# ==================================================================================
+# Package: Low Batteries Monitor
+# Version: 2026.06.1
+# Description:
+#   Monitors battery levels for sensors and triggers notifications when 
+#   they drop below a defined threshold.
 #
-# Count and list of entities device class battery with the value under 20
+# --- Required Helpers ---
+# To customize this package, create the following helpers:
 #
-# To change the delay of low battery notifications create a input number helper named: "𐃏 Delay Notifiy Batteries"
-# and set the number of minutes to wait until send the notification
+# 1. input_number.delay_notify_batteries
+#    - Name: "𐃏 Delay Notifiy Batteries"
+#    - Purpose: Delay (in minutes) before notification triggers.
 #
-# To change the notification service create an input text helper named: "𐃏 Notify Service Batteries"
-# and put inside the name of the service you want. 
+# 2. input_number.battery_level_threshold
+#    - Name: "𐃏 Battery Level Threshold"
+#    - Purpose: Percentage threshold (default 20).
 #
-# If you want to exlcude entities assign a label named Ignore to them.
+# 3. input_text.notify_service_batteries (Optional)
+#    - Name: "𐃏 Notify Service Batteries"
+#    - Purpose: Specific notification service for this package.
+#
+# 4. input_text.notify_service (General/Global)
+#    - Name: "𐃏 Notify Service"
+#    - Purpose: Default notification service used by this and other packages.
+#
+# 5. input_text.telegram_chat_id (Optional)
+#    - Name: "𐃏 Telegram Chat ID"
+#    - Purpose: Required only if using Telegram.
+#
+# --- Configuration ---
+# - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude.
+# ==================================================================================
 
 
 script:
@@ -117,138 +138,71 @@ automation:
   - id: "low_batteries"
     alias: "𐃏 Low Batteries"
     mode: restart
-    trigger:
+    triggers:
       - trigger: state
         entity_id: sensor.low_batteries
-        to: ~
       - trigger: state
         entity_id: sensor.low_batteries_offset
-        to: ~
       - trigger: homeassistant
         event: start
     condition:
       - condition: template
         value_template: "{{ states.sensor.low_batteries.state is defined }}"
+    actions:
+      - variables:
+          count: "{{ states('sensor.low_batteries') | int(0) }}"
+          offset_count: "{{ states('sensor.low_batteries_offset') | int(0) }}"
+          last_triggered: "{{ states('input_number.low_batteries_last_triggered') | int(0) }}"
       - condition: template
-        value_template: "{{ states.sensor.low_batteries_offset.state is defined }}"
-    action:
-      - delay:
-          seconds: 1
+        value_template: >-
+          {{ count != last_triggered or (count == 0 and offset_count == 0 and last_triggered > 0) }}
+      - variables:
+          notify_service: >-
+            {% if states.input_text.notify_service_batteries.state is defined %}
+              {{ states('input_text.notify_service_batteries') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: |
+            {% if count == 0 %}
+            🔋 Starea bateriilor este bună!
+            {% elif count == 1 %}
+            ⚠️ Este un dispozitiv cu baterie descărcată:
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            {% else %}
+            ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            {% endif %}
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.low_batteries
-                above: 0
-                below: 2
               - condition: template
-                value_template: >-
-                  {% if states('input_number.low_batteries_last_triggered') | int 
-                      < states('sensor.low_batteries') | int %}
-                    true
-                  {% elif states('input_number.low_batteries_last_triggered') | int 
-                        > states('sensor.low_batteries') | int 
-                      and states('sensor.low_batteries') | int 
-                      == states('sensor.low_batteries_offset') | int %}
-                    true
-                  {% else %}
-                    false
-                  {% endif %}
+                value_template: "{{ count > 0 }}"
             sequence:
               - delay: 
                   minutes: >-
                     {% if states.input_number.delay_notify_batteries.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_batteries') | int %}
+                      {{ states('input_number.delay_notify_batteries') | int }}
                     {% else %}
-                      {% set minutes = 10 %}
+                      10
                     {% endif %}
-                    {{ minutes }}
-              - action: >-
-                  {% if states.input_text.notify_service_batteries.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_batteries') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    ⚠️ Este un dispozitiv cu baterie descărcată:
-                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
-                    –') }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.low_batteries_last_triggered
-                data:
-                  value: "{{ states('sensor.low_batteries') | int }}"
+      - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.low_batteries
-                above: 1
               - condition: template
                 value_template: >-
-                  {% if states('input_number.low_batteries_last_triggered') | int 
-                      < states('sensor.low_batteries') | int %}
-                    true
-                  {% elif states('input_number.low_batteries_last_triggered') | int 
-                        > states('sensor.low_batteries') | int 
-                      and states('sensor.low_batteries') | int 
-                      == states('sensor.low_batteries_offset') | int %}
-                    true
-                  {% else %}
-                    false
-                  {% endif %}
-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
-              - delay: 
-                  minutes: >-
-                    {% if states.input_number.delay_notify_batteries.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_batteries') | int %}
-                    {% else %}
-                      {% set minutes = 10 %}
-                    {% endif %}
-                    {{ minutes }}
-              - action: >-
-                  {% if states.input_text.notify_service_batteries.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_batteries') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
+              - action: "{{ notify_service }}"
                 data:
-                  message: |
-                    ⚠️ Sunt {{ states('sensor.low_batteries') | int }} dispozitive cu bateria descărcată:
-                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
-                    –') }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.low_batteries_last_triggered
-                data:
-                  value: "{{ states('sensor.low_batteries') | int }}"
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.low_batteries_offset
-                below: 1
-              - condition: template
-                value_template: "{{ states('input_number.low_batteries_last_triggered') | int != states('sensor.low_batteries') | int }}"
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_batteries.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_batteries') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔋 Starea bateriilor este bună!
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.low_batteries_last_triggered
-                data:
-                  value: "{{ states('sensor.low_batteries') | int }}"
-        default: []
+                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
+                  message: "{{ notify_message }}"
+        default:
+          - action: "{{ notify_service }}"
+            data:
+              message: "{{ notify_message }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.low_batteries_last_triggered
+        data:
+          value: "{{ count }}"
