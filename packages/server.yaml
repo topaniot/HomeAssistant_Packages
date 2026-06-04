@@ -5,10 +5,6 @@
 #   Monitors server health, handles updates, and manages maintenance modes.
 #
 # --- Required Helpers ---
-# 1. input_boolean.maintenance_mode
-#    - Name: "𐃏 Maintenance Mode"
-#    - Purpose: Toggle to disable automations during maintenance.
-#
 # 2. input_text.notify_service_server (Optional)
 #    - Name: "𐃏 Notify Service Server"
 #    - Purpose: Specific notification service for server alerts.
@@ -23,6 +19,7 @@
 # ==================================================================================
 
 script:
+  # Script to update this package from GitHub
   update_packages:
     alias: "𐃏 Update Packages"
     sequence:
@@ -46,10 +43,14 @@ input_boolean:
     icon: "hass:wrench-clock"
 
 http:
+  # ip_ban_enabled: true
+  # login_attempts_threshold: 15
+  # Setup NGINX
   use_x_forwarded_for: true
   trusted_proxies:
     - 172.30.33.0/24
 
+# Enable log errors to fire events
 system_log:
   fire_event: true
 
@@ -59,137 +60,168 @@ recorder:
       - automation.healthchecks
 
 rest_command:
+  # monitor server with healthchecks.io
   healthchecks:
     url: !secret healthchecks
 
 logbook:
   exclude:
     entity_globs:
+      # Exclude Load Sensors
       - sensor.*_load_*
       - sensor.load_*
 
 automation:
-  # Update Packages on server STOP
+    # Update Packages on server STOP
   - id: 'update_on_server_stop'
     alias: "𐃏 Update Packages on STOP"
+    description: ''
     triggers:
-      - trigger: homeassistant
-        event: shutdown
-      - trigger: webhook
-        allowed_methods: [PUT]
-        local_only: false
-        webhook_id: !secret update_packages_webhook
+    - trigger: homeassistant
+      event: shutdown
+    - trigger: webhook
+      allowed_methods:
+        - PUT
+      local_only: false
+      webhook_id: !secret update_packages_webhook
+    condition: []
     actions:
-      - action: script.turn_on
-        target:
-          entity_id: script.update_packages
-      - delay:
-          seconds: 10
+    - action: script.turn_on
+      target:
+        entity_id: script.update_packages
+    - delay:
+        seconds: 10
     mode: single
 
-  # Server Start/Stop Notifications
+    # Notify on server start using defined service
   - id: 'server_start'
     alias: "𐃏 Server Start"
+    description: ''
     triggers:
-      - trigger: homeassistant
-        event: start
+    - trigger: homeassistant
+      event: start
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables: &notify_vars
-          notify_service: >-
-            {% if states.input_text.notify_service_server.state is defined %}
-              {{ states('input_text.notify_service_server') }}
-            {% elif states.input_text.notify_service.state is defined %}
-              {{ states('input_text.notify_service') }}
-            {% else %}
-              notify.notify
-            {% endif %}
-      - choose:
-          - conditions: &telegram_cond
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "▶️ Serverul a pornit!"
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "▶️ Serverul a pornit!"
+    - variables:
+        notify_service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {{ states('input_text.notify_service_server') }}
+          {% elif states.input_text.notify_service.state is defined %}
+            {{ states('input_text.notify_service') }}
+          {% else %}
+            notify.notify
+          {% endif %}
+        notify_message: "▶️ Serverul a pornit!"
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: >-
+                {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+          sequence:
+            - action: "{{ notify_service }}"
+              data:
+                entity_id: "{{ states('input_text.telegram_chat_id') }}"
+                message: "{{ notify_message }}"
+      default:
+        - action: "{{ notify_service }}"
+          data:
+            message: "{{ notify_message }}"
     mode: single
 
+    # Notify on server Stop using defined service
   - id: 'server_stop'
     alias: "𐃏 Server Stop"
+    description: ''
     triggers:
-      - trigger: homeassistant
-        event: shutdown
+    - trigger: homeassistant
+      event: shutdown
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables: *notify_vars
-      - choose:
-          - conditions: *telegram_cond
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "⏹️ Serverul s-a oprit!"
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "⏹️ Serverul s-a oprit!"
+    - variables:
+        notify_service: >-
+          {% if states.input_text.notify_service_server.state is defined %}
+            {{ states('input_text.notify_service_server') }}
+          {% elif states.input_text.notify_service.state is defined %}
+            {{ states('input_text.notify_service') }}
+          {% else %}
+            notify.notify
+          {% endif %}
+        notify_message: "⏹️ Serverul s-a oprit!"
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: >-
+                {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+          sequence:
+            - action: "{{ notify_service }}"
+              data:
+                entity_id: "{{ states('input_text.telegram_chat_id') }}"
+                message: "{{ notify_message }}"
+      default:
+        - action: "{{ notify_service }}"
+          data:
+            message: "{{ notify_message }}"
     mode: single
 
-  # Healthchecks & System Tools
+    # Ping healthchecks.io every minute
   - id: 'healthchecks_update'
     alias: "𐃏 HealthChecks"
+    description: ''
     triggers:
       - trigger: time_pattern
         minutes: /1
+    condition: []
     actions:
       - action: rest_command.healthchecks
     mode: restart
 
+    # Notify when a nofitication can't be sent
   - id: failed_notification
     alias: '𐃏 Failed Notification'
+    description: "Alert when a notification can't be sent."
+    mode: single
     triggers:
       - trigger: event
         event_type: system_log_event
         event_data:
           level: ERROR
-    condition:
+    conditions:
       - condition: template
         value_template: '{{ "Error sending message" in trigger.event.data.message[0] }}'
+        enabled: true
     actions:
       - action: persistent_notification.create
         data:
-          message: "A apărut o problemă la trimiterea unei notificări. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
+          message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
 
-  - id: 'update_packages_reload'
-    alias: "𐃏 Update Packages Reload"
+    # Reload things after script update_packages is run
+  - id: 'update_packages'
+    alias: "𐃏 Update Packages"
+    description: ''
     triggers:
       - trigger: state
         entity_id: script.update_packages
         from: 'on'
         to: 'off'
+    condition: []
     actions:
       - delay:
           seconds: 10
       - action: homeassistant.reload_all
     mode: restart
 
-  # Resource Monitoring (Load, RAM, Disk)
+    # Notify when CPU load 15m is above 10 and when goes back below 4
   - id: 'cpu_load_15m'
     alias: "𐃏 CPU Load"
+    description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.load_15m
@@ -199,34 +231,54 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables: *notify_vars
+      - variables:
+          notify_service: >-
+            {% if states.input_text.notify_service_server.state is defined %}
+              {{ states('input_text.notify_service_server') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+              message: "{{ notify_message }}"
       - wait_template: "{{ states('sensor.load_15m') | float < 4 }}"
+      - variables:
+          notify_message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+              message: "{{ notify_message }}"
     mode: single
+    max_exceeded: silent
 
+    # Notify when RAM is almost full
   - id: 'ram_usage'
     alias: "𐃏 RAM Usage"
+    description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.memory_use_percent
@@ -236,34 +288,54 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables: *notify_vars
+      - variables:
+          notify_service: >-
+            {% if states.input_text.notify_service_server.state is defined %}
+              {{ states('input_text.notify_service_server') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
+              message: "{{ notify_message }}"
       - wait_template: "{{ states('sensor.memory_use_percent') | float < 80 }}"
+      - variables:
+          notify_message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
+              message: "{{ notify_message }}"
     mode: single
+    max_exceeded: silent
 
+    # Notify when storage is almost full
   - id: 'disk_usage'
     alias: "𐃏 Disk Usage"
+    description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.disk_use_percent
@@ -273,42 +345,60 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables: *notify_vars
+      - variables:
+          notify_service: >-
+            {% if states.input_text.notify_service_server.state is defined %}
+              {{ states('input_text.notify_service_server') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
+              message: "{{ notify_message }}"
       - wait_template: "{{ states('sensor.disk_use_percent') | float < 60 }}"
+      - variables:
+          notify_message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
       - choose:
-          - conditions: *telegram_cond
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
+                  message: "{{ notify_message }}"
         default:
           - action: "{{ notify_service }}"
             data:
-              message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
+              message: "{{ notify_message }}"
     mode: restart
 
-  # Maintenance Management
   - id: maintenance_on_off
     alias: "𐃏 Maintenance ON/OFF"
+    description: ""
     triggers:
       - trigger: state
-        entity_id: sensor.updates_in_progress
+        entity_id:
+          - sensor.updates_in_progress
     condition:
       - condition: template
         value_template: "{{ states.sensor.updates_in_progress.state is defined }}"
-    actions:
+    action:
       - choose:
           - conditions:
               - condition: numeric_state
@@ -316,23 +406,30 @@ automation:
                 below: 1
             sequence:
               - action: input_boolean.turn_off
-                target: { entity_id: input_boolean.maintenance_mode }
+                data: {}
+                target:
+                  entity_id: input_boolean.maintenance_mode
           - conditions:
               - condition: numeric_state
                 entity_id: sensor.updates_in_progress
                 above: 2
             sequence:
               - action: input_boolean.turn_on
-                target: { entity_id: input_boolean.maintenance_mode }
+                data: {}
+                target:
+                  entity_id: input_boolean.maintenance_mode
     mode: single
 
   - id: maintenance_notifications
     alias: "𐃏 Maintenance Notifications"
+    description: ""
+    mode: single
     triggers:
       - trigger: state
-        entity_id: input_boolean.maintenance_mode
+        entity_id:
+          - input_boolean.maintenance_mode
+    condition: []
     actions:
-      - variables: *notify_vars
       - choose:
           - conditions:
               - condition: state
@@ -347,43 +444,69 @@ automation:
                       {{ as_timestamp(states.sensor.updates_in_progress.last_updated) | int + 10 < as_timestamp(now()) | int }}
                     continue_on_timeout: true
                     timeout: "00:01:00"
+              - variables:
+                  notify_service: >-
+                    {% if states.input_text.notify_service_server.state is defined %}
+                      {{ states('input_text.notify_service_server') }}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {{ states('input_text.notify_service') }}
+                    {% else %}
+                      notify.notify
+                    {% endif %}
+                  notify_message: |
+                    ⚙️ Mentenanță în curs!
+                    {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
+                    🔧 Următoarele actualizări vor fi instalate:
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
+                    {% endif %}
+                    Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
+
+                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
               - choose:
-                  - conditions: *telegram_cond
+                  - conditions:
+                      - condition: template
+                        value_template: >-
+                          {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
                     sequence:
                       - action: "{{ notify_service }}"
                         data:
                           entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                          message: |
-                            ⚙️ Mentenanță în curs!
-                            {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
-                            🔧 Următoarele actualizări vor fi instalate:
-                            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
-                            {% endif %}
-                            Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor și dispozitivelor.
+                          message: "{{ notify_message }}"
                 default:
                   - action: "{{ notify_service }}"
                     data:
-                      message: |
-                        ⚙️ Mentenanță în curs!
-                        {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
-                        🔧 Următoarele actualizări vor fi instalate:
-                        – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
-                        {% endif %}
-                        Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor și dispozitivelor.
+                      message: "{{ notify_message }}"
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
                 state: "off"
             sequence:
+              - variables:
+                  notify_service: >-
+                    {% if states.input_text.notify_service_server.state is defined %}
+                      {{ states('input_text.notify_service_server') }}
+                    {% elif states.input_text.notify_service.state is defined %}
+                      {{ states('input_text.notify_service') }}
+                    {% else %}
+                      notify.notify
+                    {% endif %}
+                  notify_message: |
+                    🎉 Mentenanță finalizată!
+                    
+                    Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
+                    
+                    🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
               - choose:
-                  - conditions: *telegram_cond
+                  - conditions:
+                      - condition: template
+                        value_template: >-
+                          {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
                     sequence:
                       - action: "{{ notify_service }}"
                         data:
                           entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                          message: "🎉 Mentenanță finalizată! Toate serviciile sunt acum disponibile."
+                          message: "{{ notify_message }}"
                 default:
                   - action: "{{ notify_service }}"
                     data:
-                      message: "🎉 Mentenanță finalizată! Toate serviciile sunt acum disponibile."
-    mode: single
+                      message: "{{ notify_message }}"
