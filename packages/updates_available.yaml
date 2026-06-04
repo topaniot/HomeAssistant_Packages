@@ -191,10 +191,12 @@ automation:
       - variables:
           count: "{{ states('sensor.updates_available') | int(0) }}"
           notify_service: >-
-            {% if states.input_text.notify_service_updates.state is defined %}
-              {{ states('input_text.notify_service_updates') }}
-            {% elif states.input_text.notify_service.state is defined %}
-              {{ states('input_text.notify_service') }}
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %}
+              {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %}
+              {{ general }}
             {% else %}
               notify.notify
             {% endif %}
@@ -214,7 +216,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
@@ -264,10 +266,12 @@ automation:
       - variables:
           count: "{{ states('sensor.updates_in_progress') | int(0) }}"
           notify_service: >-
-            {% if states.input_text.notify_service_updates.state is defined %}
-              {{ states('input_text.notify_service_updates') }}
-            {% elif states.input_text.notify_service.state is defined %}
-              {{ states('input_text.notify_service') }}
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %}
+              {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %}
+              {{ general }}
             {% else %}
               notify.notify
             {% endif %}
@@ -287,7 +291,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
