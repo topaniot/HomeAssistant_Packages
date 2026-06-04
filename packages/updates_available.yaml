@@ -1,22 +1,40 @@
-# Version: 2026.1.2
-# Updates Available Package
+# ==================================================================================
+# Package: Updates Available Monitor
+# Version: 2026.06.1
+# Description:
+#   Auto-updates addons, firmware, core, and OS. Monitors for available updates,
+#   manages automated installation based on delays, and sends notifications.
 #
-# Auto update all addons, firmware, core, os.
-# Also send notifications when updates are installed and finished. And if for some reason
-# some updates are not installed you will recieve notification that updates are available.
+# --- Required Helpers ---
+# To customize this package, create the following helpers:
 #
-# To change the delay of updates notifications create a input number helper named: "𐃏 Delay Notifiy Updates"
-# and set the number of hours to wait until send the notification
+# 1. input_number.delay_notify_updates (Optional)
+#    - Name: "𐃏 Delay Notifiy Updates"
+#    - Purpose: Hours to wait until sending update availability notification.
 #
-# To change the delay of installing updates create a input number helper called: "𐃏 Delay Update"
-# and set how old should be the update before installing. for minor updates create "𐃏 Delay Update minor"
+# 2. input_number.delay_update
+#    - Name: "𐃏 Delay Update"
+#    - Purpose: Delay (hours) for major updates before installation.
 #
+# 3. input_number.delay_update_minor
+#    - Name: "𐃏 Delay Update minor"
+#    - Purpose: Delay (hours) for minor updates before installation.
 #
-# To change the notification service create an input text helper named: "𐃏 Notify Service Updates"
-# and put inside the name of the service you want.
+# 4. input_text.notify_service_updates (Optional)
+#    - Name: "𐃏 Notify Service Updates"
+#    - Purpose: Specific notification service for this package.
 #
-# If you want to exlcude entities create a label named: "Ignored"
-# and apply it to all entities that you want to exclude
+# 5. input_datetime.notify_updates_time / input_datetime.auto_update_time
+#    - Name: "Notify Updates Time" / "Auto Update Time"
+#    - Purpose: Set specific times for notifications and auto-updates.
+#
+# 6. input_boolean.maintenance_mode
+#    - Name: "Maintenance Mode"
+#    - Purpose: Pause all updates and notifications.
+#
+# --- Configuration ---
+# - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude.
+# ==================================================================================
 
 script:
   # Script to update this package from GitHub
@@ -170,91 +188,59 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.updates_available.state is defined }}"
     actions:
+      - variables:
+          count: "{{ states('sensor.updates_available') | int(0) }}"
+          notify_service: >-
+            {% if states.input_text.notify_service_updates.state is defined %}
+              {{ states('input_text.notify_service_updates') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: |
+            {% if count == 0 %}
+            🎉 Dispozitivele și serviciile sunt actualizate!
+            {% elif count == 1 %}
+            ⚙️ Este o actualizare disponibilă:
+            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n– ') }}
+            {% else %}
+            ⚙️ Sunt {{ count }} actualizări disponibile:
+            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n– ') }}
+            {% endif %}
+      - condition: template
+        value_template: "{{ count > 0 or is_state('input_boolean.update_available_alert', 'on') }}"
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_available
-                above: 0
-                below: 2
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
+              - action: "{{ notify_service }}"
                 data:
-                  message: |
-                    ⚙️ Este o actualizare disponibilă:
-                    – {{ state_attr('sensor.updates_available','names').split(',') |
-                    join('
-                    –') }}
-                  data:
-                    disable_notification: true
+                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
+                  message: "{{ notify_message }}"
+                  disable_notification: true
+        default:
+          - action: "{{ notify_service }}"
+            data:
+              message: "{{ notify_message }}"
+              disable_notification: true
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ count > 0 }}"
+            sequence:
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_available_alert
-                data: {}
-                enabled: true
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_available
-                above: 1
+              - condition: template
+                value_template: "{{ count == 0 }}"
             sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    ⚙️ Sunt {{ states('sensor.updates_available')|int }} actualizări
-                    disponibile:
-                    – {{ state_attr('sensor.updates_available','names').split(',') |
-                    join('
-                    –') }}
-                  data:
-                    disable_notification: true
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.update_available_alert
-                data: {}
-                enabled: true
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_available
-                below: 1
-              - condition: state
-                entity_id: input_boolean.update_available_alert
-                state: "on"
-                enabled: true
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: 🎉 Dispozitivele și serviciile sunt actualizate!
-                  data:
-                    disable_notification: true
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_alert
-                data: {}
-                enabled: true
-        default: []
     mode: restart
 
   # Notify when updates are in progress
@@ -275,81 +261,59 @@ automation:
     actions:
       - delay:
           seconds: 10
+      - variables:
+          count: "{{ states('sensor.updates_in_progress') | int(0) }}"
+          notify_service: >-
+            {% if states.input_text.notify_service_updates.state is defined %}
+              {{ states('input_text.notify_service_updates') }}
+            {% elif states.input_text.notify_service.state is defined %}
+              {{ states('input_text.notify_service') }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: |
+            {% if count == 0 %}
+            🎉 Actualizare finalizată!
+            {% elif count == 1 %}
+            🔧 Este o actualizare în progress:
+            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+            {% else %}
+            🔧 Sunt {{ count }} actualizări în progress:
+            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+            {% endif %}
+      - condition: template
+        value_template: "{{ count > 0 or is_state('input_boolean.update_in_progress_alert', 'on') }}"
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_in_progress
-                above: 0
-                below: 2
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
             sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
+              - action: "{{ notify_service }}"
                 data:
-                  message: |
-                    🔧 Este o actualizare în progress:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
-                    –') }}
-                  data:
-                    disable_notification: True
+                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
+                  message: "{{ notify_message }}"
+                  disable_notification: true
+        default:
+          - action: "{{ notify_service }}"
+            data:
+              message: "{{ notify_message }}"
+              disable_notification: true
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ count > 0 }}"
+            sequence:
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.update_in_progress_alert
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_in_progress
-                above: 1
+              - condition: template
+                value_template: "{{ count == 0 }}"
             sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔧 Sunt {{ states('sensor.updates_in_progress')|int }} actualizări în progress:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
-                    –') }}
-                  data:
-                    disable_notification: True
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.update_in_progress_alert
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.updates_in_progress
-                below: 1
-              - condition: state
-                entity_id: input_boolean.update_in_progress_alert
-                state: "on"
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_updates.state is defined %}
-                      {% set notify_service = states('input_text.notify_service_updates') %}
-                    {% elif states.input_text.notify_service.state is defined %}
-                      {% set notify_service = states('input_text.notify_service') %}
-                    {% else %}
-                      {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: "🎉 Actualizare finalizată!"
-                  data:
-                    disable_notification: True
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_in_progress_alert
-        default: []
 
   # Auto install updates
   - id: "auto_update"
