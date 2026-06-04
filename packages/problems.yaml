@@ -115,10 +115,10 @@ automation:
             👌 Probleme rezolvate!
             {% elif count == 1 %}
             ⚠️ Este o problemă:
-            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
             {% else %}
             ⚠️ Sunt {{ count }} probleme:
-            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
             {% endif %}
       - condition: template
         value_template: "{{ count != last_triggered }}"
