@@ -103,10 +103,12 @@ automation:
           count: "{{ states('sensor.problems_detected') | int(0) }}"
           last_triggered: "{{ states('input_number.problems_detected_last_triggered') | int(0) }}"
           notify_service: >-
-            {% if states.input_text.notify_service_problems.state is defined %}
-              {{ states('input_text.notify_service_problems') }}
-            {% elif states.input_text.notify_service.state is defined %}
-              {{ states('input_text.notify_service') }}
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %}
+              {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %}
+              {{ general }}
             {% else %}
               notify.notify
             {% endif %}
@@ -138,7 +140,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
