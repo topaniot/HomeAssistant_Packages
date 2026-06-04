@@ -203,10 +203,10 @@ automation:
             🎉 Dispozitivele și serviciile sunt actualizate!
             {% elif count == 1 %}
             ⚙️ Este o actualizare disponibilă:
-            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n–') }}
             {% else %}
             ⚙️ Sunt {{ count }} actualizări disponibile:
-            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.updates_available','names').split(',') | join('\n–') }}
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_available_alert', 'on') }}"
@@ -276,10 +276,10 @@ automation:
             🎉 Actualizare finalizată!
             {% elif count == 1 %}
             🔧 Este o actualizare în progress:
-            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
             {% else %}
             🔧 Sunt {{ count }} actualizări în progress:
-            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_in_progress_alert', 'on') }}"
