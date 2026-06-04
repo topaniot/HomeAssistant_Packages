@@ -159,10 +159,10 @@ automation:
             🟢 Toate dispozitivele funcționzează!
             {% elif count == 1 %}
             🔴 Este un dispozitiv indisponibil:
-            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
             {% else %}
             🔴 Sunt {{ count }} dispozitive indisponibile:
-            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
             {% endif %}
       - choose:
           - conditions:
@@ -230,10 +230,10 @@ automation:
             🟢 Toți senzorii funcționzează!
             {% elif count == 1 %}
             🔴 Este un senzor indisponibil:
-            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
             {% else %}
             🔴 Sunt {{ count }} senzori indisponibili:
-            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n– ') }}
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
             {% endif %}
       - choose:
           - conditions:
