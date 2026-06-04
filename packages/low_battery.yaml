@@ -170,10 +170,10 @@ automation:
             🔋 Starea bateriilor este bună!
             {% elif count == 1 %}
             ⚠️ Este un dispozitiv cu baterie descărcată:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n–') }}
             {% else %}
             ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n–') }}
             {% endif %}
       - choose:
           - conditions:
