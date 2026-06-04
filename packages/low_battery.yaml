@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.1
+# Version: 2026.06.2
 # Description:
 #   Monitors battery levels for sensors and triggers notifications when 
 #   they drop below a defined threshold.
@@ -158,10 +158,12 @@ automation:
           {{ count != last_triggered or (count == 0 and offset_count == 0 and last_triggered > 0) }}
       - variables:
           notify_service: >-
-            {% if states.input_text.notify_service_batteries.state is defined %}
-              {{ states('input_text.notify_service_batteries') }}
-            {% elif states.input_text.notify_service.state is defined %}
-              {{ states('input_text.notify_service') }}
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %}
+              {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %}
+              {{ general }}
             {% else %}
               notify.notify
             {% endif %}
@@ -191,7 +193,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states.input_text.telegram_chat_id is defined }}
+                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
             sequence:
               - action: "{{ notify_service }}"
                 data:
