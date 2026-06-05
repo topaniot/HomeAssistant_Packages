@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Updates Available Monitor
-# Version: 2026.06.1
+# Version: 2026.06.2
 # Description:
 #   Auto-updates addons, firmware, core, and OS. Monitors for available updates,
 #   manages automated installation based on delays, and sends notifications.
@@ -222,12 +222,12 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
                   disable_notification: true
         default:
           - action: "{{ notify_service }}"
             data:
               message: "{{ notify_message }}"
-              disable_notification: true
       - choose:
           - conditions:
               - condition: template
@@ -297,12 +297,12 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
                   disable_notification: true
         default:
           - action: "{{ notify_service }}"
             data:
               message: "{{ notify_message }}"
-              disable_notification: true
       - choose:
           - conditions:
               - condition: template
