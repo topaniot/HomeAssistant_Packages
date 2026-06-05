@@ -530,7 +530,7 @@ automation:
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
                     {% endif %}
                     Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
 
