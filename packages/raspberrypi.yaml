@@ -1,31 +1,18 @@
 # ==================================================================================
 # Package: Raspberry PI Monitor
-# Version: 2026.06.1
+# Version: 2026.06.2
 # Description:
 #   Monitors Raspberry PI system health (CPU Temperature).
-#   Provides automated alerts when temperature exceeds 80°C.
+#   Routes all alerts through the centralized global notification engine.
 #
-# --- Required Helpers ---
-# To customize this package, create the following helpers:
-#
-# 1. input_text.notify_service_server (Optional)
-#    - Name: "𐃏 Notify Service Server"
-#    - Purpose: Specific notification service for server/PI alerts.
-#
-# 2. input_text.notify_service (General/Global)
-#    - Name: "𐃏 Notify Service"
-#    - Purpose: Default notification service used by this and other packages.
-#
-# 3. input_text.telegram_chat_id (Optional)
-#    - Name: "𐃏 Telegram Chat ID"
-#    - Purpose: Required only if using Telegram.
-#
-# --- Configuration ---
-# - Maintenance Mode: This package respects 'input_boolean.maintenance_mode'.
+# --- Dependencies ---
+# - script.global_notify (Defined in Server Monitor package)
 # ==================================================================================
 
 script:
+  # Script to update this package from GitHub
   update_packages:
+    alias: "𐃏 Update Raspberry PI Package"
     sequence:
       - action: downloader.download_file
         data:
@@ -55,50 +42,10 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-      
-      # Notify High Temperature
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-
+      - action: script.global_notify
+        data:
+          message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
       - wait_template: "{{ states('sensor.processor_temperature') | float < 70 }}"
-
-      # Notify Normal Temperature
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+      - action: script.global_notify
+        data:
+          message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
