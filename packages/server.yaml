@@ -229,11 +229,10 @@ automation:
     actions:
       - action: script.global_notify
         data:
-          title: "⚠️ Atenție, a eșuat o automatizare!"
           message: |
-            Anunță echipa tehnică!
+            ⚠️ Atenție, a eșuat o automatizare! Anunță echipa tehnică!
 
-            🛑 Eroare: {{ trigger.event.data.message[0] }}
+            🛑 Info: {{ trigger.event.data.message[0] }}
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
