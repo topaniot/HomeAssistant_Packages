@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Updates Available Monitor
-# Version: 2026.06.2
+# Version: 2026.06.3
 # Description:
 #   Auto-updates addons, firmware, core, and OS. Monitors for available updates,
 #   manages automated installation based on delays, and sends notifications.
@@ -190,16 +190,6 @@ automation:
     actions:
       - variables:
           count: "{{ states('sensor.updates_available') | int(0) }}"
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
           notify_message: |
             {% if count == 0 %}
             🎉 Dispozitivele și serviciile sunt actualizate!
@@ -212,22 +202,10 @@ automation:
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_available_alert', 'on') }}"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-                  disable_notification: true
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "{{ notify_message }}"
+          disable_notification: true
       - choose:
           - conditions:
               - condition: template
@@ -265,16 +243,6 @@ automation:
           seconds: 10
       - variables:
           count: "{{ states('sensor.updates_in_progress') | int(0) }}"
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
           notify_message: |
             {% if count == 0 %}
             🎉 Actualizare finalizată!
@@ -287,22 +255,10 @@ automation:
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_in_progress_alert', 'on') }}"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-                  disable_notification: true
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "{{ notify_message }}"
+          disable_notification: true
       - choose:
           - conditions:
               - condition: template
@@ -318,6 +274,7 @@ automation:
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_in_progress_alert
+
 
   # Auto install updates
   - id: "auto_update"
