@@ -188,6 +188,7 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -261,6 +262,7 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
