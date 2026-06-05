@@ -207,6 +207,59 @@ automation:
           message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
+  
+  # Notify when an automation fails
+  - id: failed_automation
+    alias: '𐃏 Failed Automation'
+    description: "Alert when an automation fails to run."
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: system_log_event
+        event_data:
+          level: ERROR
+    conditions:
+      - condition: template
+        # Verifică dacă eroarea provine de la componenta de automatizări
+        value_template: '{{ "homeassistant.components.automation" in trigger.event.data.name }}'
+        enabled: true
+      - condition: template
+        # PREVENȚIE BUCLĂ INFINITĂ: Ignoră erorile generate de această automatizare
+        value_template: '{{ "failed_automation" not in trigger.event.data.message[0] and "Failed Automation" not in trigger.event.data.message[0] }}'
+    actions:
+      - variables:
+          notify_service: >-
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %}
+              {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %}
+              {{ general }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          notify_message: |
+            Anunță echipa tehnică!
+
+            🛑 Eroare: {{ trigger.event.data.message[0] }}
+          notify_title: "⚠️ Atenție, a eșuat o automatizare!"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
+            sequence:
+              - action: "{{ notify_service }}"
+                data:
+                  target: "{{ states('input_text.telegram_chat_id') }}"
+                  message: "{{ notify_message }}"
+                  title: "{{ notify_title }}"
+                  parse_mode: html
+        default:
+          - action: "{{ notify_service }}"
+            data:
+              message: "{{ notify_message }}"
+              title: "{{ notify_title }}"
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
