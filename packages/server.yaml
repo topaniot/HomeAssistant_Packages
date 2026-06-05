@@ -1,21 +1,30 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.2
+# Version: 2026.06.4
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
+#   Features a centralized global notification engine with parallel execution.
 #
-# --- Required Helpers ---
+# --- Required Helpers & Dependencies ---
+# 1. input_text.packages_account (Optional)
+#    - Name: "𐃏 Packages Account"
+#    - Purpose: GitHub account name for package updates. Defaults to 'topaniot'.
+#
 # 2. input_text.notify_service_server (Optional)
 #    - Name: "𐃏 Notify Service Server"
 #    - Purpose: Specific notification service for server alerts.
 #
 # 3. input_text.notify_service (General/Global)
 #    - Name: "𐃏 Notify Service"
-#    - Purpose: Default notification service.
+#    - Purpose: Default global notification service (e.g., notify.notify).
 #
 # 4. input_text.telegram_chat_id (Optional)
 #    - Name: "𐃏 Telegram Chat ID"
-#    - Purpose: Required only if using Telegram.
+#    - Purpose: Chat target ID; required only if using Telegram.
+#
+# 5. input_text.telegram_thread_id (Optional)
+#    - Name: "𐃏 Telegram Thread ID"
+#    - Purpose: Topic/Thread identifier for Telegram forum supergroups.
 # ==================================================================================
 
 script:
@@ -36,6 +45,47 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'server.yaml' %}
             {{ url + account + path + name }}
+
+  global_notify:
+    alias: "𐃏 Global Notification Engine"
+    mode: parallel
+    max: 10
+    fields:
+      message:
+        required: true
+      title:
+        required: false
+      disable_notification:
+        required: false
+    sequence:
+      - variables:
+          notify_service: >-
+            {% set server = states('input_text.notify_service_server') %}
+            {% set general = states('input_text.notify_service') %}
+            {% if server not in ['unknown', 'unavailable', ''] %} {{ server }}
+            {% elif general not in ['unknown', 'unavailable', ''] %} {{ general }}
+            {% else %} notify.notify {% endif %}
+      - action: "{{ notify_service }}"
+        data: >-
+          {% set payload = {"message": message} %}
+          {% if title is defined and title not in ['unknown', 'unavailable', ''] %}
+            {% set payload = dict(payload, title=title) %}
+          {% endif %}
+          {% if notify_service == 'telegram_bot.send_message' %}
+            {% set payload = dict(payload, parse_mode='html') %}
+            {% set chat = states('input_text.telegram_chat_id') %}
+            {% set thread = states('input_text.telegram_thread_id') %}
+            {% if chat not in ['unknown', 'unavailable', ''] %}
+              {% set payload = dict(payload, target=chat) %}
+            {% endif %}
+            {% if thread not in ['unknown', 'unavailable', ''] %}
+              {% set payload = dict(payload, message_thread_id=thread | int) %}
+            {% endif %}
+            {% if disable_notification is defined and disable_notification not in ['unknown', 'unavailable', ''] %}
+              {% set payload = dict(payload, disable_notification=disable_notification | bool) %}
+            {% endif %}
+          {% endif %}
+          {{ payload }}
 
 input_boolean:
   maintenance_mode:
@@ -93,7 +143,7 @@ automation:
         seconds: 10
     mode: single
 
-    # Notify on server start using defined service
+    # Notify on server start
   - id: 'server_start'
     alias: "𐃏 Server Start"
     description: ''
@@ -105,36 +155,12 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-    - variables:
-        notify_service: >-
-          {% set server = states('input_text.notify_service_server') %}
-          {% set general = states('input_text.notify_service') %}
-          {% if server not in ['unknown', 'unavailable', ''] %}
-            {{ server }}
-          {% elif general not in ['unknown', 'unavailable', ''] %}
-            {{ general }}
-          {% else %}
-            notify.notify
-          {% endif %}
-        notify_message: "▶️ Serverul a pornit!"
-    - choose:
-        - conditions:
-            - condition: template
-              value_template: >-
-                {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-          sequence:
-            - action: "{{ notify_service }}"
-              data:
-                target: "{{ states('input_text.telegram_chat_id') }}"
-                message: "{{ notify_message }}"
-                parse_mode: html
-      default:
-        - action: "{{ notify_service }}"
-          data:
-            message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "▶️ Serverul a pornit!"
     mode: single
 
-    # Notify on server Stop using defined service
+    # Notify on server Stop
   - id: 'server_stop'
     alias: "𐃏 Server Stop"
     description: ''
@@ -146,33 +172,9 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-    - variables:
-        notify_service: >-
-          {% set server = states('input_text.notify_service_server') %}
-          {% set general = states('input_text.notify_service') %}
-          {% if server not in ['unknown', 'unavailable', ''] %}
-            {{ server }}
-          {% elif general not in ['unknown', 'unavailable', ''] %}
-            {{ general }}
-          {% else %}
-            notify.notify
-          {% endif %}
-        notify_message: "⏹️ Serverul s-a oprit!"
-    - choose:
-        - conditions:
-            - condition: template
-              value_template: >-
-                {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-          sequence:
-            - action: "{{ notify_service }}"
-              data:
-                target: "{{ states('input_text.telegram_chat_id') }}"
-                message: "{{ notify_message }}"
-                parse_mode: html
-      default:
-        - action: "{{ notify_service }}"
-          data:
-            message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "⏹️ Serverul s-a oprit!"
     mode: single
 
     # Ping healthchecks.io every minute
@@ -187,7 +189,7 @@ automation:
       - action: rest_command.healthchecks
     mode: restart
 
-    # Notify when a nofitication can't be sent
+    # Notify when a notification can't be sent (Fallback safety mechanism)
   - id: failed_notification
     alias: '𐃏 Failed Notification'
     description: "Alert when a notification can't be sent."
@@ -220,46 +222,18 @@ automation:
           level: ERROR
     conditions:
       - condition: template
-        # Verifică dacă eroarea provine de la componenta de automatizări
         value_template: '{{ "homeassistant.components.automation" in trigger.event.data.name }}'
         enabled: true
       - condition: template
-        # PREVENȚIE BUCLĂ INFINITĂ: Ignoră erorile generate de această automatizare
         value_template: '{{ "failed_automation" not in trigger.event.data.message[0] and "Failed Automation" not in trigger.event.data.message[0] }}'
     actions:
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: |
+      - action: script.global_notify
+        data:
+          title: "⚠️ Atenție, a eșuat o automatizare!"
+          message: |
             Anunță echipa tehnică!
 
             🛑 Eroare: {{ trigger.event.data.message[0] }}
-          notify_title: "⚠️ Atenție, a eșuat o automatizare!"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  title: "{{ notify_title }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
-              title: "{{ notify_title }}"
 
     # Reload things after script update_packages is run
   - id: 'update_packages'
@@ -290,51 +264,13 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - wait_template: "{{ states('sensor.load_15m') | float < 4 }}"
-      - variables:
-          notify_message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
     max_exceeded: silent
 
@@ -351,51 +287,13 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - wait_template: "{{ states('sensor.memory_use_percent') | float < 80 }}"
-      - variables:
-          notify_message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
     max_exceeded: silent
 
@@ -412,53 +310,16 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states('sensor.disk_use_percent') | float < 60 }}"
-      - variables:
-          notify_message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  target: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
 
+  # Maintenance Toggle Controller
   - id: maintenance_on_off
     alias: "𐃏 Maintenance ON/OFF"
     description: ""
@@ -491,6 +352,7 @@ automation:
                   entity_id: input_boolean.maintenance_mode
     mode: single
 
+  # Maintenance Alerts
   - id: maintenance_notifications
     alias: "𐃏 Maintenance Notifications"
     description: ""
@@ -515,75 +377,27 @@ automation:
                       {{ as_timestamp(states.sensor.updates_in_progress.last_updated) | int + 10 < as_timestamp(now()) | int }}
                     continue_on_timeout: true
                     timeout: "00:01:00"
-              - variables:
-                  notify_service: >-
-                    {% set server = states('input_text.notify_service_server') %}
-                    {% set general = states('input_text.notify_service') %}
-                    {% if server not in ['unknown', 'unavailable', ''] %}
-                      {{ server }}
-                    {% elif general not in ['unknown', 'unavailable', ''] %}
-                      {{ general }}
-                    {% else %}
-                      notify.notify
-                    {% endif %}
-                  notify_message: |
+              - action: script.global_notify
+                data:
+                  message: |
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
                     {% endif %}
                     Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
 
                     ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: >-
-                          {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-                    sequence:
-                      - action: "{{ notify_service }}"
-                        data:
-                          target: "{{ states('input_text.telegram_chat_id') }}"
-                          message: "{{ notify_message }}"
-                          parse_mode: html
-                default:
-                  - action: "{{ notify_service }}"
-                    data:
-                      message: "{{ notify_message }}"
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
                 state: "off"
             sequence:
-              - variables:
-                  notify_service: >-
-                    {% set server = states('input_text.notify_service_server') %}
-                    {% set general = states('input_text.notify_service') %}
-                    {% if server not in ['unknown', 'unavailable', ''] %}
-                      {{ server }}
-                    {% elif general not in ['unknown', 'unavailable', ''] %}
-                      {{ general }}
-                    {% else %}
-                      notify.notify
-                    {% endif %}
-                  notify_message: |
+              - action: script.global_notify
+                data:
+                  message: |
                     🎉 Mentenanță finalizată!
                     
                     Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
                     
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: >-
-                          {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-                    sequence:
-                      - action: "{{ notify_service }}"
-                        data:
-                          target: "{{ states('input_text.telegram_chat_id') }}"
-                          message: "{{ notify_message }}"
-                          parse_mode: html
-                default:
-                  - action: "{{ notify_service }}"
-                    data:
-                      message: "{{ notify_message }}"
