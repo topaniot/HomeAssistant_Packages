@@ -1,11 +1,12 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.2
+# Version: 2026.06.3
 # Description:
 #   Monitors battery levels for sensors and triggers notifications when 
 #   they drop below a defined threshold.
+#   Routes all alerts through the centralized global notification engine.
 #
-# --- Required Helpers ---
+# --- Required Helpers & Dependencies ---
 # To customize this package, create the following helpers:
 #
 # 1. input_number.delay_notify_batteries
@@ -16,22 +17,12 @@
 #    - Name: "𐃏 Battery Level Threshold"
 #    - Purpose: Percentage threshold (default 20).
 #
-# 3. input_text.notify_service_batteries (Optional)
-#    - Name: "𐃏 Notify Service Batteries"
-#    - Purpose: Specific notification service for this package.
-#
-# 4. input_text.notify_service (General/Global)
-#    - Name: "𐃏 Notify Service"
-#    - Purpose: Default notification service used by this and other packages.
-#
-# 5. input_text.telegram_chat_id (Optional)
-#    - Name: "𐃏 Telegram Chat ID"
-#    - Purpose: Required only if using Telegram.
+# 3. script.global_notify
+#    - Purpose: Centralized notification engine (Defined in Server Monitor package).
 #
 # --- Configuration ---
 # - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude.
 # ==================================================================================
-
 
 script:
   # Script to update this package from GitHub
@@ -156,27 +147,6 @@ automation:
       - condition: template
         value_template: >-
           {{ count != last_triggered or (count == 0 and offset_count == 0 and last_triggered > 0) }}
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: |
-            {% if count == 0 %}
-            🔋 Starea bateriilor este bună!
-            {% elif count == 1 %}
-            ⚠️ Este un dispozitiv cu baterie descărcată:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n–') }}
-            {% else %}
-            ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n–') }}
-            {% endif %}
       - choose:
           - conditions:
               - condition: template
@@ -189,21 +159,18 @@ automation:
                     {% else %}
                       10
                     {% endif %}
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: |
+            {% if count == 0 %}
+            🔋 Starea bateriilor este bună!
+            {% elif count == 1 %}
+            ⚠️ Este un dispozitiv cu baterie descărcată:
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            {% else %}
+            ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
+            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+            {% endif %}
       - action: input_number.set_value
         target:
           entity_id: input_number.low_batteries_last_triggered
