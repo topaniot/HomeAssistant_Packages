@@ -1,28 +1,19 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.06.1
+# Version: 2026.06.2
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
-#   Provides automated notifications with configurable delay and service selection.
+#   Routes all alerts through the centralized global notification engine.
 #
-# --- Helpers ---
+# --- Required Helpers & Dependencies ---
 # To customize this package, create the following helpers:
 #
-# 1. input_text.notify_service (General/Global)
-#    - Name: "𐃏 Notify Service"
-#    - Purpose: Default notification service used by this and other packages.
-#
-# 2. input_number.delay_notify_unavailable
+# 1. input_number.delay_notify_unavailable
 #    - Name: "𐃏 Delay Notifiy Unavailable"
 #    - Purpose: Delay (in minutes) before notification triggers.
 #
-# 3. input_text.notify_service_unavailable (Optional)
-#    - Name: "𐃏 Notify Service Unavailable"
-#    - Purpose: Specific notification service for this package.
-#
-# 4. input_text.telegram_chat_id (Optional)
-#    - Name: "𐃏 Telegram Chat ID"
-#    - Purpose: Required only if using Telegram; contains the target chat ID.
+# 2. script.global_notify
+#    - Purpose: Centralized notification engine (Defined in Server Monitor package).
 #
 # --- Configuration ---
 # - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude
@@ -32,6 +23,7 @@
 script:
   # Script to update this package from GitHub
   update_packages:
+    alias: "𐃏 Update Unavailable Entities Package"
     sequence:
       - action: downloader.download_file
         data:
@@ -145,27 +137,6 @@ automation:
           last_triggered: "{{ states('input_number.unavailable_entities_last_triggered') | int(0) }}"
       - condition: template
         value_template: "{{ count != last_triggered }}"
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: |
-            {% if count == 0 %}
-            🟢 Toate dispozitivele funcționzează!
-            {% elif count == 1 %}
-            🔴 Este un dispozitiv indisponibil:
-            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
-            {% else %}
-            🔴 Sunt {{ count }} dispozitive indisponibile:
-            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
-            {% endif %}
       - choose:
           - conditions:
               - condition: template
@@ -178,21 +149,18 @@ automation:
                     {% else %}
                       10
                     {% endif %}
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: |
+            {% if count == 0 %}
+            🟢 Toate dispozitivele funcționzează!
+            {% elif count == 1 %}
+            🔴 Este un dispozitiv indisponibil:
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
+            {% else %}
+            🔴 Sunt {{ count }} dispozitive indisponibile:
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
+            {% endif %}
       - action: input_number.set_value
         target:
           entity_id: input_number.unavailable_entities_last_triggered
@@ -219,27 +187,6 @@ automation:
           last_triggered: "{{ states('input_number.unavailable_sensors_last_triggered') | int(0) }}"
       - condition: template
         value_template: "{{ count != last_triggered }}"
-      - variables:
-          notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %}
-              {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %}
-              {{ general }}
-            {% else %}
-              notify.notify
-            {% endif %}
-          notify_message: |
-            {% if count == 0 %}
-            🟢 Toți senzorii funcționzează!
-            {% elif count == 1 %}
-            🔴 Este un senzor indisponibil:
-            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
-            {% else %}
-            🔴 Sunt {{ count }} senzori indisponibili:
-            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
-            {% endif %}
       - choose:
           - conditions:
               - condition: template
@@ -252,21 +199,18 @@ automation:
                     {% else %}
                       10
                     {% endif %}
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {{ notify_service == 'telegram_bot.send_message' and states('input_text.telegram_chat_id') not in ['unknown', 'unavailable', ''] }}
-            sequence:
-              - action: "{{ notify_service }}"
-                data:
-                  entity_id: "{{ states('input_text.telegram_chat_id') }}"
-                  message: "{{ notify_message }}"
-                  parse_mode: html
-        default:
-          - action: "{{ notify_service }}"
-            data:
-              message: "{{ notify_message }}"
+      - action: script.global_notify
+        data:
+          message: |
+            {% if count == 0 %}
+            🟢 Toți senzorii funcționzează!
+            {% elif count == 1 %}
+            🔴 Este un senzor indisponibil:
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
+            {% else %}
+            🔴 Sunt {{ count }} senzori indisponibili:
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
+            {% endif %}
       - action: input_number.set_value
         target:
           entity_id: input_number.unavailable_sensors_last_triggered
