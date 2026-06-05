@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.1
+# Version: 2026.06.2
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #
@@ -127,6 +127,7 @@ automation:
               data:
                 target: "{{ states('input_text.telegram_chat_id') }}"
                 message: "{{ notify_message }}"
+                parse_mode: html
       default:
         - action: "{{ notify_service }}"
           data:
@@ -167,6 +168,7 @@ automation:
               data:
                 target: "{{ states('input_text.telegram_chat_id') }}"
                 message: "{{ notify_message }}"
+                parse_mode: html
       default:
         - action: "{{ notify_service }}"
           data:
@@ -257,6 +259,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -274,6 +277,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -316,6 +320,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -333,6 +338,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -375,6 +381,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -392,6 +399,7 @@ automation:
                 data:
                   target: "{{ states('input_text.telegram_chat_id') }}"
                   message: "{{ notify_message }}"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -484,6 +492,7 @@ automation:
                         data:
                           target: "{{ states('input_text.telegram_chat_id') }}"
                           message: "{{ notify_message }}"
+                          parse_mode: html
                 default:
                   - action: "{{ notify_service }}"
                     data:
@@ -520,6 +529,7 @@ automation:
                         data:
                           target: "{{ states('input_text.telegram_chat_id') }}"
                           message: "{{ notify_message }}"
+                          parse_mode: html
                 default:
                   - action: "{{ notify_service }}"
                     data:
