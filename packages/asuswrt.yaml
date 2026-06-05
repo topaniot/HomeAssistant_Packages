@@ -1,11 +1,19 @@
-# Version: 2025.7.1
-# Asuswrt Package
-# For this to work asuswrt integration needs to be setup.
-
+# ==================================================================================
+# Package: Asuswrt Monitor
+# Version: 2026.06.2
+# Description:
+#   Monitors ASUS router hardware metrics (CPU and wireless chip temperatures).
+#   Routes all alerts through the centralized global notification engine.
+#
+# --- Dependencies ---
+# - script.global_notify (Defined in Server Monitor package)
+# - Asuswrt Integration
+# ==================================================================================
 
 script:
   # Script to update this package from GitHub
   update_packages:
+    alias: "𐃏 Update Asuswrt Package"
     sequence:
       - action: downloader.download_file
         data:
@@ -21,112 +29,63 @@ script:
             {% set name = 'asuswrt.yaml' %}
             {{ url + account + path + name }}
 
-
 automation:
-# Notify when CPU Temperature is high
+    # Notify when CPU Temperature is high
   - id: 'asuswrt_cpu_temp'
     alias: "𐃏 Asuswrt CPU Temperature"
     description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.asuswrt_cpu_temperature
-        above: '80'
+        above: 80
     condition: []
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - action: script.global_notify
         data:
           message: "🟡 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
-      - wait_template: "{{ states( 'sensor.asuswrt_cpu_temperature' ) | float < 75 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.asuswrt_cpu_temperature') | float < 75 }}"
+      - action: script.global_notify
         data:
           message: "🟢 Asuswrt CPU Temp. = {{ states('sensor.asuswrt_cpu_temperature') }}°C"
     mode: single
     max_exceeded: silent
 
-# Notify when 2.4GHz Temperature is high
+    # Notify when 2.4GHz Temperature is high
   - id: 'asuswrt_24ghz_temp'
     alias: "𐃏 Asuswrt 2.4GHz Temperature"
     description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.asuswrt_2_4ghz_temperature
-        above: '60'
+        above: 60
     condition: []
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - action: script.global_notify
         data:
           message: "🟡 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
-      - wait_template: "{{ states( 'sensor.asuswrt_2_4ghz_temperature' ) | float < 55 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.asuswrt_2_4ghz_temperature') | float < 55 }}"
+      - action: script.global_notify
         data:
           message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_2_4ghz_temperature') }}°C"
     mode: single
     max_exceeded: silent
 
-# Notify when 5GHz Temperature is high
+    # Notify when 5GHz Temperature is high
   - id: 'asuswrt_5ghz_temp'
     alias: "𐃏 Asuswrt 5GHz Temperature"
     description: ''
     triggers:
       - trigger: numeric_state
         entity_id: sensor.asuswrt_5ghz_temperature
-        above: '60'
+        above: 60
     condition: []
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - action: script.global_notify
         data:
           message: "🟡 Asuswrt 5GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
-      - wait_template: "{{ states( 'sensor.asuswrt_5ghz_temperature' ) | float < 55 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.asuswrt_5ghz_temperature') | float < 55 }}"
+      - action: script.global_notify
         data:
-          message: "🟢 Asuswrt 2.4GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
+          message: "🟢 Asuswrt 5GHz Temp. = {{ states('sensor.asuswrt_5ghz_temperature') }}°C"
     mode: single
     max_exceeded: silent
