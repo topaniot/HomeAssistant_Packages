@@ -78,6 +78,7 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
@@ -96,6 +97,7 @@ automation:
                 data:
                   entity_id: "{{ states('input_text.telegram_chat_id') }}"
                   message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
+                  parse_mode: html
         default:
           - action: "{{ notify_service }}"
             data:
