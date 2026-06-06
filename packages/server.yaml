@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.6
+# Version: 2026.06.7
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -50,22 +50,51 @@ script:
       notify_service_override: { required: false }
     sequence:
       - variables:
-          suffix: "{{ notify_service_override | replace('input_text.notify_service_', '') if notify_service_override.startswith('input_text.notify_service_') else '' }}"
+          # Procesare sufix (evită crash dacă override lipsește)
+          suffix: >-
+            {% set o = notify_service_override | default('', true) | string %}
+            {% if o.startswith('input_text.notify_service_') %}
+              {{ o | replace('input_text.notify_service_', '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
 
+          # Determinare serviciu notificări
           notify_service: >-
-            {% if states(notify_service_override) not in ['unknown', 'unavailable', '', 'none'] %} {{ states(notify_service_override) }}
-            {% elif states('input_text.notify_service') not in ['unknown', 'unavailable', '', 'none'] %} {{ states('input_text.notify_service') }}
-            {% else %} notify.notify {% endif %}
+            {% set ov = states(notify_service_override) %}
+            {% set gen = states('input_text.notify_service') %}
+            {% if ov not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ ov | trim }}
+            {% elif gen not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ gen | trim }}
+            {% else %}
+              notify.notify
+            {% endif %}
 
-          chat_ent: "{{ 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'input_text.telegram_chat_id' }}"
-          thread_ent: "{{ 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'input_text.telegram_thread_id' }}"
+          # Preluare entitate chat (cu fallback general)
+          chat: >-
+            {% set spec = 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'none' %}
+            {% set gen = states('input_text.telegram_chat_id') %}
+            {% if suffix != '' and states(spec) not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ states(spec) | trim }}
+            {% else %}
+              {{ gen | trim }}
+            {% endif %}
 
-          chat: "{{ states(chat_ent) }}"
-          thread: "{{ states(thread_ent) }}"
+          # Preluare entitate thread (cu fallback general)
+          thread: >-
+            {% set spec = 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'none' %}
+            {% set gen = states('input_text.telegram_thread_id') %}
+            {% if suffix != '' and states(spec) not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ states(spec) | trim }}
+            {% else %}
+              {{ gen | trim }}
+            {% endif %}
 
       - action: "{{ notify_service }}"
         data: >-
           {% set payload = {"message": message} %}
+
           {% if title is defined and title not in ['unknown', 'unavailable', '', 'none'] %}
             {% set payload = dict(payload, title=title) %}
           {% endif %}
@@ -73,11 +102,11 @@ script:
           {% if notify_service == 'telegram_bot.send_message' %}
             {% set payload = dict(payload, parse_mode='html') %}
             
-            {% if chat is defined and chat not in ['unknown', 'unavailable', '', 'none'] %}
+            {% if chat not in ['unknown', 'unavailable', '', 'none'] %}
               {% set payload = dict(payload, entity_id=[chat]) %}
             {% endif %}
 
-            {% if thread is defined and thread not in ['unknown', 'unavailable', '', 'none'] %}
+            {% if thread not in ['unknown', 'unavailable', '', 'none'] %}
               {% set payload = dict(payload, message_thread_id=thread) %}
             {% endif %}
             
