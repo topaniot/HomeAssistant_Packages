@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.3
+# Version: 2026.06.4
 # Description:
 #   Monitors battery levels for sensors and triggers notifications when 
 #   they drop below a defined threshold.
@@ -161,6 +161,7 @@ automation:
                     {% endif %}
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_battery"
           message: |
             {% if count == 0 %}
             🔋 Starea bateriilor este bună!
