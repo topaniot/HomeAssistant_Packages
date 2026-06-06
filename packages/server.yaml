@@ -37,33 +37,29 @@
 #
 # ==================================================================================
 
-
 script:
+  # Script used for global notifications
   global_notify:
     alias: "𐃏 Global Notification Engine"
     mode: parallel
     max: 10
     fields:
-      message: {required: true}
-      title: {required: false}
-      disable_notification: {required: false}
-      notify_service_override: {required: false} 
+      message: { required: true }
+      title: { required: false }
+      disable_notification: { required: false }
+      notify_service_override: { required: false }
     sequence:
       - variables:
-          override: "{{ states(notify_service_override | default('')) }}"
           suffix: "{{ notify_service_override | replace('input_text.notify_service_', '') if notify_service_override.startswith('input_text.notify_service_') else '' }}"
-          
-          # Determinăm serviciul
+
           notify_service: >-
-            {% if override != '' and states(override) not in ['unknown', 'unavailable', '', 'none'] %} {{ states(override) }}
+            {% if states(notify_service_override) not in ['unknown', 'unavailable', '', 'none'] %} {{ states(notify_service_override) }}
             {% elif states('input_text.notify_service') not in ['unknown', 'unavailable', '', 'none'] %} {{ states('input_text.notify_service') }}
             {% else %} notify.notify {% endif %}
-            
-          # Căutăm ID-urile ca string-uri (nu mai forțăm int)
+
           chat_ent: "{{ 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'input_text.telegram_chat_id' }}"
           thread_ent: "{{ 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'input_text.telegram_thread_id' }}"
-          
-          # Definim variabilele aici, pentru a fi vizibile în blocul data
+
           chat: "{{ states(chat_ent) }}"
           thread: "{{ states(thread_ent) }}"
 
@@ -73,7 +69,7 @@ script:
           {% if title is defined and title not in ['unknown', 'unavailable', '', 'none'] %}
             {% set payload = dict(payload, title=title) %}
           {% endif %}
-          
+
           {% if notify_service == 'telegram_bot.send_message' %}
             {% set payload = dict(payload, parse_mode='html') %}
             
@@ -89,7 +85,7 @@ script:
               {% set payload = dict(payload, disable_notification=true) %}
             {% endif %}
           {% endif %}
-          
+
           {{ payload }}
 
   # Script to update this package from GitHub
@@ -109,7 +105,6 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'server.yaml' %}
             {{ url + account + path + name }}
-
 
 input_boolean:
   maintenance_mode:
@@ -146,34 +141,34 @@ logbook:
       - sensor.load_*
 
 automation:
-    # Update Packages on server STOP
-  - id: 'update_on_server_stop'
+  # Update Packages on server STOP
+  - id: "update_on_server_stop"
     alias: "𐃏 Update Packages on STOP"
-    description: ''
+    description: ""
     triggers:
-    - trigger: homeassistant
-      event: shutdown
-    - trigger: webhook
-      allowed_methods:
-        - PUT
-      local_only: false
-      webhook_id: !secret update_packages_webhook
+      - trigger: homeassistant
+        event: shutdown
+      - trigger: webhook
+        allowed_methods:
+          - PUT
+        local_only: false
+        webhook_id: !secret update_packages_webhook
     condition: []
     actions:
-    - action: script.turn_on
-      target:
-        entity_id: script.update_packages
-    - delay:
-        seconds: 10
+      - action: script.turn_on
+        target:
+          entity_id: script.update_packages
+      - delay:
+          seconds: 10
     mode: single
 
     # Notify on server start
-  - id: 'server_start'
+  - id: "server_start"
     alias: "𐃏 Server Start"
-    description: ''
+    description: ""
     triggers:
-    - trigger: homeassistant
-      event: start
+      - trigger: homeassistant
+        event: start
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -186,12 +181,12 @@ automation:
     mode: single
 
     # Notify on server Stop
-  - id: 'server_stop'
+  - id: "server_stop"
     alias: "𐃏 Server Stop"
-    description: ''
+    description: ""
     triggers:
-    - trigger: homeassistant
-      event: shutdown
+      - trigger: homeassistant
+        event: shutdown
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -204,9 +199,9 @@ automation:
     mode: single
 
     # Ping healthchecks.io every minute
-  - id: 'healthchecks_update'
+  - id: "healthchecks_update"
     alias: "𐃏 HealthChecks"
-    description: ''
+    description: ""
     triggers:
       - trigger: time_pattern
         minutes: /1
@@ -217,7 +212,7 @@ automation:
 
     # Notify when a notification can't be sent (Fallback safety mechanism)
   - id: failed_notification
-    alias: '𐃏 Failed Notification'
+    alias: "𐃏 Failed Notification"
     description: "Alert when a notification can't be sent."
     mode: single
     triggers:
@@ -235,10 +230,10 @@ automation:
           message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
-  
+
   # Notify when an automation fails
   - id: failed_automation
-    alias: '𐃏 Failed Automation'
+    alias: "𐃏 Failed Automation"
     description: "Alert when an automation fails to run."
     mode: single
     triggers:
@@ -262,14 +257,14 @@ automation:
             🛑 Info: {{ trigger.event.data.message[0] }}
 
     # Reload things after script update_packages is run
-  - id: 'update_packages'
+  - id: "update_packages"
     alias: "𐃏 Update Packages"
-    description: ''
+    description: ""
     triggers:
       - trigger: state
         entity_id: script.update_packages
-        from: 'on'
-        to: 'off'
+        from: "on"
+        to: "off"
     condition: []
     actions:
       - delay:
@@ -278,9 +273,9 @@ automation:
     mode: restart
 
     # Notify when CPU load 15m is above 10 and when goes back below 4
-  - id: 'cpu_load_15m'
+  - id: "cpu_load_15m"
     alias: "𐃏 CPU Load"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.load_15m
@@ -303,9 +298,9 @@ automation:
     max_exceeded: silent
 
     # Notify when RAM is almost full
-  - id: 'ram_usage'
+  - id: "ram_usage"
     alias: "𐃏 RAM Usage"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.memory_use_percent
@@ -328,9 +323,9 @@ automation:
     max_exceeded: silent
 
     # Notify when storage is almost full
-  - id: 'disk_usage'
+  - id: "disk_usage"
     alias: "𐃏 Disk Usage"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.disk_use_percent
@@ -431,7 +426,7 @@ automation:
                   notify_service_override: "input_text.notify_service_server"
                   message: |
                     🎉 Mentenanță finalizată!
-                    
+
                     Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
-                    
+
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.
