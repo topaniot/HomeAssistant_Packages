@@ -56,7 +56,7 @@ script:
             {% set name = 'server.yaml' %}
             {{ url + account + path + name }}
 
-script:
+  # Global notification script
   global_notify:
     alias: "𐃏 Global Notification Engine"
     mode: parallel
