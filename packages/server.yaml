@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.5
+# Version: 2026.06.6
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -37,7 +37,61 @@
 #
 # ==================================================================================
 
+
 script:
+  global_notify:
+    alias: "𐃏 Global Notification Engine"
+    mode: parallel
+    max: 10
+    fields:
+      message: {required: true}
+      title: {required: false}
+      disable_notification: {required: false}
+      notify_service_override: {required: false} 
+    sequence:
+      - variables:
+          override: "{{ states(notify_service_override | default('')) }}"
+          suffix: "{{ notify_service_override | replace('input_text.notify_service_', '') if notify_service_override.startswith('input_text.notify_service_') else '' }}"
+          
+          # Determinăm serviciul
+          notify_service: >-
+            {% if override != '' and states(override) not in ['unknown', 'unavailable', '', 'none'] %} {{ states(override) }}
+            {% elif states('input_text.notify_service') not in ['unknown', 'unavailable', '', 'none'] %} {{ states('input_text.notify_service') }}
+            {% else %} notify.notify {% endif %}
+            
+          # Căutăm ID-urile ca string-uri (nu mai forțăm int)
+          chat_ent: "{{ 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'input_text.telegram_chat_id' }}"
+          thread_ent: "{{ 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'input_text.telegram_thread_id' }}"
+          
+          # Definim variabilele aici, pentru a fi vizibile în blocul data
+          chat: "{{ states(chat_ent) }}"
+          thread: "{{ states(thread_ent) }}"
+
+      - action: "{{ notify_service }}"
+        data: >-
+          {% set payload = {"message": message} %}
+          {% if title is defined and title not in ['unknown', 'unavailable', '', 'none'] %}
+            {% set payload = dict(payload, title=title) %}
+          {% endif %}
+          
+          {% if notify_service == 'telegram_bot.send_message' %}
+            {% set payload = dict(payload, parse_mode='html') %}
+            
+            {% if chat is defined and chat not in ['unknown', 'unavailable', '', 'none'] %}
+              {% set payload = dict(payload, entity_id=[chat]) %}
+            {% endif %}
+
+            {% if thread is defined and thread not in ['unknown', 'unavailable', '', 'none'] %}
+              {% set payload = dict(payload, message_thread_id=thread) %}
+            {% endif %}
+            
+            {% if disable_notification is defined and disable_notification | default(false) %}
+              {% set payload = dict(payload, disable_notification=true) %}
+            {% endif %}
+          {% endif %}
+          
+          {{ payload }}
+
   # Script to update this package from GitHub
   update_packages:
     alias: "𐃏 Update Packages"
@@ -56,89 +110,6 @@ script:
             {% set name = 'server.yaml' %}
             {{ url + account + path + name }}
 
-  # Global notification script
-  global_notify:
-    alias: "𐃏 Global Notification Engine"
-    mode: parallel
-    max: 10
-    fields:
-      message:
-        required: true
-      title:
-        required: false
-      disable_notification:
-        required: false
-      notify_service_override:
-        required: false
-    sequence:
-      - variables:
-          override_param: "{{ notify_service_override | default('') }}"
-          
-          # Determină valoarea serviciului de override
-          override_service: >-
-            {% if override_param.startswith('input_text.') %}
-              {{ states(override_param) }}
-            {% else %}
-              {{ override_param }}
-            {% endif %}
-            
-          # Determină valoarea serviciului general
-          general_service: "{{ states('input_text.notify_service') }}"
-            
-          # Selectează serviciul final care va fi folosit
-          notify_service: >-
-            {% if override_service not in ['unknown', 'unavailable', '', 'none'] %} {{ override_service }}
-            {% elif general_service not in ['unknown', 'unavailable', '', 'none'] %} {{ general_service }}
-            {% else %} notify.notify {% endif %}
-            
-          # Flag: Override-ul a fost validat și preluat?
-          is_override_active: "{{ override_service not in ['unknown', 'unavailable', '', 'none'] }}"
-          
-          # Extrage automat sufixul (ex: "_unavailable" din "input_text.notify_service_unavailable")
-          suffix: >-
-            {{ override_param | replace('input_text.notify_service_', '') if override_param.startswith('input_text.notify_service_') else '' }}
-            
-          # Determină ID-urile pentru Telegram izolat vs. general
-          chat: >-
-            {% if is_override_active %}
-              {% set ent = 'input_text.telegram_chat_id_' ~ suffix %}
-              {{ states(ent) if suffix != '' else '' }}
-            {% else %}
-              {{ states('input_text.telegram_chat_id') }}
-            {% endif %}
-            
-          thread: >-
-            {% if is_override_active %}
-              {% set ent = 'input_text.telegram_thread_id_' ~ suffix %}
-              {{ states(ent) if suffix != '' else '' }}
-            {% else %}
-              {{ states('input_text.telegram_thread_id') }}
-            {% endif %}
-
-      - action: "{{ notify_service }}"
-        data: >-
-          {% set payload = {"message": message} %}
-          {% if title is defined and title not in ['unknown', 'unavailable', ''] %}
-            {% set payload = dict(payload, title=title) %}
-          {% endif %}
-          
-          {% if notify_service == 'telegram_bot.send_message' %}
-            {% set payload = dict(payload, parse_mode='html') %}
-            
-            {% if chat not in ['unknown', 'unavailable', ''] %}
-              {% set payload = dict(payload, target=chat) %}
-            {% endif %}
-            
-            {% if thread not in ['unknown', 'unavailable', ''] %}
-              {% set payload = dict(payload, message_thread_id=thread | int) %}
-            {% endif %}
-            
-            {% if disable_notification is defined and disable_notification not in ['unknown', 'unavailable', ''] %}
-              {% set payload = dict(payload, disable_notification=disable_notification | bool) %}
-            {% endif %}
-          {% endif %}
-          
-          {{ payload }}
 
 input_boolean:
   maintenance_mode:
