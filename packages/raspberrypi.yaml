@@ -44,8 +44,10 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_raspberry"
           message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
       - wait_template: "{{ states('sensor.processor_temperature') | float < 70 }}"
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_raspberry"
           message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
