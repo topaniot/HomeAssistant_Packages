@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.4
+# Version: 2026.06.5
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -10,21 +10,31 @@
 #    - Name: "𐃏 Packages Account"
 #    - Purpose: GitHub account name for package updates. Defaults to 'topaniot'.
 #
-# 2. input_text.notify_service_server (Optional)
-#    - Name: "𐃏 Notify Service Server"
-#    - Purpose: Specific notification service for server alerts.
-#
 # 3. input_text.notify_service (General/Global)
 #    - Name: "𐃏 Notify Service"
 #    - Purpose: Default global notification service (e.g., notify.notify).
 #
-# 4. input_text.telegram_chat_id (Optional)
+# 4. input_text.telegram_chat_id (General/Global)
 #    - Name: "𐃏 Telegram Chat ID"
-#    - Purpose: Chat target ID; required only if using Telegram.
+#    - Purpose: Default global chat ID; required only if using Telegram.
 #
-# 5. input_text.telegram_thread_id (Optional)
+# 5. input_text.telegram_thread_id (General/Global)
 #    - Name: "𐃏 Telegram Thread ID"
-#    - Purpose: Topic/Thread identifier for Telegram forum supergroups.
+#    - Purpose: Default global Topic/Thread identifier for Telegram forum supergroups.
+
+# 2. input_text.notify_service_server (Optional)
+#    - Name: "𐃏 Notify Service Server"
+#    - Purpose: Specific notification service for server alerts.
+#    - If this is defined the global chat ID and Thread will be ignored. You need to define them.
+#
+# 4. input_text.telegram_chat_id_server (Optional)
+#    - Name: "𐃏 Telegram Chat ID Server"
+#    - Purpose: Specific Chat target ID; required only if using Telegram.
+#
+# 5. input_text.telegram_thread_id_server (Optional)
+#    - Name: "𐃏 Telegram Thread ID Server"
+#    - Purpose: Specific Topic/Thread identifier for Telegram forum supergroups.
+#
 # ==================================================================================
 
 script:
@@ -46,6 +56,7 @@ script:
             {% set name = 'server.yaml' %}
             {{ url + account + path + name }}
 
+script:
   global_notify:
     alias: "𐃏 Global Notification Engine"
     mode: parallel
@@ -57,34 +68,76 @@ script:
         required: false
       disable_notification:
         required: false
+      notify_service_override:
+        required: false
     sequence:
       - variables:
+          override_param: "{{ notify_service_override | default('') }}"
+          
+          # Determină valoarea serviciului de override
+          override_service: >-
+            {% if override_param.startswith('input_text.') %}
+              {{ states(override_param) }}
+            {% else %}
+              {{ override_param }}
+            {% endif %}
+            
+          # Determină valoarea serviciului general
+          general_service: "{{ states('input_text.notify_service') }}"
+            
+          # Selectează serviciul final care va fi folosit
           notify_service: >-
-            {% set server = states('input_text.notify_service_server') %}
-            {% set general = states('input_text.notify_service') %}
-            {% if server not in ['unknown', 'unavailable', ''] %} {{ server }}
-            {% elif general not in ['unknown', 'unavailable', ''] %} {{ general }}
+            {% if override_service not in ['unknown', 'unavailable', '', 'none'] %} {{ override_service }}
+            {% elif general_service not in ['unknown', 'unavailable', '', 'none'] %} {{ general_service }}
             {% else %} notify.notify {% endif %}
+            
+          # Flag: Override-ul a fost validat și preluat?
+          is_override_active: "{{ override_service not in ['unknown', 'unavailable', '', 'none'] }}"
+          
+          # Extrage automat sufixul (ex: "_unavailable" din "input_text.notify_service_unavailable")
+          suffix: >-
+            {{ override_param | replace('input_text.notify_service_', '') if override_param.startswith('input_text.notify_service_') else '' }}
+            
+          # Determină ID-urile pentru Telegram izolat vs. general
+          chat: >-
+            {% if is_override_active %}
+              {% set ent = 'input_text.telegram_chat_id_' ~ suffix %}
+              {{ states(ent) if suffix != '' else '' }}
+            {% else %}
+              {{ states('input_text.telegram_chat_id') }}
+            {% endif %}
+            
+          thread: >-
+            {% if is_override_active %}
+              {% set ent = 'input_text.telegram_thread_id_' ~ suffix %}
+              {{ states(ent) if suffix != '' else '' }}
+            {% else %}
+              {{ states('input_text.telegram_thread_id') }}
+            {% endif %}
+
       - action: "{{ notify_service }}"
         data: >-
           {% set payload = {"message": message} %}
           {% if title is defined and title not in ['unknown', 'unavailable', ''] %}
             {% set payload = dict(payload, title=title) %}
           {% endif %}
+          
           {% if notify_service == 'telegram_bot.send_message' %}
             {% set payload = dict(payload, parse_mode='html') %}
-            {% set chat = states('input_text.telegram_chat_id') %}
-            {% set thread = states('input_text.telegram_thread_id') %}
+            
             {% if chat not in ['unknown', 'unavailable', ''] %}
               {% set payload = dict(payload, target=chat) %}
             {% endif %}
+            
             {% if thread not in ['unknown', 'unavailable', ''] %}
               {% set payload = dict(payload, message_thread_id=thread | int) %}
             {% endif %}
+            
             {% if disable_notification is defined and disable_notification not in ['unknown', 'unavailable', ''] %}
               {% set payload = dict(payload, disable_notification=disable_notification | bool) %}
             {% endif %}
           {% endif %}
+          
           {{ payload }}
 
 input_boolean:
@@ -157,6 +210,7 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "▶️ Serverul a pornit!"
     mode: single
 
@@ -174,6 +228,7 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "⏹️ Serverul s-a oprit!"
     mode: single
 
@@ -229,6 +284,7 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: |
             ⚠️ Atenție, a eșuat o automatizare! Anunță echipa tehnică!
 
@@ -265,10 +321,12 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
       - wait_template: "{{ states('sensor.load_15m') | float < 4 }}"
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
     max_exceeded: silent
@@ -288,10 +346,12 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
       - wait_template: "{{ states('sensor.memory_use_percent') | float < 80 }}"
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
     max_exceeded: silent
@@ -311,10 +371,12 @@ automation:
     actions:
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
       - wait_template: "{{ states('sensor.disk_use_percent') | float < 60 }}"
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
 
@@ -378,6 +440,7 @@ automation:
                     timeout: "00:01:00"
               - action: script.global_notify
                 data:
+                  notify_service_override: "input_text.notify_service_server"
                   message: |
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
@@ -394,6 +457,7 @@ automation:
             sequence:
               - action: script.global_notify
                 data:
+                  notify_service_override: "input_text.notify_service_server"
                   message: |
                     🎉 Mentenanță finalizată!
                     
