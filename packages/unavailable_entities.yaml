@@ -23,7 +23,6 @@
 script:
   # Script to update this package from GitHub
   update_packages:
-    alias: "𐃏 Update Unavailable Entities Package"
     sequence:
       - action: downloader.download_file
         data:
