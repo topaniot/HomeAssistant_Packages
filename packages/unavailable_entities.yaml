@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.06.2
+# Version: 2026.06.3
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
 #   Routes all alerts through the centralized global notification engine.
@@ -150,6 +150,7 @@ automation:
                     {% endif %}
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_unavailable"
           message: |
             {% if count == 0 %}
             🟢 Toate dispozitivele funcționzează!
@@ -200,6 +201,7 @@ automation:
                     {% endif %}
       - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_unavailable"
           message: |
             {% if count == 0 %}
             🟢 Toți senzorii funcționzează!
