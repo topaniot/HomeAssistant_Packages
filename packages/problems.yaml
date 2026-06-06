@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Problems Detected Monitor
-# Version: 2026.06.2
+# Version: 2026.06.3
 # Description:
 #   Monitors binary_sensors with device_class 'problem' and notifies when issues arise.
 #   Routes all alerts through the centralized global notification engine.
@@ -111,16 +111,16 @@ automation:
                     {% endif %}
       - action: script.global_notify
         data:
-          title: "🧯 Monitor Probleme"
+          notify_service_override: "input_text.notify_service_problems"
           message: |
             {% if count == 0 %}
             👌 Probleme rezolvate!
             {% elif count == 1 %}
             ⚠️ Este o problemă:
-            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
             {% else %}
             ⚠️ Sunt {{ count }} probleme:
-            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n– ') }}
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
             {% endif %}
       - action: input_number.set_value
         target:
