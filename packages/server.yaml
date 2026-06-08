@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.7
+# Version: 2026.06.8
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -10,29 +10,42 @@
 #    - Name: "𐃏 Packages Account"
 #    - Purpose: GitHub account name for package updates. Defaults to 'topaniot'.
 #
-# 3. input_text.notify_service (General/Global)
+# 2. input_text.notify_service (General/Global)
 #    - Name: "𐃏 Notify Service"
 #    - Purpose: Default global notification service (e.g., notify.notify).
 #
-# 4. input_text.telegram_chat_id (General/Global)
+# 3. input_text.telegram_chat_id (General/Global)
 #    - Name: "𐃏 Telegram Chat ID"
 #    - Purpose: Default global chat ID; required only if using Telegram.
 #
-# 5. input_text.telegram_thread_id (General/Global)
+# 4. input_text.telegram_thread_id (General/Global)
 #    - Name: "𐃏 Telegram Thread ID"
 #    - Purpose: Default global Topic/Thread identifier for Telegram forum supergroups.
 
-# 2. input_text.notify_service_server (Optional)
+# 5. input_text.notify_service_server (Optional)
 #    - Name: "𐃏 Notify Service Server"
 #    - Purpose: Specific notification service for server alerts.
 #    - If this is defined the global chat ID and Thread will be ignored. You need to define them.
 #
-# 4. input_text.telegram_chat_id_server (Optional)
+# 7. input_text.telegram_chat_id_server (Optional)
 #    - Name: "𐃏 Telegram Chat ID Server"
 #    - Purpose: Specific Chat target ID; required only if using Telegram.
 #
-# 5. input_text.telegram_thread_id_server (Optional)
+# 8. input_text.telegram_thread_id_server (Optional)
 #    - Name: "𐃏 Telegram Thread ID Server"
+#    - Purpose: Specific Topic/Thread identifier for Telegram forum supergroups.
+#
+# 9. input_text.notify_service_maintenance (Optional)
+#    - Name: "𐃏 Notify Service Maintenance"
+#    - Purpose: Specific notification service for server alerts.
+#    - If this is defined the global chat ID and Thread will be ignored. You need to define them.
+#
+# 10. input_text.telegram_chat_id_maintenance (Optional)
+#    - Name: "𐃏 Telegram Chat ID Maintenance"
+#    - Purpose: Specific Chat target ID; required only if using Telegram.
+#
+# 11. input_text.telegram_thread_id_maintenance (Optional)
+#    - Name: "𐃏 Telegram Thread ID Maintenance"
 #    - Purpose: Specific Topic/Thread identifier for Telegram forum supergroups.
 #
 # ==================================================================================
@@ -58,7 +71,6 @@ script:
             {% else %}
               {{ '' }}
             {% endif %}
-
           # Determinare serviciu notificări
           notify_service: >-
             {% set ov = states(notify_service_override) %}
@@ -70,7 +82,6 @@ script:
             {% else %}
               notify.notify
             {% endif %}
-
           # Preluare entitate chat (cu fallback general)
           chat: >-
             {% set spec = 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'none' %}
@@ -80,7 +91,6 @@ script:
             {% else %}
               {{ gen | trim }}
             {% endif %}
-
           # Preluare entitate thread (cu fallback general)
           thread: >-
             {% set spec = 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'none' %}
@@ -90,31 +100,24 @@ script:
             {% else %}
               {{ gen | trim }}
             {% endif %}
-
       - action: "{{ notify_service }}"
         data: >-
           {% set payload = {"message": message} %}
-
           {% if title is defined and title not in ['unknown', 'unavailable', '', 'none'] %}
             {% set payload = dict(payload, title=title) %}
           {% endif %}
-
           {% if notify_service == 'telegram_bot.send_message' %}
             {% set payload = dict(payload, parse_mode='html') %}
-            
             {% if chat not in ['unknown', 'unavailable', '', 'none'] %}
               {% set payload = dict(payload, entity_id=[chat]) %}
             {% endif %}
-
             {% if thread not in ['unknown', 'unavailable', '', 'none'] %}
               {% set payload = dict(payload, message_thread_id=thread) %}
             {% endif %}
-            
             {% if disable_notification is defined and disable_notification | default(false) %}
               {% set payload = dict(payload, disable_notification=true) %}
             {% endif %}
           {% endif %}
-
           {{ payload }}
 
   # Script to update this package from GitHub
@@ -191,7 +194,19 @@ automation:
           seconds: 10
     mode: single
 
-    # Notify on server start
+  # Ping healthchecks.io every minute
+  - id: "healthchecks_update"
+    alias: "𐃏 HealthChecks"
+    description: ""
+    triggers:
+      - trigger: time_pattern
+        minutes: /1
+    condition: []
+    actions:
+      - action: rest_command.healthchecks
+    mode: restart
+
+  # Notify on server start
   - id: "server_start"
     alias: "𐃏 Server Start"
     description: ""
@@ -209,7 +224,7 @@ automation:
           message: "▶️ Serverul a pornit!"
     mode: single
 
-    # Notify on server Stop
+  # Notify on server Stop
   - id: "server_stop"
     alias: "𐃏 Server Stop"
     description: ""
@@ -227,19 +242,7 @@ automation:
           message: "⏹️ Serverul s-a oprit!"
     mode: single
 
-    # Ping healthchecks.io every minute
-  - id: "healthchecks_update"
-    alias: "𐃏 HealthChecks"
-    description: ""
-    triggers:
-      - trigger: time_pattern
-        minutes: /1
-    condition: []
-    actions:
-      - action: rest_command.healthchecks
-    mode: restart
-
-    # Notify when a notification can't be sent (Fallback safety mechanism)
+  # Notify when a notification can't be sent
   - id: failed_notification
     alias: "𐃏 Failed Notification"
     description: "Alert when a notification can't be sent."
@@ -256,7 +259,12 @@ automation:
     actions:
       - action: persistent_notification.create
         data:
-          message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
+          message: |
+            ⚠️ A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! 
+          
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message }}
+
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
 
@@ -277,13 +285,24 @@ automation:
       - condition: template
         value_template: '{{ "failed_automation" not in trigger.event.data.message[0] and "Failed Automation" not in trigger.event.data.message[0] }}'
     actions:
+      - action: persistent_notification.create
+        data:
+          message: |
+            ⚠️ A apărut o problemă la finalizarea unei automatizări. Anunță echipa tehnică!
+
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message[0] }}
+
+          title: Nu s-a putut finaliza atomatizarea!
+          notification_id: failed_automation
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
           message: |
-            ⚠️ Atenție, a eșuat o automatizare! Anunță echipa tehnică!
+            ⚠️ A apărut o problemă la finalizarea unei automatizări.
 
-            🛑 Info: {{ trigger.event.data.message[0] }}
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message[0] }}
 
     # Reload things after script update_packages is run
   - id: "update_packages"
@@ -435,7 +454,7 @@ automation:
                     timeout: "00:01:00"
               - action: script.global_notify
                 data:
-                  notify_service_override: "input_text.notify_service_server"
+                  notify_service_override: "input_text.notify_service_maintenance"
                   message: |
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
@@ -452,7 +471,7 @@ automation:
             sequence:
               - action: script.global_notify
                 data:
-                  notify_service_override: "input_text.notify_service_server"
+                  notify_service_override: "input_text.notify_service_maintenance"
                   message: |
                     🎉 Mentenanță finalizată!
 
