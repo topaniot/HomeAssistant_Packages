@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.06.3
+# Version: 2026.06.4
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
 #   Routes all alerts through the centralized global notification engine.
@@ -57,13 +57,33 @@ template:
         attributes:
             names: >
               {% set ignored = label_entities('ignore') %}
-                    
-              {{ states
+              {% set ns = namespace(results=[]) %}
+              {% for entity in states
                 |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
                 |selectattr('state','in',['unavailable','none'])
                 |rejectattr('entity_id','in', ignored )
-                |map(attribute='name')|join(', ')
-              }}
+              %}
+                {% set dev_name = device_attr(entity.entity_id, 'name') %}
+                {% set is_generic = dev_name and ('shelly' in dev_name|lower or 'bthome' in dev_name|lower or 'daikin' in dev_name|lower or 'system monitor' in dev_name|lower) %}
+                {# Combine device and entity name raw strings #}
+                {% if dev_name and not is_generic %}
+                  {% set raw_combined = dev_name ~ ' ' ~ entity.name %}
+                {% else %}
+                  {% set raw_combined = entity.name %}
+                {% endif %}
+                {# Tokenize and deduplicate words across the combined name #}
+                {% set words = raw_combined.split(' ') %}
+                {% set w_ns = namespace(seen=[], unique=[]) %}
+                {% for w in words %}
+                  {% set norm = w | lower | replace(':','') | replace('-','') | replace(',','') | replace('(','') | replace(')','') | trim %}
+                  {% if norm != '' and norm not in w_ns.seen %}
+                    {% set w_ns.seen = w_ns.seen + [norm] %}
+                    {% set w_ns.unique = w_ns.unique + [w] %}
+                  {% endif %}
+                {% endfor %}
+                {% set ns.results = ns.results + [w_ns.unique | join(' ')] %}
+              {% endfor %}
+              {{ ns.results | join(", ") }}
 
   - trigger:
       - trigger: time_pattern
@@ -85,15 +105,35 @@ template:
         attributes:
             names: >
               {% set ignored = label_entities('ignore') %}
-                  
-              {{ states
+              {% set ns = namespace(results=[]) %}
+              {% for entity in states
                 |selectattr('domain','in',['sensor','binary_sensor'])
                 |selectattr('attributes.device_class','defined')
                 |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
                 |selectattr('state', 'in', ['unavailable','none'])
-                |rejectattr('entity_id','in', ignored )
-                |map(attribute='name')|join (", ")
-              }}
+                |rejectattr('entity_id','in', ignored ) 
+              %}
+                {% set dev_name = device_attr(entity.entity_id, 'name') %}
+                {% set is_generic = dev_name and ('shelly' in dev_name|lower or 'bthome' in dev_name|lower or 'daikin' in dev_name|lower or 'system monitor' in dev_name|lower) %}
+                {# Combine device and entity name raw strings #}
+                {% if dev_name and not is_generic %}
+                  {% set raw_combined = dev_name ~ ' ' ~ entity.name %}
+                {% else %}
+                  {% set raw_combined = entity.name %}
+                {% endif %}
+                {# Tokenize and deduplicate words across the combined name #}
+                {% set words = raw_combined.split(' ') %}
+                {% set w_ns = namespace(seen=[], unique=[]) %}
+                {% for w in words %}
+                  {% set norm = w | lower | replace(':','') | replace('-','') | replace(',','') | replace('(','') | replace(')','') | trim %}
+                  {% if norm != '' and norm not in w_ns.seen %}
+                    {% set w_ns.seen = w_ns.seen + [norm] %}
+                    {% set w_ns.unique = w_ns.unique + [w] %}
+                  {% endif %}
+                {% endfor %}
+                {% set ns.results = ns.results + [w_ns.unique | join(' ')] %}
+              {% endfor %}
+              {{ ns.results | join(", ") }}
 
 input_number:
   unavailable_entities_last_triggered:
