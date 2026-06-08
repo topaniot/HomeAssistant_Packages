@@ -1,15 +1,24 @@
-# Version 2025.12.1
-# Package - Unavailable Entities
-# Count and list of devices and sensors with a state of unavailable
+# ==================================================================================
+# Package: Unavailable Entities Monitor
+# Version: 2026.06.3
+# Description:
+#   Monitors devices and sensors for 'unavailable' or 'none' states.
+#   Routes all alerts through the centralized global notification engine.
 #
-# To change the delay of unavailable notifications create a input number helper named: "𐃏 Delay Notifiy Unavailable"
-# and set the number of minutes to wait until send the notification
+# --- Required Helpers & Dependencies ---
+# To customize this package, create the following helpers:
 #
-# To change the notification service create an input text helper named: "𐃏 Notify Service Unavailable"
-# and put inside the name of the service you want.
-# 
-# If you want to exlcude entities create an imput select helper named: "𐃏 Ignored Unavailable" 
-# and add all entity id's that you want to exclude as options.
+# 1. input_number.delay_notify_unavailable
+#    - Name: "𐃏 Delay Notifiy Unavailable"
+#    - Purpose: Delay (in minutes) before notification triggers.
+#
+# 2. script.global_notify
+#    - Purpose: Centralized notification engine (Defined in Server Monitor package).
+#
+# --- Configuration ---
+# - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude
+#   from monitoring.
+# ==================================================================================
 
 script:
   # Script to update this package from GitHub
@@ -122,105 +131,41 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.unavailable_entities.state is defined }}"
     actions:
+      - variables:
+          count: "{{ states('sensor.unavailable_entities') | int(0) }}"
+          last_triggered: "{{ states('input_number.unavailable_entities_last_triggered') | int(0) }}"
+      - condition: template
+        value_template: "{{ count != last_triggered }}"
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_entities
-                above: 0
-                below: 2
               - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_entities_last_triggered') | int
-                  != states('sensor.unavailable_entities') | int }}
+                value_template: "{{ count > 0 }}"
             sequence:
               - delay: 
                   minutes: >-
                     {% if states.input_number.delay_notify_unavailable.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                      {{ states('input_number.delay_notify_unavailable') | int }}
                     {% else %}
-                      {% set minutes = 10 %}
+                      10
                     {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_entities_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_entities') | int }}"
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔴 Este un dispozitiv indisponibil:
-                    – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_entities
-                above: 1
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_entities_last_triggered') | int
-                  != states('sensor.unavailable_entities') | int }}
-            sequence:
-              - delay: 
-                  minutes: >-
-                    {% if states.input_number.delay_notify_unavailable.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
-                    {% else %}
-                      {% set minutes = 10 %}
-                    {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_entities_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_entities') | int }}"
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔴 Sunt {{ states('sensor.unavailable_entities')|int }} dispozitive indisponibile:
-                    – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_entities
-                below: 1
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_entities_last_triggered') | int > 0 }}
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: "🟢 Toate dispozitivele funcționzează!"
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_entities_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_entities') | int }}"
-        default: []
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_unavailable"
+          message: |
+            {% if count == 0 %}
+            🟢 Toate dispozitivele funcționzează!
+            {% elif count == 1 %}
+            🔴 Este un dispozitiv indisponibil:
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
+            {% else %}
+            🔴 Sunt {{ count }} dispozitive indisponibile:
+            – {{ state_attr('sensor.unavailable_entities','names').split(',') | join('\n–') }}
+            {% endif %}
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.unavailable_entities_last_triggered
+        data:
+          value: "{{ count }}"
 
   - id: "unavailable_sensors"
     alias: "𐃏 Unavailable Sensors"
@@ -237,102 +182,38 @@ automation:
       - condition: template
         value_template: "{{ states.sensor.unavailable_sensors.state is defined }}"
     actions:
+      - variables:
+          count: "{{ states('sensor.unavailable_sensors') | int(0) }}"
+          last_triggered: "{{ states('input_number.unavailable_sensors_last_triggered') | int(0) }}"
+      - condition: template
+        value_template: "{{ count != last_triggered }}"
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_sensors
-                above: 0
-                below: 2
               - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_sensors_last_triggered') | int
-                  != states('sensor.unavailable_sensors') | int }}
+                value_template: "{{ count > 0 }}"
             sequence:
               - delay: 
                   minutes: >-
                     {% if states.input_number.delay_notify_unavailable.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
+                      {{ states('input_number.delay_notify_unavailable') | int }}
                     {% else %}
-                      {% set minutes = 10 %}
+                      10
                     {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_sensors_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_sensors') | int }}"
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔴 Este un senzor indisponibil:
-                    – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_sensors
-                above: 1
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_sensors_last_triggered') | int
-                  != states('sensor.unavailable_sensors') | int }}
-            sequence:
-              - delay: 
-                  minutes: >-
-                    {% if states.input_number.delay_notify_unavailable.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_unavailable') | int %}
-                    {% else %}
-                      {% set minutes = 10 %}
-                    {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_sensors_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_sensors') | int }}"
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    🔴 Sunt {{ states('sensor.unavailable_sensors')|int }} senzori indisponibili:
-                    – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.unavailable_sensors
-                below: 1
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.unavailable_sensors_last_triggered') | int > 0 }}
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_unavailable.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_unavailable') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: "🟢 Toți senzorii funcționzează!"
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.unavailable_sensors_last_triggered
-                data:
-                  value: "{{ states('sensor.unavailable_sensors') | int }}"
-        default: []
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_unavailable"
+          message: |
+            {% if count == 0 %}
+            🟢 Toți senzorii funcționzează!
+            {% elif count == 1 %}
+            🔴 Este un senzor indisponibil:
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
+            {% else %}
+            🔴 Sunt {{ count }} senzori indisponibili:
+            – {{ state_attr('sensor.unavailable_sensors','names').split(',') | join('\n–') }}
+            {% endif %}
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.unavailable_sensors_last_triggered
+        data:
+          value: "{{ count }}"

@@ -1,9 +1,18 @@
-# Version: 2025.7.1
-# Senzors and automations specific for Raspberry PI boards.
+# ==================================================================================
+# Package: Raspberry PI Monitor
+# Version: 2026.06.2
+# Description:
+#   Monitors Raspberry PI system health (CPU Temperature).
+#   Routes all alerts through the centralized global notification engine.
+#
+# --- Dependencies ---
+# - script.global_notify (Defined in Server Monitor package)
+# ==================================================================================
 
 script:
   # Script to update this package from GitHub
   update_packages:
+    alias: "𐃏 Update Raspberry PI Package"
     sequence:
       - action: downloader.download_file
         data:
@@ -18,43 +27,27 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'raspberrypi.yaml' %}
             {{ url + account + path + name }}
-      
+
 automation:
-    # Notify when CPU Temperature is high
   - id: 'cpu_temp'
     alias: "𐃏 CPU Temperature"
-    description: ''
+    mode: single
+    max_exceeded: silent
     triggers:
       - trigger: numeric_state
         entity_id: sensor.processor_temperature
-        above: '80'
+        above: 80
     condition: 
       - condition: state
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_raspberry"
           message: "🟡 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-      - wait_template: "{{ states( 'sensor.processor_temperature' ) | float < 70 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.processor_temperature') | float < 70 }}"
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_raspberry"
           message: "🟢 CPU Temp. = {{ states('sensor.processor_temperature') }}°C"
-    mode: single
-    max_exceeded: silent

@@ -1,9 +1,125 @@
-# Version: 2025.12.1
-# Package Server
-# This package includes default integrations, automations 
-# and sersors for server activity.
+# ==================================================================================
+# Package: Server Monitor
+# Version: 2026.06.8
+# Description:
+#   Monitors server health, handles updates, and manages maintenance modes.
+#   Features a centralized global notification engine with parallel execution.
+#
+# --- Required Helpers & Dependencies ---
+# 1. input_text.packages_account (Optional)
+#    - Name: "𐃏 Packages Account"
+#    - Purpose: GitHub account name for package updates. Defaults to 'topaniot'.
+#
+# 2. input_text.notify_service (General/Global)
+#    - Name: "𐃏 Notify Service"
+#    - Purpose: Default global notification service (e.g., notify.notify).
+#
+# 3. input_text.telegram_chat_id (General/Global)
+#    - Name: "𐃏 Telegram Chat ID"
+#    - Purpose: Default global chat ID; required only if using Telegram.
+#
+# 4. input_text.telegram_thread_id (General/Global)
+#    - Name: "𐃏 Telegram Thread ID"
+#    - Purpose: Default global Topic/Thread identifier for Telegram forum supergroups.
+
+# 5. input_text.notify_service_server (Optional)
+#    - Name: "𐃏 Notify Service Server"
+#    - Purpose: Specific notification service for server alerts.
+#    - If this is defined the global chat ID and Thread will be ignored. You need to define them.
+#
+# 7. input_text.telegram_chat_id_server (Optional)
+#    - Name: "𐃏 Telegram Chat ID Server"
+#    - Purpose: Specific Chat target ID; required only if using Telegram.
+#
+# 8. input_text.telegram_thread_id_server (Optional)
+#    - Name: "𐃏 Telegram Thread ID Server"
+#    - Purpose: Specific Topic/Thread identifier for Telegram forum supergroups.
+#
+# 9. input_text.notify_service_maintenance (Optional)
+#    - Name: "𐃏 Notify Service Maintenance"
+#    - Purpose: Specific notification service for server alerts.
+#    - If this is defined the global chat ID and Thread will be ignored. You need to define them.
+#
+# 10. input_text.telegram_chat_id_maintenance (Optional)
+#    - Name: "𐃏 Telegram Chat ID Maintenance"
+#    - Purpose: Specific Chat target ID; required only if using Telegram.
+#
+# 11. input_text.telegram_thread_id_maintenance (Optional)
+#    - Name: "𐃏 Telegram Thread ID Maintenance"
+#    - Purpose: Specific Topic/Thread identifier for Telegram forum supergroups.
+#
+# ==================================================================================
 
 script:
+  # Script used for global notifications
+  global_notify:
+    alias: "𐃏 Global Notification Engine"
+    mode: parallel
+    max: 10
+    fields:
+      message: { required: true }
+      title: { required: false }
+      disable_notification: { required: false }
+      notify_service_override: { required: false }
+    sequence:
+      - variables:
+          # Procesare sufix (evită crash dacă override lipsește)
+          suffix: >-
+            {% set o = notify_service_override | default('', true) | string %}
+            {% if o.startswith('input_text.notify_service_') %}
+              {{ o | replace('input_text.notify_service_', '') }}
+            {% else %}
+              {{ '' }}
+            {% endif %}
+          # Determinare serviciu notificări
+          notify_service: >-
+            {% set ov = states(notify_service_override) %}
+            {% set gen = states('input_text.notify_service') %}
+            {% if ov not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ ov | trim }}
+            {% elif gen not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ gen | trim }}
+            {% else %}
+              notify.notify
+            {% endif %}
+          # Preluare entitate chat (cu fallback general)
+          chat: >-
+            {% set spec = 'input_text.telegram_chat_id_' ~ suffix if suffix != '' else 'none' %}
+            {% set gen = states('input_text.telegram_chat_id') %}
+            {% if suffix != '' and states(spec) not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ states(spec) | trim }}
+            {% else %}
+              {{ gen | trim }}
+            {% endif %}
+          # Preluare entitate thread (cu fallback general)
+          thread: >-
+            {% set spec = 'input_text.telegram_thread_id_' ~ suffix if suffix != '' else 'none' %}
+            {% set gen = states('input_text.telegram_thread_id') %}
+            {% if suffix != '' and states(spec) not in ['unknown', 'unavailable', '', 'none'] %}
+              {{ states(spec) | trim }}
+            {% else %}
+              {{ gen | trim }}
+            {% endif %}
+      - action: "{{ notify_service }}"
+        data: >-
+          {% set payload = {"message": message} %}
+          {% if title is defined and title not in ['unknown', 'unavailable', '', 'none'] %}
+            {% set payload = dict(payload, title=title) %}
+          {% endif %}
+          {% if notify_service == 'telegram_bot.send_message' %}
+            {% set payload = dict(payload, parse_mode='html') %}
+            {% if chat not in ['unknown', 'unavailable', '', 'none'] %}
+              {% set payload = dict(payload, entity_id=[chat]) %}
+            {% endif %}
+            {% if thread not in ['unknown', 'unavailable', '', 'none'] %}
+              {% set payload = dict(payload, message_thread_id=thread) %}
+            {% endif %}
+            {% if disable_notification is defined and disable_notification | default(false) %}
+              {% set payload = dict(payload, disable_notification=true) %}
+            {% endif %}
+          {% endif %}
+          {{ payload }}
+
   # Script to update this package from GitHub
   update_packages:
     alias: "𐃏 Update Packages"
@@ -57,83 +173,31 @@ logbook:
       - sensor.load_*
 
 automation:
-    # Update Packages on server STOP
-  - id: 'update_on_server_stop'
+  # Update Packages on server STOP
+  - id: "update_on_server_stop"
     alias: "𐃏 Update Packages on STOP"
-    description: ''
+    description: ""
     triggers:
-    - trigger: homeassistant
-      event: shutdown
-    - trigger: webhook
-      allowed_methods:
-        - PUT
-      local_only: false
-      webhook_id: !secret update_packages_webhook
+      - trigger: homeassistant
+        event: shutdown
+      - trigger: webhook
+        allowed_methods:
+          - PUT
+        local_only: false
+        webhook_id: !secret update_packages_webhook
     condition: []
     actions:
-    - action: script.turn_on
-      target:
-        entity_id: script.update_packages
-    - delay:
-        seconds: 10
+      - action: script.turn_on
+        target:
+          entity_id: script.update_packages
+      - delay:
+          seconds: 10
     mode: single
 
-    # Notify on server start using defined service
-  - id: 'server_start'
-    alias: "𐃏 Server Start"
-    description: ''
-    triggers:
-    - trigger: homeassistant
-      event: start
-    condition:
-      - condition: state
-        entity_id: input_boolean.maintenance_mode
-        state: "off"
-    actions:
-    - action: >-
-        {% if states.input_text.notify_service_server.state is defined %}
-          {% set notify_service = states('input_text.notify_service_server') %}
-        {% elif states.input_text.notify_service.state is defined %}
-          {% set notify_service = states('input_text.notify_service') %}
-        {% else %}
-          {% set notify_service = 'notify.notify' %}
-        {% endif %}
-          
-        {{ notify_service }}
-      data:
-        message: ▶️ Serverul a pornit!
-    mode: single
-
-    # Notify on server Stop using defined service
-  - id: 'server_stop'
-    alias: "𐃏 Server Stop"
-    description: ''
-    triggers:
-    - trigger: homeassistant
-      event: shutdown
-    condition:
-      - condition: state
-        entity_id: input_boolean.maintenance_mode
-        state: "off"
-    actions:
-    - action: >-
-        {% if states.input_text.notify_service_server.state is defined %}
-          {% set notify_service = states('input_text.notify_service_server') %}
-        {% elif states.input_text.notify_service.state is defined %}
-          {% set notify_service = states('input_text.notify_service') %}
-        {% else %}
-          {% set notify_service = 'notify.notify' %}
-        {% endif %}
-          
-        {{ notify_service }}
-      data:
-        message: ⏹️ Serverul s-a oprit!
-    mode: single
-
-    # Ping healthchecks.io every minute
-  - id: 'healthchecks_update'
+  # Ping healthchecks.io every minute
+  - id: "healthchecks_update"
     alias: "𐃏 HealthChecks"
-    description: ''
+    description: ""
     triggers:
       - trigger: time_pattern
         minutes: /1
@@ -142,9 +206,45 @@ automation:
       - action: rest_command.healthchecks
     mode: restart
 
-    # Notify when a nofitication can't be sent
+  # Notify on server start
+  - id: "server_start"
+    alias: "𐃏 Server Start"
+    description: ""
+    triggers:
+      - trigger: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
+    actions:
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_server"
+          message: "▶️ Serverul a pornit!"
+    mode: single
+
+  # Notify on server Stop
+  - id: "server_stop"
+    alias: "𐃏 Server Stop"
+    description: ""
+    triggers:
+      - trigger: homeassistant
+        event: shutdown
+    condition:
+      - condition: state
+        entity_id: input_boolean.maintenance_mode
+        state: "off"
+    actions:
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_server"
+          message: "⏹️ Serverul s-a oprit!"
+    mode: single
+
+  # Notify when a notification can't be sent
   - id: failed_notification
-    alias: '𐃏 Failed Notification'
+    alias: "𐃏 Failed Notification"
     description: "Alert when a notification can't be sent."
     mode: single
     triggers:
@@ -159,19 +259,60 @@ automation:
     actions:
       - action: persistent_notification.create
         data:
-          message: "A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! \n\n{{ trigger.event.data.message }}"
+          message: |
+            ⚠️ A apărut o problemă la trimiterea unei notificari. Anunță echipa tehnică! 
+          
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message }}
+
           title: Nu s-a putut trimite notificarea!
           notification_id: failed_notification
 
+  # Notify when an automation fails
+  - id: failed_automation
+    alias: "𐃏 Failed Automation"
+    description: "Alert when an automation fails to run."
+    mode: single
+    triggers:
+      - trigger: event
+        event_type: system_log_event
+        event_data:
+          level: ERROR
+    conditions:
+      - condition: template
+        value_template: '{{ "homeassistant.components.automation" in trigger.event.data.name }}'
+        enabled: true
+      - condition: template
+        value_template: '{{ "failed_automation" not in trigger.event.data.message[0] and "Failed Automation" not in trigger.event.data.message[0] }}'
+    actions:
+      - action: persistent_notification.create
+        data:
+          message: |
+            ⚠️ A apărut o problemă la finalizarea unei automatizări. Anunță echipa tehnică!
+
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message[0] }}
+
+          title: Nu s-a putut finaliza atomatizarea!
+          notification_id: failed_automation
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_server"
+          message: |
+            ⚠️ A apărut o problemă la finalizarea unei automatizări.
+
+            ℹ️ Detalii problemă: 
+            {{ trigger.event.data.message[0] }}
+
     # Reload things after script update_packages is run
-  - id: 'update_packages'
+  - id: "update_packages"
     alias: "𐃏 Update Packages"
-    description: ''
+    description: ""
     triggers:
       - trigger: state
         entity_id: script.update_packages
-        from: 'on'
-        to: 'off'
+        from: "on"
+        to: "off"
     condition: []
     actions:
       - delay:
@@ -180,9 +321,9 @@ automation:
     mode: restart
 
     # Notify when CPU load 15m is above 10 and when goes back below 4
-  - id: 'cpu_load_15m'
+  - id: "cpu_load_15m"
     alias: "𐃏 CPU Load"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.load_15m
@@ -192,38 +333,22 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          
-          {{ notify_service }}
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - wait_template: "{{ states( 'sensor.load_15m' ) | float < 4 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.load_15m') | float < 4 }}"
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
     mode: single
     max_exceeded: silent
 
     # Notify when RAM is almost full
-  - id: 'ram_usage'
+  - id: "ram_usage"
     alias: "𐃏 RAM Usage"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.memory_use_percent
@@ -233,37 +358,22 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          
-          {{ notify_service }}
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - wait_template: "{{ states( 'sensor.memory_use_percent' ) | float < 80 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.memory_use_percent') | float < 80 }}"
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
     mode: single
     max_exceeded: silent
 
     # Notify when storage is almost full
-  - id: 'disk_usage'
+  - id: "disk_usage"
     alias: "𐃏 Disk Usage"
-    description: ''
+    description: ""
     triggers:
       - trigger: numeric_state
         entity_id: sensor.disk_use_percent
@@ -273,32 +383,18 @@ automation:
         entity_id: input_boolean.maintenance_mode
         state: "off"
     actions:
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
-      - wait_template: "{{ states( 'sensor.disk_use_percent' ) | float < 60 }}"
-      - action: >-
-          {% if states.input_text.notify_service_server.state is defined %}
-            {% set notify_service = states('input_text.notify_service_server') %}
-          {% elif states.input_text.notify_service.state is defined %}
-            {% set notify_service = states('input_text.notify_service') %}
-          {% else %}
-            {% set notify_service = 'notify.notify' %}
-          {% endif %}
-          {{ notify_service }}
+      - wait_template: "{{ states('sensor.disk_use_percent') | float < 60 }}"
+      - action: script.global_notify
         data:
+          notify_service_override: "input_text.notify_service_server"
           message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
     mode: restart
 
-
+  # Maintenance Toggle Controller
   - id: maintenance_on_off
     alias: "𐃏 Maintenance ON/OFF"
     description: ""
@@ -331,6 +427,7 @@ automation:
                   entity_id: input_boolean.maintenance_mode
     mode: single
 
+  # Maintenance Alerts
   - id: maintenance_notifications
     alias: "𐃏 Maintenance Notifications"
     description: ""
@@ -355,44 +452,29 @@ automation:
                       {{ as_timestamp(states.sensor.updates_in_progress.last_updated) | int + 10 < as_timestamp(now()) | int }}
                     continue_on_timeout: true
                     timeout: "00:01:00"
-              - action: >-
-                  {% if states.input_text.notify_service_server.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_server') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
+              - action: script.global_notify
                 data:
+                  notify_service_override: "input_text.notify_service_maintenance"
                   message: |
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('
-                    –') }}
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
                     {% endif %}
                     Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
 
-                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.   
+                    ✉️ Vă vom anunța imediat ce mentenanța va fi finalizată și când toate serviciile noastre vor fi din nou disponibile.
           - conditions:
               - condition: state
                 entity_id: input_boolean.maintenance_mode
                 state: "off"
             sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_server.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_server') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
+              - action: script.global_notify
                 data:
+                  notify_service_override: "input_text.notify_service_maintenance"
                   message: |
                     🎉 Mentenanță finalizată!
-                    
+
                     Mentenanța a fost finalizată cu succes. Toate serviciile și dispozitivele sunt acum disponibile. Anunță-ne dacă întâmpini probleme sau observi anomalii de funcționare.
-                    
+
                     🙏 Mulțumim pentru răbdare și pentru alegerea serviciilor noastre.

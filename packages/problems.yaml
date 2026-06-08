@@ -1,18 +1,23 @@
-# Version: 2025.12.1
-# Problems found Package
+# ==================================================================================
+# Package: Problems Detected Monitor
+# Version: 2026.06.3
+# Description:
+#   Monitors binary_sensors with device_class 'problem' and notifies when issues arise.
+#   Routes all alerts through the centralized global notification engine.
 #
-# List all available problems entities with device class problem
+# --- Required Helpers & Dependencies ---
+# To customize this package, create the following helpers:
 #
-# To change the delay of problems notifications create a input number helper named: "𐃏 Delay Notifiy Problems"
-# and set the number of minutes to wait until send the notification.
+# 1. input_number.delay_notify_problems
+#    - Name: "𐃏 Delay Notifiy Problems"
+#    - Purpose: Delay (in minutes) before notification triggers.
 #
-# To change the notification service create an input text helper named: "𐃏 Notify Service Problems"
-# and put inside the name of the service you want. 
+# 2. script.global_notify
+#    - Purpose: Centralized notification engine (Defined in Server Monitor package).
 #
-# If you want to exlcude entities create an imput select helper named: "𐃏 Ignored Problems" 
-# and add all entity id's that you want to exclude as options.
-#
-
+# --- Configuration ---
+# - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude.
+# ==================================================================================
 
 script:
   # Script to update this package from GitHub
@@ -31,7 +36,6 @@ script:
             {% set path = '/HomeAssistant_Packages/main/packages/' %}
             {% set name = 'problems.yaml' %}
             {{ url + account + path + name }}
-            
 
 template:
   - trigger:
@@ -41,26 +45,24 @@ template:
       - name: "𐃏 Problems Detected"
         icon: "hass:alert-outline"
         state: >
-              {% set ignored = label_entities('ignore') %}
-                    
-              {{ states.binary_sensor
-                |selectattr('attributes.device_class','defined')
-                |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in', ignored )
-                |list|count 
-              }}
+          {% set ignored = label_entities('ignore') %}
+          {{ states.binary_sensor
+            |selectattr('attributes.device_class','defined')
+            |selectattr('attributes.device_class','eq','problem')
+            |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+            |rejectattr('entity_id','in', ignored )
+            |list|count 
+          }}
         attributes:
-            names: >
-              {% set ignored = label_entities('ignore') %}
-                    
-              {{ states.binary_sensor
-                |selectattr('attributes.device_class','defined')
-                |selectattr('attributes.device_class','eq','problem')
-                |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
-                |rejectattr('entity_id','in', ignored )
-                |map(attribute='name')|join (", ")
-              }}
+          names: >
+            {% set ignored = label_entities('ignore') %}
+            {{ states.binary_sensor
+              |selectattr('attributes.device_class','defined')
+              |selectattr('attributes.device_class','eq','problem')
+              |rejectattr('state', 'in', ['off','unknown','unavailable','none'])
+              |rejectattr('entity_id','in', ignored )
+              |map(attribute='name')|join(', ')
+            }}
 
 input_number:
   problems_detected_last_triggered:
@@ -72,18 +74,16 @@ input_number:
     step: 1
 
 automation:
-  # Notify when problems are detected
   - id: "problems_detected"
     alias: "𐃏 Problems Detected"
     mode: restart
-    trigger:
+    triggers:
       - trigger: state
         entity_id: sensor.problems_detected
       - trigger: homeassistant
         event: start
       - trigger: state
-        entity_id:
-          - input_boolean.maintenance_mode
+        entity_id: input_boolean.maintenance_mode
         to: "off"
     condition:
       - condition: state
@@ -91,103 +91,39 @@ automation:
         state: "off"
       - condition: template
         value_template: "{{ states.sensor.problems_detected.state is defined }}"
-    action:
+    actions:
+      - variables:
+          count: "{{ states('sensor.problems_detected') | int(0) }}"
+          last_triggered: "{{ states('input_number.problems_detected_last_triggered') | int(0) }}"
+      - condition: template
+        value_template: "{{ count != last_triggered }}"
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: sensor.problems_detected
-                above: 0
-                below: 2
               - condition: template
-                value_template: >-
-                  {{ states('input_number.problems_detected_last_triggered') | int
-                  != states('sensor.problems_detected') | int }}
-            sequence:
-              - delay: 
-                  minutes: >
-                    {% if states.input_number.delay_notify_problems.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_problems') | int %}
-                    {% else %}
-                      {% set minutes = 10 %}
-                    {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.problems_detected_last_triggered
-                data:
-                  value: "{{ states('sensor.problems_detected') | int }}"
-              - action: >
-                  {% if states.input_text.notify_service_problems.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_problems') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    ⚠️ Este o problema:
-                    – {{ state_attr('sensor.problems_detected','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.problems_detected
-                above: 1
-              - condition: template
-                value_template: >
-                  {{ states('input_number.problems_detected_last_triggered') | int
-                  != states('sensor.problems_detected') | int }}
+                value_template: "{{ count > 0 }}"
             sequence:
               - delay: 
                   minutes: >-
                     {% if states.input_number.delay_notify_problems.state is defined %}
-                      {% set minutes = states('input_number.delay_notify_problems') | int %}
+                      {{ states('input_number.delay_notify_problems') | int }}
                     {% else %}
-                      {% set minutes = 10 %}
+                      10
                     {% endif %}
-                    {{ minutes }}
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.problems_detected_last_triggered
-                data:
-                  value: "{{ states('sensor.problems_detected') | int }}"
-              - action: >-
-                  {% if states.input_text.notify_service_problems.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_problems') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: |
-                    ⚠️ Sunt {{ states('sensor.problems_detected')|int }} probleme:
-                    – {{ state_attr('sensor.problems_detected','names').split(',') | join('
-                    –') }}
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.problems_detected
-                below: 1
-              - condition: template
-                value_template: >-
-                  {{ states('input_number.problems_detected_last_triggered') | int > 0 }}
-            sequence:
-              - action: >-
-                  {% if states.input_text.notify_service_problems.state is defined %}
-                    {% set notify_service = states('input_text.notify_service_problems') %}
-                  {% elif states.input_text.notify_service.state is defined %}
-                    {% set notify_service = states('input_text.notify_service') %}
-                  {% else %}
-                    {% set notify_service = 'notify.notify' %}
-                  {% endif %}
-                  {{ notify_service }}
-                data:
-                  message: "👌 Probleme rezolvate!"
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.problems_detected_last_triggered
-                data:
-                  value: "{{ states('sensor.problems_detected') | int }}"
-        default: []
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_problems"
+          message: |
+            {% if count == 0 %}
+            👌 Probleme rezolvate!
+            {% elif count == 1 %}
+            ⚠️ Este o problemă:
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
+            {% else %}
+            ⚠️ Sunt {{ count }} probleme:
+            – {{ state_attr('sensor.problems_detected','names').split(',') | map('trim') | join('\n–') }}
+            {% endif %}
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.problems_detected_last_triggered
+        data:
+          value: "{{ count }}"
