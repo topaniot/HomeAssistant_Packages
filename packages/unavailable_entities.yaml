@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.06.5
+# Version: 2026.06.6
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
 #   Routes all alerts through the centralized global notification engine.
@@ -137,7 +137,7 @@ template:
 
   - trigger:
       - trigger: time_pattern
-        seconds: "/1"
+        seconds: "/10"
     sensor:
       - name: "𐃏 Low Signal"
         icon: "hass:wifi-strength-alert-outline"
