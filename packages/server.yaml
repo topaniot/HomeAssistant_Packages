@@ -327,7 +327,7 @@ automation:
     triggers:
       - trigger: numeric_state
         entity_id: sensor.load_15m
-        above: 10
+        above: 5
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -352,7 +352,7 @@ automation:
     triggers:
       - trigger: numeric_state
         entity_id: sensor.memory_use_percent
-        above: 90
+        above: 80
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -362,7 +362,7 @@ automation:
         data:
           notify_service_override: "input_text.notify_service_server"
           message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - wait_template: "{{ states('sensor.memory_use_percent') | float < 80 }}"
+      - wait_template: "{{ states('sensor.memory_use_percent') | float < 75 }}"
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"

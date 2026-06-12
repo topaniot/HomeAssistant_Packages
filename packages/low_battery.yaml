@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.4
+# Version: 2026.06.5
 # Description:
 #   Monitors battery levels for sensors and triggers notifications when 
 #   they drop below a defined threshold.
@@ -50,7 +50,8 @@ template:
       - name: "𐃏 Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% set ignored = label_entities('ignore') %}
+              {% set mobile_entities = integration_entities('mobile_app') %}
+              {% set ignored = label_entities('ignore') + mobile_entities %}
                     
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
@@ -71,7 +72,9 @@ template:
               {{ result.sensors|count }}
         attributes:
             names: >
-              {% set ignored = label_entities('ignore') %}
+              {% set mobile_entities = integration_entities('mobile_app') %}
+              {% set ignored = label_entities('ignore') + mobile_entities %}
+
               {% if states.input_number.battery_level_threshold.state is defined %}
                 {% set threshold = states('input_number.battery_level_threshold') | int %}
               {% else %}

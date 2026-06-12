@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.06.4
+# Version: 2026.06.6
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
 #   Routes all alerts through the centralized global notification engine.
@@ -134,6 +134,66 @@ template:
                 {% set ns.results = ns.results + [w_ns.unique | join(' ')] %}
               {% endfor %}
               {{ ns.results | join(", ") }}
+
+  - trigger:
+      - trigger: time_pattern
+        seconds: "/10"
+    sensor:
+      - name: "𐃏 Low Signal"
+        icon: "hass:wifi-strength-alert-outline"
+        state: >
+          {% set ignored = label_entities('ignore') %}
+          {% set threshold = states('input_number.signal_rssi_threshold') | int(-80) 
+            if states('input_number.signal_rssi_threshold') is defined else -80
+          %}
+          {{ states.sensor
+            |selectattr('attributes.device_class','defined')
+            |selectattr('attributes.device_class','==','signal_strength')
+            |rejectattr('entity_id','in', ignored )
+            |map(attribute='state') | map('int', 0)
+            |select('le', threshold)
+            |list | count
+          }}
+        attributes:
+          names: >
+            {% set ignored = label_entities('ignore') %}
+            {% set threshold = states('input_number.signal_rssi_threshold') | int(-80) %}
+            {% set ns = namespace(results=[]) %}
+            
+            {% for entity in states.sensor
+              |selectattr('attributes.device_class','defined')
+              |selectattr('attributes.device_class','==','signal_strength')
+              |rejectattr('entity_id','in', ignored )
+            %}
+              {% if entity.state | int(-100) <= threshold %}
+                {% set dev_name = device_attr(entity.entity_id, 'name') %}
+                {% set is_generic = dev_name and ('shelly' in dev_name|lower or 'bthome' in dev_name|lower or 'daikin' in dev_name|lower or 'system monitor' in dev_name|lower) %}
+                
+                {% if dev_name and not is_generic %}
+                  {% set raw_combined = dev_name ~ ' ' ~ entity.name %}
+                {% else %}
+                  {% set raw_combined = entity.name %}
+                {% endif %}
+                
+                {% set words = raw_combined.split(' ') %}
+                {% set w_ns = namespace(seen=[], unique=[]) %}
+                {% for w in words %}
+                  {% set norm = w | lower | replace(':','') | replace('-','') | replace(',','') | replace('(','') | replace(')','') | trim %}
+                  {% if norm != '' and norm not in w_ns.seen and norm not in ['rssi', 'signal', 'strength', 'semnal', 'wi-fi', 'wifi'] %}
+                    {% set w_ns.seen = w_ns.seen + [norm] %}
+                    {% set w_ns.unique = w_ns.unique + [w] %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% set display_name = w_ns.unique | join(' ') | trim %}
+                {% if display_name == '' %}
+                  {% set display_name = entity.name %}
+                {% endif %}
+                
+                {% set ns.results = ns.results + [display_name ~ ' (' ~ entity.state ~ ' dBm)'] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.results | join(", ") }}
 
 input_number:
   unavailable_entities_last_triggered:
