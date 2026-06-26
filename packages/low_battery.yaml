@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.5
+# Version: 2026.06.6
 # Description:
 #   Monitors battery levels for sensors and triggers notifications when 
 #   they drop below a defined threshold.
@@ -156,25 +156,37 @@ automation:
     triggers:
       - trigger: state
         entity_id: sensor.low_batteries
+        to: ~
       - trigger: state
         entity_id: sensor.low_batteries_offset
+        to: ~
       - trigger: homeassistant
         event: start
     condition:
       - condition: template
         value_template: "{{ states.sensor.low_batteries.state is defined }}"
+      - condition: template
+        value_template: "{{ states.sensor.low_batteries_offset.state is defined }}"
     actions:
       - variables:
           count: "{{ states('sensor.low_batteries') | int(0) }}"
           offset_count: "{{ states('sensor.low_batteries_offset') | int(0) }}"
           last_triggered: "{{ states('input_number.low_batteries_last_triggered') | int(0) }}"
-      - condition: template
-        value_template: >-
-          {{ count != last_triggered or (count == 0 and offset_count == 0 and last_triggered > 0) }}
+      - delay:
+          seconds: 1
       - choose:
           - conditions:
               - condition: template
                 value_template: "{{ count > 0 }}"
+              - condition: template
+                value_template: >-
+                  {% if last_triggered < count %}
+                    true
+                  {% elif last_triggered > count and count == offset_count %}
+                    true
+                  {% else %}
+                    false
+                  {% endif %}
             sequence:
               - delay: 
                   minutes: >-
@@ -183,21 +195,35 @@ automation:
                     {% else %}
                       10
                     {% endif %}
-      - action: script.global_notify
-        data:
-          notify_service_override: "input_text.notify_service_battery"
-          message: |
-            {% if count == 0 %}
-            🔋 Starea bateriilor este bună!
-            {% elif count == 1 %}
-            ⚠️ Este un dispozitiv cu baterie descărcată:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
-            {% else %}
-            ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
-            – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
-            {% endif %}
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.low_batteries_last_triggered
-        data:
-          value: "{{ count }}"
+              - action: script.global_notify
+                data:
+                  notify_service_override: "input_text.notify_service_battery"
+                  message: |
+                    {% if count == 1 %}
+                    ⚠️ Este un dispozitiv cu baterie descărcată:
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+                    {% else %}
+                    ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
+                    {% endif %}
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ count }}"
+          - conditions:
+              - condition: template
+                value_template: "{{ offset_count < 1 }}"
+              - condition: template
+                value_template: "{{ last_triggered != count }}"
+            sequence:
+              - action: script.global_notify
+                data:
+                  notify_service_override: "input_text.notify_service_battery"
+                  message: |
+                    🔋 Starea bateriilor este bună!
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ count }}"
