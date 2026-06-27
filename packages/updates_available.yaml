@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Updates Available Monitor
-# Version: 2026.06.4
+# Version: 2026.06.5
 # Description:
 #   Auto-updates addons, firmware, core, and OS. Monitors for available updates,
 #   manages automated installation based on delays, and sends notifications.
@@ -162,6 +162,7 @@ automation:
   - id: "updates_available"
     alias: "𐃏 Updates Available"
     description: ""
+    mode: restart
     triggers:
       - trigger: template
         value_template: |-
@@ -202,11 +203,6 @@ automation:
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_available_alert', 'on') }}"
-      - action: script.global_notify
-        data:
-          notify_service_override: "input_text.notify_service_updates"
-          message: "{{ notify_message }}"
-          disable_notification: true
       - choose:
           - conditions:
               - condition: template
@@ -222,7 +218,12 @@ automation:
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_available_alert
-    mode: restart
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_updates"
+          message: "{{ notify_message }}"
+          disable_notification: true
+
 
   # Notify when updates are in progress
   - id: "updates_in_progress"
@@ -256,11 +257,6 @@ automation:
             {% endif %}
       - condition: template
         value_template: "{{ count > 0 or is_state('input_boolean.update_in_progress_alert', 'on') }}"
-      - action: script.global_notify
-        data:
-          notify_service_override: "input_text.notify_service_updates"
-          message: "{{ notify_message }}"
-          disable_notification: true
       - choose:
           - conditions:
               - condition: template
@@ -276,7 +272,11 @@ automation:
               - action: input_boolean.turn_off
                 target:
                   entity_id: input_boolean.update_in_progress_alert
-
+      - action: script.global_notify
+        data:
+          notify_service_override: "input_text.notify_service_updates"
+          message: "{{ notify_message }}"
+          disable_notification: true
 
   # Auto install updates
   - id: "auto_update"
