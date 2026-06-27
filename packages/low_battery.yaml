@@ -1,8 +1,8 @@
 # ==================================================================================
 # Package: Low Batteries Monitor
-# Version: 2026.06.6
+# Version: 2026.06.8
 # Description:
-#   Monitors battery levels for sensors and triggers notifications when 
+#   Monitors battery levels for sensors and triggers notifications when
 #   they drop below a defined threshold.
 #   Routes all alerts through the centralized global notification engine.
 #
@@ -10,7 +10,7 @@
 # To customize this package, create the following helpers:
 #
 # 1. input_number.delay_notify_batteries
-#    - Name: "𐃏 Delay Notifiy Batteries"
+#    - Name: "𐃏 Delay Notify Batteries"
 #    - Purpose: Delay (in minutes) before notification triggers.
 #
 # 2. input_number.battery_level_threshold
@@ -19,6 +19,11 @@
 #
 # 3. script.global_notify
 #    - Purpose: Centralized notification engine (Defined in Server Monitor package).
+#
+#
+# 4. input_number.notify_service_batteries (optional)
+#    - Name: "𐃏 Notify Service Batteries"
+#    - Purpose: Override global notify service
 #
 # --- Configuration ---
 # - Entity Exclusion: Assign the label "ignore" to any entity you wish to exclude.
@@ -50,92 +55,93 @@ template:
       - name: "𐃏 Low Batteries"
         icon: "hass:battery-alert-variant-outline"
         state: >
-              {% set mobile_entities = integration_entities('mobile_app') %}
-              {% set ignored = label_entities('ignore') + mobile_entities %}
-                    
-              {% if states.input_number.battery_level_threshold.state is defined %}
-                {% set threshold = states('input_number.battery_level_threshold') | int %}
-              {% else %}
-                {% set threshold = 20 %}
-              {% endif %}
-              
-              {% set result = namespace(sensors=[]) %}
-              {% for state in states.sensor 
-                |selectattr('attributes.device_class', 'defined')
-                |selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-              {% if 0 <= state.state | int (-1) < threshold | int  %}
-                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
-              {% endif %}
-              {% endfor %}
-              {{ result.sensors|count }}
-        attributes:
-            names: >
-              {% set mobile_entities = integration_entities('mobile_app') %}
-              {% set ignored = label_entities('ignore') + mobile_entities %}
+          {% set mobile_entities = integration_entities('mobile_app') %}
+          {% set ignored = label_entities('ignore') + mobile_entities %}
+                
+          {% if states.input_number.battery_level_threshold.state is defined %}
+            {% set threshold = states('input_number.battery_level_threshold') | int %}
+          {% else %}
+            {% set threshold = 20 %}
+          {% endif %}
 
-              {% if states.input_number.battery_level_threshold.state is defined %}
-                {% set threshold = states('input_number.battery_level_threshold') | int %}
-              {% else %}
-                {% set threshold = 20 %}
-              {% endif %}
-              {% set result = namespace(sensors=[]) %}
-              {% for state in states.sensor 
-                |selectattr('attributes.device_class', 'defined')
-                |selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-                {% if 0 <= state.state | int(-1) < threshold %}
-                  {% set dev_name = device_attr(state.entity_id, 'name') %}
-                  {% set is_generic = dev_name and ('shelly' in dev_name|lower or 'bthome' in dev_name|lower or 'daikin' in dev_name|lower or 'system monitor' in dev_name|lower) %}
-                  {# Combine device and entity name raw strings #}
-                  {% if dev_name and not is_generic %}
-                    {% set raw_combined = dev_name ~ ' ' ~ state.name %}
-                  {% else %}
-                    {% set raw_combined = state.name %}
-                  {% endif %}
-                  {# Tokenize, deduplicate, and strip battery keywords #}
-                  {% set words = raw_combined.split(' ') %}
-                  {% set w_ns = namespace(seen=[], unique=[]) %}
-                  {% for w in words %}
-                    {% set norm = w | lower | replace(':','') | replace('-','') | replace(',','') | replace('(','') | replace(')','') | trim %}
-                    {% if norm != '' and norm not in w_ns.seen and norm not in ['battery', 'baterie', 'level'] %}
-                      {% set w_ns.seen = w_ns.seen + [norm] %}
-                      {% set w_ns.unique = w_ns.unique + [w] %}
-                    {% endif %}
-                  {% endfor %}
-                  {% set display_name = w_ns.unique | join(' ') | trim %}
-                  {# Fallback in case the name consisted ONLY of the keyword #}
-                  {% if display_name == '' %}
-                    {% set display_name = state.name %}
-                  {% endif %}
-                  {% set result.sensors = result.sensors + [display_name ~ ' (' ~ state.state ~ '%)'] %}
+          {% set result = namespace(sensors=[]) %}
+          {% for state in states.sensor 
+            |selectattr('attributes.device_class', 'defined')
+            |selectattr('attributes.device_class', '==', 'battery')
+            |rejectattr('entity_id','in', ignored) 
+          %}
+          {% if 0 <= state.state | int (-1) < threshold | int  %}
+            {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+          {% endif %}
+          {% endfor %}
+          {{ result.sensors|count }}
+        attributes:
+          names: >
+            {% set mobile_entities = integration_entities('mobile_app') %}
+            {% set ignored = label_entities('ignore') + mobile_entities %}
+
+            {% if states.input_number.battery_level_threshold.state is defined %}
+              {% set threshold = states('input_number.battery_level_threshold') | int %}
+            {% else %}
+              {% set threshold = 20 %}
+            {% endif %}
+            {% set result = namespace(sensors=[]) %}
+            {% for state in states.sensor 
+              |selectattr('attributes.device_class', 'defined')
+              |selectattr('attributes.device_class', '==', 'battery')
+              |rejectattr('entity_id','in', ignored) 
+            %}
+              {% if 0 <= state.state | int(-1) < threshold %}
+                {% set dev_name = device_attr(state.entity_id, 'name') %}
+                {% set is_generic = dev_name and ('shelly' in dev_name|lower or 'bthome' in dev_name|lower or 'daikin' in dev_name|lower or 'system monitor' in dev_name|lower) %}
+                {# Combine device and entity name raw strings #}
+                {% if dev_name and not is_generic %}
+                  {% set raw_combined = dev_name ~ ' ' ~ state.name %}
+                {% else %}
+                  {% set raw_combined = state.name %}
                 {% endif %}
-              {% endfor %}
-              {{ result.sensors | join(', ') }}
+                {# Tokenize, deduplicate, and strip battery keywords #}
+                {% set words = raw_combined.split(' ') %}
+                {% set w_ns = namespace(seen=[], unique=[]) %}
+                {% for w in words %}
+                  {% set norm = w | lower | replace(':','') | replace('-','') | replace(',','') | replace('(','') | replace(')','') | trim %}
+                  {% if norm != '' and norm not in w_ns.seen and norm not in ['battery', 'baterie', 'level'] %}
+                    {% set w_ns.seen = w_ns.seen + [norm] %}
+                    {% set w_ns.unique = w_ns.unique + [w] %}
+                  {% endif %}
+                {% endfor %}
+                {% set display_name = w_ns.unique | join(' ') | trim %}
+                {# Fallback in case the name consisted ONLY of the keyword #}
+                {% if display_name == '' %}
+                  {% set display_name = state.name %}
+                {% endif %}
+                {% set result.sensors = result.sensors + [display_name ~ ' (' ~ state.state ~ '%)'] %}
+              {% endif %}
+            {% endfor %}
+            {{ result.sensors | join(', ') }}
       - name: "𐃏 Low Batteries Offset"
         icon: "hass:battery-heart-variant"
         state: >
-              {% set ignored = label_entities('ignore') %}
-                    
-              {% if states.input_number.battery_level_threshold.state is defined %}
-                {% set threshold = states('input_number.battery_level_threshold') | int + 10 %}
-              {% else %}
-                {% set threshold = 30 %}
-              {% endif %}
-              
-              {% set result = namespace(sensors=[]) %}
-              {% for state in states.sensor 
-                |selectattr('attributes.device_class', 'defined')
-                |selectattr('attributes.device_class', '==', 'battery')
-                |rejectattr('entity_id','in', ignored) 
-              %}
-              {% if state.state | int (-1) < threshold | int  %}
-                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
-              {% endif %}
-              {% endfor %}
-              {{ result.sensors|count }}
+          {% set mobile_entities = integration_entities('mobile_app') %}
+          {% set ignored = label_entities('ignore') + mobile_entities %}
+                
+          {% if states.input_number.battery_level_threshold.state is defined %}
+            {% set threshold = states('input_number.battery_level_threshold') | int + 10 %}
+          {% else %}
+            {% set threshold = 30 %}
+          {% endif %}
+
+          {% set result = namespace(sensors=[]) %}
+          {% for state in states.sensor 
+            |selectattr('attributes.device_class', 'defined')
+            |selectattr('attributes.device_class', '==', 'battery')
+            |rejectattr('entity_id','in', ignored) 
+          %}
+          {% if state.state | int (-1) < threshold | int  %}
+            {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+          {% endif %}
+          {% endfor %}
+          {{ result.sensors|count }}
     binary_sensor:
       - name: "𐃏 Low Batteries Alert"
         state: "{{ states('sensor.low_batteries') | int > 0 }}"
@@ -153,7 +159,7 @@ automation:
   - id: "low_batteries"
     alias: "𐃏 Low Batteries"
     mode: restart
-    triggers:
+    trigger:
       - trigger: state
         entity_id: sensor.low_batteries
         to: ~
@@ -167,63 +173,100 @@ automation:
         value_template: "{{ states.sensor.low_batteries.state is defined }}"
       - condition: template
         value_template: "{{ states.sensor.low_batteries_offset.state is defined }}"
-    actions:
-      - variables:
-          count: "{{ states('sensor.low_batteries') | int(0) }}"
-          offset_count: "{{ states('sensor.low_batteries_offset') | int(0) }}"
-          last_triggered: "{{ states('input_number.low_batteries_last_triggered') | int(0) }}"
-      - delay:
-          seconds: 1
+    action:
       - choose:
           - conditions:
-              - condition: template
-                value_template: "{{ count > 0 }}"
+              - condition: numeric_state
+                entity_id: sensor.low_batteries
+                above: 0
+                below: 2
               - condition: template
                 value_template: >-
-                  {% if last_triggered < count %}
+                  {% if states('input_number.low_batteries_last_triggered') | int 
+                      < states('sensor.low_batteries') | int %}
                     true
-                  {% elif last_triggered > count and count == offset_count %}
+                  {% elif states('input_number.low_batteries_last_triggered') | int 
+                        > states('sensor.low_batteries') | int 
+                      and states('sensor.low_batteries') | int 
+                      == states('sensor.low_batteries_offset') | int %}
                     true
                   {% else %}
                     false
                   {% endif %}
             sequence:
-              - delay: 
+              - delay:
                   minutes: >-
                     {% if states.input_number.delay_notify_batteries.state is defined %}
-                      {{ states('input_number.delay_notify_batteries') | int }}
+                      {% set minutes = states('input_number.delay_notify_batteries') | int %}
                     {% else %}
-                      10
+                      {% set minutes = 10 %}
                     {% endif %}
+                    {{ minutes }}
               - action: script.global_notify
                 data:
-                  notify_service_override: "input_text.notify_service_battery"
+                  notify_service_override: "input_text.notify_service_batteries"
                   message: |
-                    {% if count == 1 %}
                     ⚠️ Este un dispozitiv cu baterie descărcată:
-                    – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
-                    {% else %}
-                    ⚠️ Sunt {{ count }} dispozitive cu baterii descărcate:
-                    – {{ state_attr('sensor.low_batteries','names').split(',') | map('trim') | join('\n– ') }}
-                    {% endif %}
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
+                    –') }}
               - action: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
                 data:
-                  value: "{{ count }}"
+                  value: "{{ states('sensor.low_batteries') | int }}"
           - conditions:
+              - condition: numeric_state
+                entity_id: sensor.low_batteries
+                above: 1
               - condition: template
-                value_template: "{{ offset_count < 1 }}"
+                value_template: >-
+                  {% if states('input_number.low_batteries_last_triggered') | int 
+                      < states('sensor.low_batteries') | int %}
+                    true
+                  {% elif states('input_number.low_batteries_last_triggered') | int 
+                        > states('sensor.low_batteries') | int 
+                      and states('sensor.low_batteries') | int 
+                      == states('sensor.low_batteries_offset') | int %}
+                    true
+                  {% else %}
+                    false
+                  {% endif %}
+            sequence:
+              - delay:
+                  minutes: >-
+                    {% if states.input_number.delay_notify_batteries.state is defined %}
+                      {% set minutes = states('input_number.delay_notify_batteries') | int %}
+                    {% else %}
+                      {% set minutes = 10 %}
+                    {% endif %}
+                    {{ minutes }}
+              - action: script.global_notify
+                data:
+                  notify_service_override: "input_text.notify_service_batteries"
+                  message: |
+                    ⚠️ Sunt {{ states('sensor.low_batteries') | int }} dispozitive cu bateria descărcată:
+                    – {{ state_attr('sensor.low_batteries','names').split(',') | join('
+                    –') }}
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.low_batteries_last_triggered
+                data:
+                  value: "{{ states('sensor.low_batteries') | int }}"
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.low_batteries_offset
+                below: 1
               - condition: template
-                value_template: "{{ last_triggered != count }}"
+                value_template: "{{ states('input_number.low_batteries_last_triggered') | int != states('sensor.low_batteries') | int }}"
             sequence:
               - action: script.global_notify
                 data:
-                  notify_service_override: "input_text.notify_service_battery"
+                  notify_service_override: "input_text.notify_service_batteries"
                   message: |
                     🔋 Starea bateriilor este bună!
               - action: input_number.set_value
                 target:
                   entity_id: input_number.low_batteries_last_triggered
                 data:
-                  value: "{{ count }}"
+                  value: "{{ states('sensor.low_batteries') | int }}"
+        default: []
