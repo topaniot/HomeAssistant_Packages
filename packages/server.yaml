@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.06.8
+# Version: 2026.07.1
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -459,7 +459,7 @@ automation:
                     ⚙️ Mentenanță în curs!
                     {% if states.sensor.updates_in_progress.state is defined and states.sensor.updates_in_progress.state | int > 0 %}
                     🔧 Următoarele actualizări vor fi instalate:
-                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n– ') }}
+                    – {{ state_attr('sensor.updates_in_progress','names').split(',') | join('\n–') }}
                     {% endif %}
                     Vă informăm că mentenanța ar putea afecta funcționarea automatizărilor, aplicației și dispozitivelor. Ne cerem scuze pentru orice neplăceri pe care acestea le-ar putea cauza.
 
