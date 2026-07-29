@@ -153,7 +153,7 @@ template:
             {% set ignored = label_entities('ignore') %}
             {% set threshold = states('input_number.signal_rssi_threshold') | int(-80) %}
             {% set ns = namespace(results=[]) %}
-            {% set excluded_words = ['rssi', 'signal', 'strength', 'semnal'] %}
+            {% set excluded_words = ['rssi', 'signal', 'strength', 'puterea', 'semnalului'] %}
             
             {% for entity in states.sensor
               |selectattr('attributes.device_class','defined')
