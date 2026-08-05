@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Unavailable Entities Monitor
-# Version: 2026.07.1
+# Version: 2026.08.1
 # Description:
 #   Monitors devices and sensors for 'unavailable' or 'none' states.
 #   Routes all alerts through the centralized global notification engine.
@@ -51,7 +51,7 @@ template:
             |selectattr('domain','in',['sensor','binary_sensor'])
             |selectattr('attributes.device_class','defined')
             |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
-            |selectattr('state', 'in', ['unavailable','none'])
+            |selectattr('state', 'in', ['unavailable', 'unknown', 'none'])
             |rejectattr('entity_id','in', ignored )
             |list|count
           }}
@@ -63,7 +63,7 @@ template:
               |selectattr('domain','in',['sensor','binary_sensor'])
               |selectattr('attributes.device_class','defined')
               |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
-              |selectattr('state', 'in', ['unavailable','none'])
+              |selectattr('state', 'in', ['unavailable', 'unknown', 'none'])
               |rejectattr('entity_id','in', ignored ) 
             %}
               {% set dev_name = device_attr(entity.entity_id, 'name_by_user') or device_attr(entity.entity_id, 'name') or '' %}
@@ -96,7 +96,7 @@ template:
           {% set ignored = label_entities('ignore') %}
           {{ states
             |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
-            |selectattr('state','in',['unavailable','none'])
+            |selectattr('state','in',['unavailable', 'unknown', 'none'])
             |rejectattr('entity_id','in', ignored )
             |list|count
           }}
@@ -106,7 +106,7 @@ template:
             {% set ns = namespace(results=[]) %}
             {% for entity in states
               |selectattr('domain','in',['switch','light','cover','climate','camera','lock','remote'])
-              |selectattr('state','in',['unavailable','none'])
+              |selectattr('state','in',['unavailable', 'unknown', 'none'])
               |rejectattr('entity_id','in', ignored )
             %}
               {% set dev_name = device_attr(entity.entity_id, 'name_by_user') or device_attr(entity.entity_id, 'name') or '' %}
