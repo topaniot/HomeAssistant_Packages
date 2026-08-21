@@ -12,7 +12,6 @@
 script:
   # Script to update this package from GitHub
   update_packages:
-    alias: "𐃏 Update Raspberry PI Package"
     sequence:
       - action: downloader.download_file
         data:
