@@ -143,14 +143,6 @@ input_boolean:
     name: "𐃏 Maintenance Mode"
     icon: "hass:wrench-clock"
 
-http:
-  # ip_ban_enabled: true
-  # login_attempts_threshold: 15
-  # Setup NGINX
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 172.30.33.0/24
-
 # Enable log errors to fire events
 system_log:
   fire_event: true
@@ -160,10 +152,15 @@ recorder:
     entities:
       - automation.healthchecks
 
+input_text:
+  healthchecks_url:
+    name: "𐃏 HealthChecks URL"
+    icon: "hass:web"
+
 rest_command:
-  # monitor server with healthchecks.io
+  # monitor server with resst command
   healthchecks:
-    url: !secret healthchecks
+    url: "{{ states('input_text.healthchecks_url') }}"
 
 logbook:
   exclude:
@@ -180,11 +177,6 @@ automation:
     triggers:
       - trigger: homeassistant
         event: shutdown
-      - trigger: webhook
-        allowed_methods:
-          - PUT
-        local_only: false
-        webhook_id: !secret update_packages_webhook
     condition: []
     actions:
       - action: script.turn_on
@@ -285,7 +277,11 @@ automation:
           level: ERROR
     conditions:
       - condition: template
-        value_template: '{{ "homeassistant.components.automation" in trigger.event.data.name }}'
+        value_template: >-
+          {{ 
+            "homeassistant.components.automation" in trigger.event.data.name 
+            and "automation.healthchecks" not in trigger.event.data.name 
+          }}
         enabled: true
       - condition: template
         value_template: >-
