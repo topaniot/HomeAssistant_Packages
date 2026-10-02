@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.08.1
+# Version: 2026.10.1
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -147,21 +147,6 @@ input_boolean:
 system_log:
   fire_event: true
 
-recorder:
-  exclude:
-    entities:
-      - automation.healthchecks
-
-input_text:
-  healthchecks_url:
-    name: "𐃏 HealthChecks URL"
-    icon: "hass:web"
-
-rest_command:
-  # monitor server with resst command
-  healthchecks:
-    url: "{{ states('input_text.healthchecks_url') }}"
-
 logbook:
   exclude:
     entity_globs:
@@ -185,18 +170,6 @@ automation:
       - delay:
           seconds: 10
     mode: single
-
-  # Ping healthchecks.io every minute
-  - id: "healthchecks_update"
-    alias: "𐃏 HealthChecks"
-    description: ""
-    triggers:
-      - trigger: time_pattern
-        minutes: /1
-    condition: []
-    actions:
-      - action: rest_command.healthchecks
-    mode: restart
 
   # Notify on server start
   - id: "server_start"
@@ -288,7 +261,6 @@ automation:
           {{
             "failed_automation" not in trigger.event.data.message[0]
             and "Failed Automation" not in trigger.event.data.message[0]
-            and "HealthChecks" not in trigger.event.data.message[0]
           }}
     actions:
       - action: persistent_notification.create
