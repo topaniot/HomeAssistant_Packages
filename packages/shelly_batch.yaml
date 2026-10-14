@@ -35,7 +35,7 @@ script:
 
   # Internal helper: one settings call, counted and logged.
   shelly_call:
-    alias: "Shelly call (internal)"
+    alias: "𐃏 Shelly call (internal)"
     description: "Used by Configure All Shelly Devices. Sends one RPC call and counts the result."
     mode: queued
     max: 20
@@ -79,7 +79,7 @@ script:
                 {%- endif %}
 
   configure_all_shelly_devices:
-    alias: "Configure All Shelly Devices"
+    alias: "𐃏 Configure All Shelly Devices"
     description: "Batch-configures all Shelly Gen2+ devices, sending only what each device supports."
     mode: single
     fields:
@@ -697,22 +697,22 @@ shell_command:
 # Counters used to build the final summary (reset at the start of every run).
 counter:
   shelly_batch_devices_ok:
-    name: Shelly batch devices OK
+    name: "𐃏 Shelly batch devices OK"
     initial: 0
     restore: false
   shelly_batch_devices_failed:
-    name: Shelly batch devices failed
+    name: "𐃏 Shelly batch devices failed"
     initial: 0
     restore: false
   shelly_batch_devices_skipped:
-    name: Shelly batch devices nothing to configure
+    name: "𐃏 Shelly batch devices nothing to configure"
     initial: 0
     restore: false
   shelly_batch_calls_ok:
-    name: Shelly batch calls OK
+    name: "𐃏 Shelly batch calls OK"
     initial: 0
     restore: false
   shelly_batch_calls_failed:
-    name: Shelly batch calls failed
+    name: "𐃏 Shelly batch calls failed"
     initial: 0
     restore: false
