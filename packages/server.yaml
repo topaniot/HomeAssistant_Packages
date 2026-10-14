@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Server Monitor
-# Version: 2026.10.1
+# Version: 2026.10.2
 # Description:
 #   Monitors server health, handles updates, and manages maintenance modes.
 #   Features a centralized global notification engine with parallel execution.
@@ -298,14 +298,26 @@ automation:
       - action: homeassistant.reload_all
     mode: restart
 
-    # Notify when CPU load 15m is above 10 and when goes back below 4
+# Notify when CPU load 15m is above 10 and when goes back below 4
   - id: "cpu_load_15m"
     alias: "𐃏 CPU Load"
     description: ""
+    variables:
+      entity: >-
+        {% set sensors = [
+          'sensor.system_monitor_load_15_min',
+          'sensor.load_15m'
+        ] %}
+        {{ sensors | select('has_value') | first | default(none) }}
     triggers:
-      - trigger: numeric_state
-        entity_id: sensor.load_15m
-        above: 5
+      - trigger: template
+        value_template: >-
+          {% set sensors = [
+            'sensor.system_monitor_load_15_min',
+            'sensor.load_15m'
+          ] %}
+          {% set trigger_entity = sensors | select('has_value') | first | default(none) %}
+          {{ trigger_entity is not none and states(trigger_entity) | float(0) > 5 }}
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -314,12 +326,15 @@ automation:
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟡 CPU Load (15m) = {{ states('sensor.load_15m') }}"
-      - wait_template: "{{ states('sensor.load_15m') | float < 4 }}"
+          message: >-
+            🟡 CPU Load (15m) = {{ states(entity) if entity else 'N/A' }}
+      - wait_template: >-
+          {{ not entity or states(entity) | float(0) < 4 }}
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟢 CPU Load (15m) = {{ states('sensor.load_15m') }}"
+          message: >-
+            🟢 CPU Load (15m) = {{ states(entity) if entity else 'N/A' }}
     mode: single
     max_exceeded: silent
 
@@ -327,10 +342,22 @@ automation:
   - id: "ram_usage"
     alias: "𐃏 RAM Usage"
     description: ""
+    variables:
+      entity: >-
+        {% set sensors = [
+          'sensor.system_monitor_memory_usage',
+          'sensor.memory_use_percent'
+        ] %}
+        {{ sensors | select('has_value') | first | default(none) }}
     triggers:
-      - trigger: numeric_state
-        entity_id: sensor.memory_use_percent
-        above: 80
+      - trigger: template
+        value_template: >-
+          {% set sensors = [
+            'sensor.system_monitor_memory_usage',
+            'sensor.memory_use_percent'
+          ] %}
+          {% set trigger_entity = sensors | select('has_value') | first | default(none) %}
+          {{ trigger_entity is not none and states(trigger_entity) | float(0) > 80 }}
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -339,12 +366,15 @@ automation:
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟡 RAM = {{ states('sensor.memory_use_percent') }}%"
-      - wait_template: "{{ states('sensor.memory_use_percent') | float < 75 }}"
+          message: >-
+            🟡 RAM = {{ states(entity) if entity else 'N/A' }}%
+      - wait_template: >-
+          {{ not entity or states(entity) | float(0) < 75 }}
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟢 RAM = {{ states('sensor.memory_use_percent') }}%"
+          message: >-
+            🟢 RAM = {{ states(entity) if entity else 'N/A' }}%
     mode: single
     max_exceeded: silent
 
@@ -352,10 +382,22 @@ automation:
   - id: "disk_usage"
     alias: "𐃏 Disk Usage"
     description: ""
+    variables:
+      entity: >-
+        {% set sensors = [
+          'sensor.system_monitor_disk_usage',
+          'sensor.disk_use_percent'
+        ] %}
+        {{ sensors | select('has_value') | first | default(none) }}
     triggers:
-      - trigger: numeric_state
-        entity_id: sensor.disk_use_percent
-        above: 70
+      - trigger: template
+        value_template: >-
+          {% set sensors = [
+            'sensor.system_monitor_disk_usage',
+            'sensor.disk_use_percent'
+          ] %}
+          {% set trigger_entity = sensors | select('has_value') | first | default(none) %}
+          {{ trigger_entity is not none and states(trigger_entity) | float(0) > 70 }}
     condition:
       - condition: state
         entity_id: input_boolean.maintenance_mode
@@ -364,12 +406,15 @@ automation:
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟡 Disk = {{ states('sensor.disk_use_percent') }}%"
-      - wait_template: "{{ states('sensor.disk_use_percent') | float < 60 }}"
+          message: >-
+            🟡 Disk = {{ states(entity) if entity else 'N/A' }}%
+      - wait_template: >-
+          {{ not entity or states(entity) | float(0) < 60 }}
       - action: script.global_notify
         data:
           notify_service_override: "input_text.notify_service_server"
-          message: "🟢 Disk = {{ states('sensor.disk_use_percent') }}%"
+          message: >-
+            🟢 Disk = {{ states(entity) if entity else 'N/A' }}%
     mode: restart
 
   # Maintenance Toggle Controller

@@ -52,6 +52,7 @@ template:
             |selectattr('attributes.device_class','defined')
             |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
             |selectattr('state', 'in', ['unavailable', 'unknown', 'none'])
+            |rejectattr('name', 'search', '(?i)returned')
             |rejectattr('entity_id','in', ignored )
             |list|count
           }}
@@ -64,6 +65,7 @@ template:
               |selectattr('attributes.device_class','defined')
               |selectattr('attributes.device_class','in',['temperature','energy','window','door','opening'])
               |selectattr('state', 'in', ['unavailable', 'unknown', 'none'])
+              |rejectattr('name', 'search', '(?i)returned')
               |rejectattr('entity_id','in', ignored ) 
             %}
               {% set dev_name = device_attr(entity.entity_id, 'name_by_user') or device_attr(entity.entity_id, 'name') or '' %}
