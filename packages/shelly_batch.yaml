@@ -1,0 +1,719 @@
+# ==================================================================================
+# Package: Shelly batch configure
+# Version: 2026.10.01
+# Description:
+#   Batch-configure Shelly Gen2+ devices from Home Assistant.
+#
+#   Each device is asked which components it has (Shelly.GetConfig) and only
+#   supported settings are sent. A device that rejects the login gets exactly
+#   one request and is then skipped.
+#
+#   NOTE: the password is typed into the script dialog and therefore appears in
+#   the script trace.
+# 
+# How to use:
+#   Go to Tools -> Actions -> Configure All Shelly Devices
+# ==================================================================================
+
+script:
+  # Script to update this package from GitHub
+  update_packages:
+    sequence:
+      - action: downloader.download_file
+        data:
+          overwrite: true
+          url: >-
+            {% set url = 'https://raw.githubusercontent.com/' %}
+            {% if states.input_text.packages_account.state is defined %}
+              {% set account = states('input_text.packages_account') %}
+            {% else %}
+              {% set account = 'topaniot' %}
+            {% endif %}
+            {% set path = '/HomeAssistant_Packages/main/packages/' %}
+            {% set name = 'shelly_batch.yaml' %}
+            {{ url + account + path + name }}
+
+shell_command:
+  shelly_curl: >-
+    curl -sS --max-time 15 --anyauth --fail-with-body
+    -u 'admin:{{ password }}'
+    -X POST -H 'Content-Type: application/json'
+    -d '{{ params | to_json }}'
+    'http://{{ ip }}/rpc/{{ method }}'
+
+# Counters used to build the final summary (reset at the start of every run).
+counter:
+  shelly_batch_devices_ok:
+    name: Shelly batch devices OK
+    initial: 0
+    restore: false
+  shelly_batch_devices_failed:
+    name: Shelly batch devices failed
+    initial: 0
+    restore: false
+  shelly_batch_devices_skipped:
+    name: Shelly batch devices nothing to configure
+    initial: 0
+    restore: false
+  shelly_batch_calls_ok:
+    name: Shelly batch calls OK
+    initial: 0
+    restore: false
+  shelly_batch_calls_failed:
+    name: Shelly batch calls failed
+    initial: 0
+    restore: false
+
+script:
+  # Internal helper: one settings call, counted and logged.
+  shelly_call:
+    alias: "Shelly call (internal)"
+    description: "Used by Configure All Shelly Devices. Sends one RPC call and counts the result."
+    mode: queued
+    max: 20
+    sequence:
+      - variables:
+          r: "{{ none }}"
+      - action: shell_command.shelly_curl
+        continue_on_error: true
+        response_variable: r
+        data:
+          ip: "{{ ip }}"
+          method: "{{ method }}"
+          params: "{{ params }}"
+          password: "{{ password }}"
+      - variables:
+          call_ok: "{{ r is mapping and r.returncode == 0 }}"
+      - if: "{{ call_ok }}"
+        then:
+          - action: counter.increment
+            target:
+              entity_id: counter.shelly_batch_calls_ok
+          - action: system_log.write
+            data:
+              level: info
+              logger: shelly_batch
+              message: "{{ ip }}: {{ method }} OK {{ params }}"
+        else:
+          - action: counter.increment
+            target:
+              entity_id: counter.shelly_batch_calls_failed
+          - action: system_log.write
+            data:
+              level: warning
+              logger: shelly_batch
+              message: >-
+                {{ ip }}: {{ method }} FAILED
+                {% if r is mapping -%}
+                (curl rc={{ r.returncode }}) {{ (r.stdout ~ ' ' ~ r.stderr) | trim }}
+                {%- else -%}
+                (no response)
+                {%- endif %}
+
+  configure_all_shelly_devices:
+    alias: "Configure All Shelly Devices"
+    description: "Batch-configures all Shelly Gen2+ devices, sending only what each device supports."
+    mode: single
+    fields:
+      password:
+        name: Shelly password
+        description: Device password (user is always admin). Leave empty if the devices have no password. Must not contain a single quote.
+        default: ""
+        selector:
+          text:
+            type: password
+      only_ips:
+        name: Only these IP addresses
+        description: Comma-separated IPs to configure, for example 192.168.34.54, 192.168.34.47. Leave empty to configure ALL devices.
+        default: ""
+        selector:
+          text:
+      factory_reset:
+        name: Button Factory Reset
+        description: Allow factory reset via 5 quick input toggles after boot (switch/button inputs)
+        default: false
+        selector:
+          boolean:
+      transition_duration:
+        name: Transition Duration
+        description: Dimmer transition time in seconds (lights that support it)
+        default: 0
+        selector:
+          number:
+            min: 0
+            max: 60
+            step: 0.5
+            mode: box
+      fade_rate:
+        name: Button Fade Rate
+        description: Dimming speed while holding the button (1 = slowest, 5 = fastest)
+        default: 5
+        selector:
+          number:
+            min: 1
+            max: 5
+            step: 1
+            mode: slider
+      light_startup:
+        name: Light Startup Behavior
+        description: Light output state on power restore
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Off"
+                value: "off"
+              - label: "On"
+                value: "on"
+              - label: "Restore last state"
+                value: restore_last
+              - label: "Toggle"
+                value: toggle
+      switch_startup:
+        name: Relay Startup Behavior
+        description: Relay output state on power restore
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Off"
+                value: "off"
+              - label: "On"
+                value: "on"
+              - label: "Restore last state"
+                value: restore_last
+              - label: "Match input"
+                value: match_input
+      dimmer_input_type:
+        name: Dimmer Input Type
+        description: Dimmers only (devices with a light output). Input type for all inputs of the dimmer. Must fit the Input Mode (Toggle/Edge need Switch, Single/Dual dimming need Button).
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Button"
+                value: button
+              - label: "Switch"
+                value: switch
+      dimmer_input_mode:
+        name: Dimmer Input Mode
+        description: Dimmers only (devices with a light output). How the input controls the light.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Toggle - one state for ON, one for OFF (needs Switch)"
+                value: follow
+              - label: "Edge - changes state on every change of the switch (needs Switch)"
+                value: flip
+              - label: "Detached - input does not change the output (Button or Switch)"
+                value: detached
+              - label: "Activation - any input turns ON and resets Auto Off (Button or Switch)"
+                value: activate
+              - label: "Single input dimming - push to toggle, hold to dim (needs Button)"
+                value: dim
+              - label: "Dual input dimming - 2 inputs for up/down (needs Button)"
+                value: dual_dim
+      relay_input_type:
+        name: Relay Input Type
+        description: Relays (switch outputs, including relays that switch ordinary lights). Input type of each relay's input. Must fit the Input Mode.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Button"
+                value: button
+              - label: "Switch"
+                value: switch
+      relay_input_mode:
+        name: Relay Input Mode
+        description: Relays (switch outputs, including relays that switch ordinary lights). How the input controls the relay.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Follow - output follows the switch state (needs Switch)"
+                value: follow
+              - label: "Flip - every change of the switch toggles the output (needs Switch)"
+                value: flip
+              - label: "Momentary - every press toggles the output (needs Button)"
+                value: momentary
+              - label: "Detached - input does not change the output (Button or Switch)"
+                value: detached
+              - label: "Cycle - each press steps through the states of two relays (needs Button, 2-relay devices only)"
+                value: cycle
+              - label: "Activate - any input turns ON and resets Auto Off, for motion sensors (Button or Switch)"
+                value: activate
+      cover_input_type:
+        name: Cover Input Type
+        description: Covers. Input type of the cover's two inputs.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Button"
+                value: button
+              - label: "Switch"
+                value: switch
+      cover_input_mode:
+        name: Cover Input Mode
+        description: Covers. How the inputs control the cover.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Single - one input opens/stops/closes/stops"
+                value: single
+              - label: "Dual - one input to open, one to close"
+                value: dual
+              - label: "Detached - inputs do not control the cover"
+                value: detached
+      cover_swap_inputs:
+        name: Cover Swap Inputs
+        description: Covers with two inputs. Swap the open and close functions of the two inputs.
+        default: unchanged
+        selector:
+          select:
+            options:
+              - label: "Leave unchanged"
+                value: unchanged
+              - label: "Swap (input 1 opens, input 0 closes)"
+                value: "yes"
+              - label: "Do not swap"
+                value: "no"
+      calibrate_dimmer:
+        name: Calibrate Dimmer
+        description: Start calibration on dimmers that support it (needs a load of at least 3.5 W)
+        default: false
+        selector:
+          boolean:
+      calibrate_cover:
+        name: Calibrate Cover
+        description: Start calibration on covers. THE SHUTTERS WILL MOVE.
+        default: false
+        selector:
+          boolean:
+
+    sequence:
+      # Defaults apply even when the script is run without the fields dialog.
+      - variables:
+          opt_password: "{{ password | default('') }}"
+          opt_factory_reset: "{{ factory_reset | default(false) | bool(false) }}"
+          opt_transition: "{{ transition_duration | default(0) | float(0) }}"
+          opt_fade: "{{ fade_rate | default(5) | int(5) }}"
+          opt_light_startup: "{{ light_startup | default('unchanged') }}"
+          opt_switch_startup: "{{ switch_startup | default('unchanged') }}"
+          opt_dimmer_type: "{{ dimmer_input_type | default('unchanged') }}"
+          opt_dimmer_mode: "{{ dimmer_input_mode | default('unchanged') }}"
+          opt_relay_type: "{{ relay_input_type | default('unchanged') }}"
+          opt_relay_mode: "{{ relay_input_mode | default('unchanged') }}"
+          opt_cover_type: "{{ cover_input_type | default('unchanged') }}"
+          opt_cover_mode: "{{ cover_input_mode | default('unchanged') }}"
+          opt_cover_swap: "{{ cover_swap_inputs | default('unchanged') }}"
+          opt_cal_dimmer: "{{ calibrate_dimmer | default(false) | bool(false) }}"
+          opt_cal_cover: "{{ calibrate_cover | default(false) | bool(false) }}"
+          opt_only_ips: "{{ only_ips | default('') | string | trim }}"
+          shelly_ips: >-
+            {%- set only = namespace(h=[]) -%}
+            {%- for x in (opt_only_ips | string | replace(',', ' ') | replace(';', ' ')).split() -%}
+              {%- set only.h = only.h + [x.split(':')[0]] -%}
+            {%- endfor -%}
+            {%- set ns = namespace(ips=[]) -%}
+            {%- for entity in integration_entities('shelly') -%}
+              {%- set url = device_attr(entity, 'configuration_url') -%}
+              {%- if url -%}
+                {%- set ip = url | replace('http://', '') | replace('https://', '') | replace('/', '') -%}
+                {%- if ip not in ns.ips and (only.h | length == 0 or ip.split(':')[0] in only.h) -%}
+                  {%- set ns.ips = ns.ips + [ip] -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ ns.ips }}
+
+      - action: counter.reset
+        target:
+          entity_id:
+            - counter.shelly_batch_devices_ok
+            - counter.shelly_batch_devices_failed
+            - counter.shelly_batch_devices_skipped
+            - counter.shelly_batch_calls_ok
+            - counter.shelly_batch_calls_failed
+
+      - action: persistent_notification.create
+        data:
+          notification_id: shelly_batch
+          title: "Shelly batch started"
+          message: >-
+            Found {{ shelly_ips | length }} device(s){% if opt_only_ips != '' %} matching "{{ opt_only_ips }}"{% else %} (no IP filter, all devices){% endif %}:
+            {{ shelly_ips | join(', ') }}
+
+      - repeat:
+          for_each: "{{ shelly_ips }}"
+          sequence:
+            - variables:
+                target_ip: "{{ repeat.item }}"
+                resp: "{{ none }}"
+                fail_before: "{{ states('counter.shelly_batch_calls_failed') | int(0) }}"
+
+            # 1) Ask the device what it has. Devices that reject the login,
+            #    Gen1 and BLU devices end up with an empty config.
+            - action: shell_command.shelly_curl
+              continue_on_error: true
+              response_variable: resp
+              data:
+                ip: "{{ target_ip }}"
+                method: Shelly.GetConfig
+                params: "{{ {} }}"
+                password: "{{ opt_password }}"
+
+            - variables:
+                raw: "{{ (resp.stdout if (resp is mapping and resp.stdout is string) else '{}') | from_json(default={}) }}"
+            - variables:
+                cfg: "{{ raw if raw is mapping else {} }}"
+                comp: >-
+                  {%- set ns = namespace(i=[], l=[], s=[], c=[]) -%}
+                  {%- for k in cfg.keys() -%}
+                    {%- if k.startswith('input:') -%}{%- set ns.i = ns.i + [k.split(':')[1] | int] -%}{%- endif -%}
+                    {%- if k.startswith('light:') -%}{%- set ns.l = ns.l + [k.split(':')[1] | int] -%}{%- endif -%}
+                    {%- if k.startswith('switch:') -%}{%- set ns.s = ns.s + [k.split(':')[1] | int] -%}{%- endif -%}
+                    {%- if k.startswith('cover:') -%}{%- set ns.c = ns.c + [k.split(':')[1] | int] -%}{%- endif -%}
+                  {%- endfor -%}
+                  {{ {'input': ns.i, 'light': ns.l, 'switch': ns.s, 'cover': ns.c} }}
+
+            # Reachable devices are logged at info level, problems at warning level.
+            - if: "{{ cfg | length > 0 }}"
+              then:
+                - action: system_log.write
+                  data:
+                    level: info
+                    logger: shelly_batch
+                    message: >-
+                      {{ target_ip }}: reachable
+                      inputs={{ comp.input }} lights={{ comp.light }}
+                      switches={{ comp.switch }} covers={{ comp.cover }}
+              else:
+                - action: system_log.write
+                  data:
+                    level: warning
+                    logger: shelly_batch
+                    message: "{{ target_ip }}: UNREACHABLE or login rejected (no config returned), device skipped"
+
+            - if: "{{ cfg | length > 0 }}"
+              then:
+                # 2) Inputs (factory_reset only exists on switch/button inputs)
+                - repeat:
+                    for_each: "{{ comp.input }}"
+                    sequence:
+                      - if: "{{ cfg['input:' ~ repeat.item].type in ['switch', 'button'] }}"
+                        then:
+                          - action: script.shelly_call
+                            data:
+                              ip: "{{ target_ip }}"
+                              method: Input.SetConfig
+                              params: "{{ {'id': repeat.item, 'config': {'factory_reset': opt_factory_reset}} }}"
+                              password: "{{ opt_password }}"
+
+                # 3) Lights. Only keys the device actually reports are sent,
+                #    because Shelly rejects the whole call on an unknown key.
+                - repeat:
+                    for_each: "{{ comp.light }}"
+                    sequence:
+                      - variables:
+                          light_params: >-
+                            {%- set lc = cfg['light:' ~ repeat.item] -%}
+                            {%- set ns = namespace(p=[]) -%}
+                            {%- if opt_light_startup != 'unchanged' and 'initial_state' in lc -%}
+                              {%- set ns.p = ns.p + [('initial_state', opt_light_startup)] -%}
+                            {%- endif -%}
+                            {%- if 'transition_duration' in lc -%}
+                              {%- set ns.p = ns.p + [('transition_duration', opt_transition)] -%}
+                            {%- endif -%}
+                            {%- if 'button_fade_rate' in lc -%}
+                              {%- set ns.p = ns.p + [('button_fade_rate', opt_fade)] -%}
+                            {%- endif -%}
+                            {{ {'id': repeat.item, 'config': dict(ns.p)} }}
+                      - if: "{{ light_params.config | length > 0 }}"
+                        then:
+                          - action: script.shelly_call
+                            data:
+                              ip: "{{ target_ip }}"
+                              method: Light.SetConfig
+                              params: "{{ light_params }}"
+                              password: "{{ opt_password }}"
+                      - if: "{{ opt_dimmer_type != 'unchanged' or opt_dimmer_mode != 'unchanged' }}"
+                        then:
+                          - variables:
+                              mode_plan: >-
+                                {%- set lc = cfg['light:' ~ repeat.item] -%}
+                                {%- set t = opt_dimmer_type -%}
+                                {%- set m = opt_dimmer_mode if opt_dimmer_mode != 'unchanged' else (lc.in_mode if 'in_mode' in lc else 'unchanged') -%}
+                                {%- set need = {'follow': 'switch', 'flip': 'switch', 'dim': 'button', 'dual_dim': 'button'}.get(m) -%}
+                                {%- set rel = comp.input[:2] if m == 'dual_dim' else [repeat.item] -%}
+                                {%- set ns = namespace(calls=[], reason='') -%}
+                                {%- if 'in_mode' not in lc -%}
+                                  {%- set ns.reason = 'device does not report in_mode' -%}
+                                {%- elif m == 'dual_dim' and comp.input | length < 2 -%}
+                                  {%- set ns.reason = 'dual_dim needs two inputs' -%}
+                                {%- else -%}
+                                  {%- for i in rel -%}
+                                    {%- if ('input:' ~ i) not in cfg -%}
+                                      {%- set ns.reason = 'input:' ~ i ~ ' not found' -%}
+                                    {%- else -%}
+                                      {%- set cur = cfg['input:' ~ i].type -%}
+                                      {%- set eff = t if t != 'unchanged' else cur -%}
+                                      {%- if eff not in ['switch', 'button'] -%}
+                                        {%- set ns.reason = 'input:' ~ i ~ ' has type ' ~ eff -%}
+                                      {%- elif need and eff != need -%}
+                                        {%- set ns.reason = 'mode ' ~ m ~ ' needs a ' ~ need ~ ' input but input:' ~ i ~ ' would be ' ~ eff ~ ' (choose a matching type or mode)' -%}
+                                      {%- endif -%}
+                                    {%- endif -%}
+                                  {%- endfor -%}
+                                  {%- if ns.reason == '' and t != 'unchanged' -%}
+                                    {%- for i in comp.input -%}
+                                      {%- if ('input:' ~ i) in cfg and cfg['input:' ~ i].type in ['switch', 'button'] and cfg['input:' ~ i].type != t -%}
+                                        {%- set ns.calls = ns.calls + [{'id': i, 'config': {'type': t}}] -%}
+                                      {%- endif -%}
+                                    {%- endfor -%}
+                                  {%- endif -%}
+                                {%- endif -%}
+                                {{ {'reason': ns.reason, 'calls': ns.calls, 'mode': opt_dimmer_mode != 'unchanged'} }}
+                          # Input type first (only inputs that differ)
+                          - repeat:
+                              for_each: "{{ mode_plan.calls }}"
+                              sequence:
+                                - action: script.shelly_call
+                                  data:
+                                    ip: "{{ target_ip }}"
+                                    method: Input.SetConfig
+                                    params: "{{ repeat.item }}"
+                                    password: "{{ opt_password }}"
+                          - if: "{{ mode_plan.reason == '' and mode_plan.mode }}"
+                            then:
+                              - action: script.shelly_call
+                                data:
+                                  ip: "{{ target_ip }}"
+                                  method: Light.SetConfig
+                                  params: "{{ {'id': repeat.item, 'config': {'in_mode': opt_dimmer_mode}} }}"
+                                  password: "{{ opt_password }}"
+                          - if: "{{ mode_plan.reason != '' }}"
+                            then:
+                              - action: counter.increment
+                                target:
+                                  entity_id: counter.shelly_batch_calls_failed
+                              - action: system_log.write
+                                data:
+                                  level: warning
+                                  logger: shelly_batch
+                                  message: "{{ target_ip }}: light:{{ repeat.item }} input type/mode change skipped: {{ mode_plan.reason }}"
+                      - if: "{{ opt_cal_dimmer }}"
+                        then:
+                          - action: script.shelly_call
+                            data:
+                              ip: "{{ target_ip }}"
+                              method: Light.Calibrate
+                              params: "{{ {'id': repeat.item} }}"
+                              password: "{{ opt_password }}"
+
+                # 4) Relays
+                - repeat:
+                    for_each: "{{ comp.switch }}"
+                    sequence:
+                      - if: "{{ opt_switch_startup != 'unchanged' and 'initial_state' in cfg['switch:' ~ repeat.item] }}"
+                        then:
+                          - action: script.shelly_call
+                            data:
+                              ip: "{{ target_ip }}"
+                              method: Switch.SetConfig
+                              params: "{{ {'id': repeat.item, 'config': {'initial_state': opt_switch_startup}} }}"
+                              password: "{{ opt_password }}"
+
+                      - if: "{{ opt_relay_type != 'unchanged' or opt_relay_mode != 'unchanged' }}"
+                        then:
+                          - variables:
+                              relay_plan: >-
+                                {%- set sc = cfg['switch:' ~ repeat.item] -%}
+                                {%- set t = opt_relay_type -%}
+                                {%- set m = opt_relay_mode if opt_relay_mode != 'unchanged' else (sc.in_mode if 'in_mode' in sc else 'unchanged') -%}
+                                {%- set need = {'follow': 'switch', 'flip': 'switch', 'momentary': 'button', 'cycle': 'button'}.get(m) -%}
+                                {%- set iid = sc.input_id if 'input_id' in sc else repeat.item -%}
+                                {%- set ns = namespace(calls=[], reason='') -%}
+                                {%- if 'in_mode' not in sc -%}
+                                  {%- set ns.reason = 'device does not report in_mode' -%}
+                                {%- elif m == 'cycle' and comp.switch | length < 2 -%}
+                                  {%- set ns.reason = 'cycle needs two relays' -%}
+                                {%- elif ('input:' ~ iid) not in cfg -%}
+                                  {%- set ns.reason = 'input:' ~ iid ~ ' not found' -%}
+                                {%- else -%}
+                                  {%- set cur = cfg['input:' ~ iid].type -%}
+                                  {%- set eff = t if t != 'unchanged' else cur -%}
+                                  {%- if eff not in ['switch', 'button'] -%}
+                                    {%- set ns.reason = 'input:' ~ iid ~ ' has type ' ~ eff -%}
+                                  {%- elif need and eff != need -%}
+                                    {%- set ns.reason = 'mode ' ~ m ~ ' needs a ' ~ need ~ ' input but input:' ~ iid ~ ' would be ' ~ eff ~ ' (choose a matching type or mode)' -%}
+                                  {%- elif t != 'unchanged' and cur != t -%}
+                                    {%- set ns.calls = [{'id': iid, 'config': {'type': t}}] -%}
+                                  {%- endif -%}
+                                {%- endif -%}
+                                {{ {'reason': ns.reason, 'calls': ns.calls, 'mode': opt_relay_mode != 'unchanged'} }}
+                          # Input type first (only when it differs)
+                          - repeat:
+                              for_each: "{{ relay_plan.calls }}"
+                              sequence:
+                                - action: script.shelly_call
+                                  data:
+                                    ip: "{{ target_ip }}"
+                                    method: Input.SetConfig
+                                    params: "{{ repeat.item }}"
+                                    password: "{{ opt_password }}"
+                          - if: "{{ relay_plan.reason == '' and relay_plan.mode }}"
+                            then:
+                              - action: script.shelly_call
+                                data:
+                                  ip: "{{ target_ip }}"
+                                  method: Switch.SetConfig
+                                  params: "{{ {'id': repeat.item, 'config': {'in_mode': opt_relay_mode}} }}"
+                                  password: "{{ opt_password }}"
+                          - if: "{{ relay_plan.reason != '' }}"
+                            then:
+                              - action: counter.increment
+                                target:
+                                  entity_id: counter.shelly_batch_calls_failed
+                              - action: system_log.write
+                                data:
+                                  level: warning
+                                  logger: shelly_batch
+                                  message: "{{ target_ip }}: switch:{{ repeat.item }} input type/mode change skipped: {{ relay_plan.reason }}"
+                # 5a) Cover inputs (type, mode, swap)
+                - if: "{{ opt_cover_type != 'unchanged' or opt_cover_mode != 'unchanged' or opt_cover_swap != 'unchanged' }}"
+                  then:
+                    - repeat:
+                        for_each: "{{ comp.cover }}"
+                        sequence:
+                          - variables:
+                              cover_plan: >-
+                                {%- set cc = cfg['cover:' ~ repeat.item] -%}
+                                {%- set t = opt_cover_type -%}
+                                {%- set ids = [2 * repeat.item, 2 * repeat.item + 1] -%}
+                                {%- set ns = namespace(calls=[], reason='', p=[]) -%}
+                                {%- if opt_cover_mode != 'unchanged' and 'in_mode' not in cc -%}
+                                  {%- set ns.reason = 'device does not report in_mode' -%}
+                                {%- elif opt_cover_swap != 'unchanged' and 'swap_inputs' not in cc -%}
+                                  {%- set ns.reason = 'device does not report swap_inputs (needs two inputs)' -%}
+                                {%- elif opt_cover_mode == 'dual' and (('input:' ~ ids[0]) not in cfg or ('input:' ~ ids[1]) not in cfg) -%}
+                                  {%- set ns.reason = 'dual needs two inputs' -%}
+                                {%- else -%}
+                                  {%- if opt_cover_mode != 'unchanged' -%}
+                                    {%- set ns.p = ns.p + [('in_mode', opt_cover_mode)] -%}
+                                  {%- endif -%}
+                                  {%- if opt_cover_swap != 'unchanged' -%}
+                                    {%- set ns.p = ns.p + [('swap_inputs', opt_cover_swap == 'yes')] -%}
+                                  {%- endif -%}
+                                  {%- if t != 'unchanged' -%}
+                                    {%- for i in ids -%}
+                                      {%- if ('input:' ~ i) in cfg and cfg['input:' ~ i].type in ['switch', 'button'] and cfg['input:' ~ i].type != t -%}
+                                        {%- set ns.calls = ns.calls + [{'id': i, 'config': {'type': t}}] -%}
+                                      {%- endif -%}
+                                    {%- endfor -%}
+                                  {%- endif -%}
+                                {%- endif -%}
+                                {{ {'reason': ns.reason, 'calls': ns.calls, 'params': {'id': repeat.item, 'config': dict(ns.p)}} }}
+                          # Input type first (only inputs that differ)
+                          - repeat:
+                              for_each: "{{ cover_plan.calls }}"
+                              sequence:
+                                - action: script.shelly_call
+                                  data:
+                                    ip: "{{ target_ip }}"
+                                    method: Input.SetConfig
+                                    params: "{{ repeat.item }}"
+                                    password: "{{ opt_password }}"
+                          - if: "{{ cover_plan.reason == '' and cover_plan.params.config | length > 0 }}"
+                            then:
+                              - action: script.shelly_call
+                                data:
+                                  ip: "{{ target_ip }}"
+                                  method: Cover.SetConfig
+                                  params: "{{ cover_plan.params }}"
+                                  password: "{{ opt_password }}"
+                          - if: "{{ cover_plan.reason != '' }}"
+                            then:
+                              - action: counter.increment
+                                target:
+                                  entity_id: counter.shelly_batch_calls_failed
+                              - action: system_log.write
+                                data:
+                                  level: warning
+                                  logger: shelly_batch
+                                  message: "{{ target_ip }}: cover:{{ repeat.item }} input change skipped: {{ cover_plan.reason }}"
+                # 5) Covers (calibration moves the shutter)
+                - if: "{{ opt_cal_cover }}"
+                  then:
+                    - repeat:
+                        for_each: "{{ comp.cover }}"
+                        sequence:
+                          - action: script.shelly_call
+                            data:
+                              ip: "{{ target_ip }}"
+                              method: Cover.Calibrate
+                              params: "{{ {'id': repeat.item} }}"
+                              password: "{{ opt_password }}"
+
+            # 6) Classify this device for the summary.
+            - choose:
+                - conditions:
+                    - "{{ cfg | length == 0 }}"
+                  sequence:
+                    - action: counter.increment
+                      target:
+                        entity_id: counter.shelly_batch_devices_failed
+                - conditions:
+                    - "{{ states('counter.shelly_batch_calls_failed') | int(0) > fail_before }}"
+                  sequence:
+                    - action: counter.increment
+                      target:
+                        entity_id: counter.shelly_batch_devices_failed
+                - conditions:
+                    - "{{ (comp.input + comp.light + comp.switch + comp.cover) | length == 0 }}"
+                  sequence:
+                    - action: counter.increment
+                      target:
+                        entity_id: counter.shelly_batch_devices_skipped
+              default:
+                - action: counter.increment
+                  target:
+                    entity_id: counter.shelly_batch_devices_ok
+
+      # Let the last counter update settle before reading the totals.
+      - delay: "00:00:01"
+
+      - action: persistent_notification.create
+        data:
+          notification_id: shelly_batch
+          title: "Shelly batch finished"
+          message: >-
+            Devices ({{ shelly_ips | length }}):
+            {{ states('counter.shelly_batch_devices_ok') }} OK,
+            {{ states('counter.shelly_batch_devices_failed') }} failed,
+            {{ states('counter.shelly_batch_devices_skipped') }} with nothing to configure.
+
+            Settings calls:
+            {{ states('counter.shelly_batch_calls_ok') }} OK,
+            {{ states('counter.shelly_batch_calls_failed') }} failed.
+
+            Failures are logged as warnings in Settings -> System -> Logs (search "shelly_batch"). Successful calls are logged at info level.
