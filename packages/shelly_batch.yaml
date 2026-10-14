@@ -1,6 +1,6 @@
 # ==================================================================================
 # Package: Shelly batch configure
-# Version: 2026.10.01
+# Version: 2026.10.02
 # Description:
 #   Batch-configure Shelly Gen2+ devices from Home Assistant.
 #
@@ -33,38 +33,6 @@ script:
             {% set name = 'shelly_batch.yaml' %}
             {{ url + account + path + name }}
 
-shell_command:
-  shelly_curl: >-
-    curl -sS --max-time 15 --anyauth --fail-with-body
-    -u 'admin:{{ password }}'
-    -X POST -H 'Content-Type: application/json'
-    -d '{{ params | to_json }}'
-    'http://{{ ip }}/rpc/{{ method }}'
-
-# Counters used to build the final summary (reset at the start of every run).
-counter:
-  shelly_batch_devices_ok:
-    name: Shelly batch devices OK
-    initial: 0
-    restore: false
-  shelly_batch_devices_failed:
-    name: Shelly batch devices failed
-    initial: 0
-    restore: false
-  shelly_batch_devices_skipped:
-    name: Shelly batch devices nothing to configure
-    initial: 0
-    restore: false
-  shelly_batch_calls_ok:
-    name: Shelly batch calls OK
-    initial: 0
-    restore: false
-  shelly_batch_calls_failed:
-    name: Shelly batch calls failed
-    initial: 0
-    restore: false
-
-script:
   # Internal helper: one settings call, counted and logged.
   shelly_call:
     alias: "Shelly call (internal)"
@@ -717,3 +685,34 @@ script:
             {{ states('counter.shelly_batch_calls_failed') }} failed.
 
             Failures are logged as warnings in Settings -> System -> Logs (search "shelly_batch"). Successful calls are logged at info level.
+            
+shell_command:
+  shelly_curl: >-
+    curl -sS --max-time 15 --anyauth --fail-with-body
+    -u 'admin:{{ password }}'
+    -X POST -H 'Content-Type: application/json'
+    -d '{{ params | to_json }}'
+    'http://{{ ip }}/rpc/{{ method }}'
+
+# Counters used to build the final summary (reset at the start of every run).
+counter:
+  shelly_batch_devices_ok:
+    name: Shelly batch devices OK
+    initial: 0
+    restore: false
+  shelly_batch_devices_failed:
+    name: Shelly batch devices failed
+    initial: 0
+    restore: false
+  shelly_batch_devices_skipped:
+    name: Shelly batch devices nothing to configure
+    initial: 0
+    restore: false
+  shelly_batch_calls_ok:
+    name: Shelly batch calls OK
+    initial: 0
+    restore: false
+  shelly_batch_calls_failed:
+    name: Shelly batch calls failed
+    initial: 0
+    restore: false
